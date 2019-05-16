@@ -1,6 +1,6 @@
-'From Cuis 5.0 of 7 November 2016 [latest update: #3744] on 15 May 2019 at 8:54:56 pm'!
+'From Cuis 5.0 of 7 November 2016 [latest update: #3744] on 15 May 2019 at 9:39:06 pm'!
 'Description A port from Squeak of a simulation of Monopoly.'!
-!provides: 'Monop' 1 13!
+!provides: 'Monop' 1 14!
 !requires: 'Game' 1 44 nil!
 SystemOrganization addCategory: #'Monop-View'!
 SystemOrganization addCategory: #'Monop-Model'!
@@ -642,6 +642,11 @@ doTour
 	model enableAll: {'Players'. 'Tour'}
 	! !
 
+!Monopoly methodsFor: 'operation' stamp: 'dhn 5/15/2019 21:37:15'!
+quitGame
+	(self confirm: 'Are you sure you want to quit ', Monopoly asString, '?')
+		ifTrue: [model quitGame]! !
+
 !Monopoly methodsFor: 'operation' stamp: 'dhn 5/15/2019 12:48:41'!
 showToken
 	"Establish the size and position of the token"
@@ -731,6 +736,12 @@ buildMorphicWindow
 initialize
 
 	super initialize! !
+
+!Monopoly methodsFor: 'initialization' stamp: 'dhn 5/15/2019 21:30:36'!
+layoutSubmorphs
+
+    super layoutSubmorphs.
+    self board morphExtent: self board owner morphExtent! !
 
 !Monopoly methodsFor: 'initialization' stamp: 'dhn 5/15/2019 12:32:55'!
 makeButtonArea
