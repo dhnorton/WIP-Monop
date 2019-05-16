@@ -1,6 +1,6 @@
-'From Cuis 5.0 of 7 November 2016 [latest update: #3744] on 15 May 2019 at 8:07:08 pm'!
+'From Cuis 5.0 of 7 November 2016 [latest update: #3744] on 15 May 2019 at 8:54:56 pm'!
 'Description A port from Squeak of a simulation of Monopoly.'!
-!provides: 'Monop' 1 11!
+!provides: 'Monop' 1 13!
 !requires: 'Game' 1 44 nil!
 SystemOrganization addCategory: #'Monop-View'!
 SystemOrganization addCategory: #'Monop-Model'!
@@ -500,10 +500,9 @@ describeSpaces
 		yourself
 ! !
 
-!Estate class methodsFor: 'instance creation' stamp: 'dhn 5/15/2019 19:59:14'!
+!Estate class methodsFor: 'instance creation' stamp: 'dhn 5/15/2019 20:16:17'!
 season
-	"Answer the Seasons in the order of their starting board positions."
-	"For Monopoly, this is an overkill."
+	"Answer the color at the top of each space in Monopoly."
 	
 	^ OrderedCollection new
 		add: (Season new range: 01; color: (Color indexedColors at: 107));
@@ -925,217 +924,6 @@ startGame
 		testGoal;
 		nextPlayer.
 	model initialButtonState! !
-
-!Monopoly methodsFor: 'as yet unclassified' stamp: 'dhn 5/15/2019 13:41:23'!
-boardX
-        "Answer the board positions."
-    ^OrderedCollection new
-        add: ( Lot for: 01 title: 'Meditteranean Avenue' );
-        add: ( Chest for: 02 title: 'Community Chest !!');
-        add: ( Lot for: 03 title: 'Baltic Avenue' );
-        add: ( Tax for: 04 title: 'Income Tax' );
-        add: ( Railroad for: 05 title: 'Reading Railroad' );
-        add: ( Lot for: 06 title: 'Oriental Avenue' );
-        add: ( Chance for: 07 title: 'Chance ?');
-        add: ( Lot for: 08 title: 'Vermont Avenue' );
-        add: ( Lot for: 09 title: 'Connecticut Avenue' );
-        add: ( Jail for: 10 title: 'Just Visiting Jail' );
-        add: ( Lot for: 11 title: 'St. Charles Place' );
-        add: ( Utility for: 12 title: 'Electric Company' );
-        add: ( Lot for: 13 title: 'States Avenue' );
-        add: ( Lot for: 14 title: 'Virginia Avenue' );
-        add: ( Railroad for: 15 title: 'Pennsylvania Railroad' );
-        add: ( Lot for: 16 title: 'St. James Place' );
-        add: ( Chest for: 17 title: 'Community Chest !!!!');
-        add: ( Lot for: 18 title: 'Tennesee Avenue' );
-        add: ( Lot for: 19 title: 'New York Avenue' );
-        add: ( Shelter for: 20 title: 'Free Parking' );
-        add: ( Lot for: 21 title: 'Kentucky Avenue' );
-        add: ( Chance for: 22 title: 'Chance ??');
-        add: ( Lot for: 23 title: 'Indiana Avenue' );
-        add: ( Lot for: 24 title: 'Illinois Avenue' );
-        add: ( Railroad for: 25 title: 'B. & O. Railroad' );
-        add: ( Lot for: 26 title: 'Atlantic Avenue' );
-        add: ( Lot for: 27 title: 'Ventnor Avenue' );
-        add: ( Utility for: 28 title: 'Water Works' );
-        add: ( Lot for: 29 title: 'Marvin Gardens' );
-        add: ( Hazard for: 30 title: 'Go to Jail' );
-        add: ( Lot for: 31 title: 'Pacific Avenue' );
-        add: ( Lot for: 32 title: 'North Carolina Avenue' );
-        add: ( Chest for: 33 title: 'Community Chest !!!!!!');
-        add: ( Lot for: 34 title: 'Pennsylvania Avenue' );
-        add: ( Railroad for: 35 title: 'Short Line Railroad' );
-        add: ( Chance for: 36 title: 'Chance ???');
-        add: ( Lot for: 37 title: 'Park Place' );
-        add: ( Tax for: 38 title: 'Luxury Tax' );
-        add: ( Lot for: 39 title: 'Boardwalk' );
-        add: ( Shelter for: 40 title: 'Go' );
-        yourself! !
-
-!Monopoly methodsFor: 'as yet unclassified' stamp: 'dhn 5/14/2019 12:19:18'!
-dialog: aPlayer buy: aProperty
-        "Answer whether aPlayer wants to buy aProperty."
-
-	^ GamePopUp 
-		inform: 'The price is $', aProperty price printString, '. Do you want to buy it?' 
-		title: aProperty title,' is For Sale'! !
-
-!Monopoly methodsFor: 'as yet unclassified' stamp: 'dhn 5/14/2019 12:42:18'!
-inJail: aPlayer with: aRoll
-	"Deal with aPlayer being in jail by applying aRoll of the dice."
-	
-	(GamePopUp 
-		inform: aPlayer name, ' is in jail. Do you want to pay to get out?' title:  'In Jail')
-			ifTrue: [ 
-				aPlayer payOut: aRoll.
-				self normal: aPlayer with: aRoll ]
-			ifFalse: [ 
-				(GamePopUp 
-					inform: aPlayer name, ' is in jail. Do you want to try to roll out?' title: 'In Jail')
-					ifTrue: [ 
-						(aPlayer rollOut: aRoll)
-							ifTrue:[ self normal: aPlayer with: aRoll ]]
-							ifFalse: [ 
-								aPlayer cardOut: aRoll.
-								self normal: aPlayer with: aRoll ]]! !
-
-!Monopoly methodsFor: 'as yet unclassified'!
-move: aPlayer by: aMove
-        "Answer aPlayer's new position as a result of aMove.
-        Record the amount of the roll and whether aPlayer
-        passed Go."
-    | posn |
-    aPlayer roll: aMove.
-    posn := aMove + aPlayer position.
-    posn >= 40 ifTrue: [ aPlayer passedGo: true ].
-    posn := posn rem: 40.
-    posn = 0 ifTrue: [ ^40].
-    ^posn! !
-
-!Monopoly methodsFor: 'as yet unclassified'!
-move: aPlayer with: aRoll
-        "Move aPlayer using aRoll."
-    aPlayer inJail
-        ifFalse: [ self normal: aPlayer with: aRoll ]
-        ifTrue:[ self inJail: aPlayer with: aRoll ].! !
-
-!Monopoly methodsFor: 'as yet unclassified'!
-next: anInteger
-        "Answer the number of the player whose turn is next.
-        The player whose turn was last is indicated by anInteger."
-    | next |
-    next := anInteger + 1.
-    ( next > players size ) ifTrue: [ ^1 ].
-    ^next! !
-
-!Monopoly methodsFor: 'as yet unclassified'!
-normal: aPlayer with: aRoll
-        "Deal with aPlayer in the normal state (not in jail) by
-        applying aRoll of the dice."
-    aPlayer position: ( self move: aPlayer by:
-        ( aRoll at: 1 ) + ( aRoll at: 2 ) ).
-    ( aRoll at: 1 ) = ( aRoll at: 2 )
-        ifFalse: [
-            aPlayer goAgain: false;
-                special: true;
-                doubles: 0.
-            [aPlayer special] whileTrue: [
-                (squares at: aPlayer position) result: aPlayer ] ]
-        ifTrue: [
-            aPlayer doubles: aPlayer doubles + 1.
-            3 > aPlayer doubles
-                ifTrue: [ aPlayer special: true.
-                    [aPlayer special] whileTrue: [
-                        (squares at: aPlayer position) result: aPlayer ] ]
-                ifFalse: [
-                    aPlayer toJail; threeDoubles ] ].! !
-
-!Monopoly methodsFor: 'as yet unclassified'!
-players
-        "Answer the players currently in the game."
-    ^players! !
-
-!Monopoly methodsFor: 'as yet unclassified'!
-run
-        "Run the game until only one player remains, by having
-        players take turns."
-    | pl |
-    [ players size > 1 ] whileTrue: [
-        pl := players at: turn.
-        pl goAgain: true.
-        [ pl goAgain ] whileTrue: [ self move: pl with:
-            (dice repeat: 2 from: 1 to: 6) ].
-        self turn: (self next: turn) ].
-    "At this point, the winner should be displayed (TBD)."! !
-
-!Monopoly methodsFor: 'as yet unclassified'!
-setChance: aSquare
-        "Answer the values for the Chance deck, establishing the
-        square to which the members of the deck are associated."
-    | deck |
-    deck := OrderedCollection new
-        add: (Move with: #relative: to: -3 for: 'Go back three spaces.');
-        add: (Move with: #summarily: to: 10 for: 'Go to Jail.');
-        add: (Move with: #direct: to: 39 for: 'Advance to Boardwalk.');
-        add: (Pay of: -150 for: 'Building and loan matures - collect $150.');
-        add: (Pay with: #toEach: of: 50 for: 'You''ve been elected Chairman of the Board. Pay each player $50.');
-        add: (Pay of: -50 for: 'Bank pays you dividend of $50.');
-        add: (Pay of: 15 for: 'Pay poor tax of $15.');
-        add: (Move with: #direct: to: 11 for: 'Advance to St. Charles Place.');
-        add: (Move with: #nearRR: for: 'Advance token to the nearest Railroad and pay the owner twice the rent to which he is otherwise entitled.');
-        add: (Move with: #nearRR: for: 'Advance token to the nearest Railroad and pay the owner twice the rent to which he is otherwise entitled.');
-        add: (Move with: #direct: to: 24 for: 'Advance token to Illinois Avenue.');
-        add: (Repair of: #(25 100) for:'Make general repairs on all your property: $25 per house; $100 per hotel.');
-        add: (Move with: #nearUt: for: 'Advance token to the nearest utility. Roll the dice and pay the owner 10 times the amount shown. If unowned, you may buy it from the bank.');
-        add: (GetOut for: 'Get out of Jail free. This card may be kept until needed.');
-        add: (GetOut for: 'Get out of Jail free. This card may be kept until needed.');
-        add: (Move with: #direct: to: 5 for: 'Take a ride on the Reading Railroad. If you pass go, collect $200.');
-        add: (Move with: #direct: to: 40 for: 'Advance to Go.');
-        yourself.
-    deck do: [ :card | card square: aSquare].
-    ^deck! !
-
-!Monopoly methodsFor: 'as yet unclassified'!
-setChest: aSquare
-        "Answer the values for the Community Chest deck,
-        establishing the square to which the members of the deck
-        are associated."
-    | deck |
-    deck := OrderedCollection new
-        add: (Move with: #summarily: to: 10 for: 'Go to Jail.');
-        add: (Pay of: -100 for: 'Xmas fund matures - collect $100.');
-        add: (Pay of: -100 for: 'Life insurance matures - collect $100.');
-        add: (Pay of: -25 for: 'Receive for services $25.');
-        add: (Pay of: -100 for: 'Inherit $100.');
-        add: (Pay of: -45 for: 'From sale of stock you get $45.');
-        add: (Pay of: -10 for: 'You''ve won second prize in a beauty contest - $10.');
-        add: (Pay of: -200 for: 'Bank error in your favor - collect $200.');
-        add: (Pay of: 150 for: 'Pay school tax of $150.');
-        add: (Pay of: 100 for: 'Pay hospital $100.');
-        add: (Pay with: #fromEach: of: 50 for: 'Grand opera opening night: collect $50 from every player.');
-        add: (Pay of: 50 for: 'Doctors fee - pay $50.');
-        add: (Pay of: -20 for: 'Income tax refund - collect $20.');
-        add: (Repair of: #(40 115) for: 'Make street repairs: $40 per house; $115 per hotel.');
-        add: (GetOut for: 'Get out of Jail free. This card may be kept until needed.');
-        add: (GetOut for: 'Get out of Jail free. This card may be kept until needed.');
-        add: (Move with: #direct: to: 40 for: 'Advance to Go.');
-        yourself.
-    deck do: [ :card | card square: aSquare].
-    ^deck! !
-
-!Monopoly methodsFor: 'as yet unclassified' stamp: 'dhn 5/14/2019 16:11:22'!
-transform: aSquare
-        "Transform the sets of aSquare from a collection of
-        positions to a collection of property objects."
-    | temp |
-    temp := OrderedCollection new: aSquare set size.
-    aSquare set do: [ :i | temp add: ( squares at: i ) ].
-    ^temp! !
-
-!Monopoly methodsFor: 'as yet unclassified'!
-turn: anInteger
-        "Set the number of the next player to anInteger."
-    turn := anInteger.! !
 
 !Monopoly class methodsFor: 'as yet unclassified'!
 priceFor: anInteger
