@@ -1,6 +1,6 @@
-'From Cuis 5.0 of 7 November 2016 [latest update: #3744] on 15 May 2019 at 9:39:06 pm'!
+'From Cuis 5.0 of 7 November 2016 [latest update: #3744] on 16 May 2019 at 7:03:06 pm'!
 'Description A port from Squeak of a simulation of Monopoly.'!
-!provides: 'Monop' 1 14!
+!provides: 'Monop' 1 17!
 !requires: 'Game' 1 44 nil!
 SystemOrganization addCategory: #'Monop-View'!
 SystemOrganization addCategory: #'Monop-Model'!
@@ -8,12 +8,22 @@ SystemOrganization addCategory: #'Monop-Model'!
 
 !classDefinition: #Estate category: #'Monop-Model'!
 Game subclass: #Estate
-	instanceVariableNames: 'demo windowCount chances drawnChances chests drawnChests'
+	instanceVariableNames: 'demo windowCount chances drawnChances chests drawnChests moveButton'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Monop-Model'!
 !classDefinition: 'Estate class' category: #'Monop-Model'!
 Estate class
+	instanceVariableNames: ''!
+
+!classDefinition: #EstateToken category: #'Monop-View'!
+Token subclass: #EstateToken
+	instanceVariableNames: ''
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'Monop-View'!
+!classDefinition: 'EstateToken class' category: #'Monop-View'!
+EstateToken class
 	instanceVariableNames: ''!
 
 !classDefinition: #Monopoly category: #'Monop-View'!
@@ -220,6 +230,9 @@ Player class
 !Estate commentStamp: '<historical>' prior: 0!
 The model for the Monopoly board.!
 
+!EstateToken commentStamp: '<historical>' prior: 0!
+A token for a player in Monopoly.!
+
 !Monopoly commentStamp: '<historical>' prior: 0!
 Simulation of the Monopoly board game.
 
@@ -284,6 +297,13 @@ name
         "Answer the Player's name."
     ^name! !
 
+!Estate methodsFor: 'initialization' stamp: 'dhn 5/16/2019 18:26:09'!
+initialButtonState
+	"Establish the button state at the start of the game"
+	
+	self enableAll: {'Move'. 'History'. 'Stats'}.
+	self disableAll: {'End Turn'. 'Purchase'. 'Auction'}! !
+
 !Estate methodsFor: 'initialization' stamp: 'dhn 5/14/2019 20:16:04'!
 initialize
 
@@ -297,6 +317,12 @@ initialize
 	chances _ self class chanceCards shuffled.
 	chests _ self class chestCards shuffled! !
 
+!Estate methodsFor: 'initialization' stamp: 'dhn 5/16/2019 15:59:01'!
+moveButton: anObject
+	"Set the value of moveButton"
+	
+	^ moveButton _ anObject! !
+
 !Estate methodsFor: 'initialization' stamp: 'dhn 5/14/2019 17:48:21'!
 setUpSpaces
 	"Initialize the board spaces"
@@ -309,14 +335,14 @@ setUpSpaces
 			routine: ('space', ix asString) asSymbol)].
 	^ col! !
 
-!Estate methodsFor: 'initialization' stamp: 'dhn 5/15/2019 12:02:39'!
+!Estate methodsFor: 'initialization' stamp: 'dhn 5/16/2019 18:52:28'!
 setUpToken
 	"Answer a token, used throughout the game, for the current player."
 	| tok |
 	
-	tok _ Token newFor: self.
+	tok _ EstateToken newFor: self.
 	tok openInWorld: world.
-	tok morphExtent: world morphExtent * (0.090@0.080).
+	tok morphExtent: world morphExtent * (0.045@0.050).
 	tok morphPosition: tok posAdjust.
 	tokenPos _ tok morphPosition.
 	tok delete. 	"not needed until next player"
@@ -360,6 +386,28 @@ drawChest
 	self perform: chan first with: (chan copyFrom: 2 to: 4).
 	self triggerEvent: #itemChange! !
 
+!Estate methodsFor: 'operating' stamp: 'dhn 5/16/2019 18:38:59'!
+endTurn
+	"End a player's turn"
+	
+	(spaces atWrap: currentPlayer position) markAddFor: currentPlayer.
+	self enableAll: {'Auction'}.
+	currentPlayer cash < 0
+		ifTrue: [self disableAll: {'Move'}.
+			currentPlayer outOfAssets
+				ifTrue: [self removeFromGame]
+				ifFalse: [
+					self declareBroke: currentPlayer identity.
+					self disableAll: {'End Turn'}]]
+		ifFalse: [
+			self triggerEvent: #deleteOpenWindows.
+			windowCount _ 0.
+			self nextPlayer.
+			self won
+				ifTrue: [self wonButtonsState]
+				ifFalse: [self enableAll: {'Move'. 'Stats'}.
+					self disableAll: {'End Turn'}]]! !
+
 !Estate methodsFor: 'operating' stamp: 'dhn 5/14/2019 21:43:28'!
 exceptCurrent: anAmount
 	"Perform multiple cash transactions"
@@ -385,13 +433,60 @@ moveMoney: anArray
 		ifTrue: [self exceptCurrent: anArray second]
 ! !
 
-!Estate methodsFor: 'operating' stamp: 'dhn 5/15/2019 13:58:43'!
+!Estate methodsFor: 'operating' stamp: 'dhn 5/16/2019 18:15:44'!
+nextPlayer
+	"Begin the next player's turn"
+	| x |
+	
+	currentPlayer _ (players atWrap: (playerIndex _ playerIndex + 1)).
+	self 
+		triggerEvent: #deleteOpenWindows; 	"close any open views of the current player"
+		triggerEvent: #itemChange; 	"update board view"
+		triggerEvent: #titleChange with: currentPlayer;
+		positionBoardTo: currentPlayer position; 	"position board,"
+		removeMarkers.
+	token openInWorld: world.
+	token morphPosition: tokenPos.
+	token id contents: currentPlayer identity.
+	token color: currentPlayer color.
+	token setBalloonText: 'token for ', currentPlayer identity.
+	self testMode ifTrue: [
+	x _ (FillInTheBlankMorph request: 'How many spaces' initialAnswer: '6' onCancel: ['0']) asNumber.
+	self hardRoll: ((1 to: 6) asArray atWrap: x)]! !
+
+!Estate methodsFor: 'operating' stamp: 'dhn 5/16/2019 16:03:47'!
+numbersReport
+	"Answer the string for displaying a player's status"
+	
+	^ String streamContents: [:string |
+		string
+			nextPutAll: 'Cash: $';
+			nextPutAll: currentPlayer cash truncated printStringWithCommas]! !
+
+!Estate methodsFor: 'operating' stamp: 'dhn 5/16/2019 15:21:32'!
+positionBoardTo: anIndex 
+	"Change the location on the board"
+	
+	self cellsAt: anIndex.
+	self triggerEvent: #showSeasons: with: anIndex! !
+
+!Estate methodsFor: 'operating' stamp: 'dhn 5/16/2019 11:59:40'!
 seasonAt: aPosition
 	"Answer the season at aPosition"
-	| pos |
+
+	^ self class season at: aPosition! !
+
+!Estate methodsFor: 'operating' stamp: 'dhn 5/16/2019 15:13:22'!
+seasonsFrom: anIndex
+	"Answer the subset of seasons to be displayed, starting at anIndex."
+	| ndx k col |
 	
-	pos _ (1 to: spaces size) atWrap: aPosition.
-	^ self class season detect: [:a | (a range x <= pos) and: [a range y >= pos]]! !
+	ndx _ (1 to: self class season size).
+	k _ ((ndx atWrap: anIndex) to: ndx last), (ndx first to: anIndex - 1).
+	col _ OrderedCollection new.
+	(k copyFrom: 1 to: self class cellsForGame) do: [ :n |
+		col addLast: (self class season at: n)].	
+	^ col! !
 
 !Estate methodsFor: 'operating' stamp: 'dhn 5/15/2019 13:48:21'!
 testMode
@@ -452,11 +547,12 @@ chestCards
 		add: #(#movePlayer: #ahead 40 'Advance to Go.');
 		yourself! !
 
-!Estate class methodsFor: 'instance creation' stamp: 'dhn 5/15/2019 17:55:04'!
+!Estate class methodsFor: 'instance creation' stamp: 'dhn 5/16/2019 15:18:39'!
 describeSpaces
 	"Descriptions for the spaces on the board."
 	
 	^ OrderedCollection new
+		add: 'Go (Collect $200)';
 		add: 'Mediterranean Avenue $60';
 		add: 'Community Chest';
 		add: 'Baltic Avenue $60';
@@ -496,56 +592,109 @@ describeSpaces
 		add: 'Park Place $350';
 		add: 'Luxury Tax (Pay $75)';
 		add: 'Boardwalk $400';
-		add: 'Go (Collect $200)';
 		yourself
 ! !
 
-!Estate class methodsFor: 'instance creation' stamp: 'dhn 5/15/2019 20:16:17'!
+!Estate class methodsFor: 'instance creation' stamp: 'dhn 5/16/2019 15:17:44'!
 season
 	"Answer the color at the top of each space in Monopoly."
 	
 	^ OrderedCollection new
-		add: (Season new range: 01; color: (Color indexedColors at: 107));
-		add: (Season new range: 02; color: (Color transparent));
-		add: (Season new range: 03; color: (Color indexedColors at: 107));
-		add: (Season new range: 04; color: (Color transparent));
+		add: (Season new range: 01; color: (Color transparent));
+		add: (Season new range: 02; color: (Color indexedColors at: 107));
+		add: (Season new range: 03; color: (Color transparent));
+		add: (Season new range: 04; color: (Color indexedColors at: 107));
 		add: (Season new range: 05; color: (Color transparent));
-		add: (Season new range: 06; color: (Color lightBlue));
-		add: (Season new range: 07; color: (Color transparent));
-		add: (Season new range: 08; color: (Color lightBlue));
+		add: (Season new range: 06; color: (Color transparent));
+		add: (Season new range: 07; color: (Color lightBlue));
+		add: (Season new range: 08; color: (Color transparent));
 		add: (Season new range: 09; color: (Color lightBlue));
-		add: (Season new range: 10; color: (Color transparent));
-		add: (Season new range: 11; color: (Color indexedColors at: 180));
-		add: (Season new range: 12; color: (Color transparent));
-		add: (Season new range: 13; color: (Color indexedColors at: 180));
+		add: (Season new range: 10; color: (Color lightBlue));
+		add: (Season new range: 11; color: (Color transparent));
+		add: (Season new range: 12; color: (Color indexedColors at: 180));
+		add: (Season new range: 13; color: (Color transparent));
 		add: (Season new range: 14; color: (Color indexedColors at: 180));
-		add: (Season new range: 15; color: (Color transparent));
-		add: (Season new range: 16; color: (Color indexedColors at: 193));
-		add: (Season new range: 17; color: (Color transparent));
-		add: (Season new range: 18; color: (Color indexedColors at: 193));
+		add: (Season new range: 15; color: (Color indexedColors at: 180));
+		add: (Season new range: 16; color: (Color transparent));
+		add: (Season new range: 17; color: (Color indexedColors at: 193));
+		add: (Season new range: 18; color: (Color transparent));
 		add: (Season new range: 19; color: (Color indexedColors at: 193));
-		add: (Season new range: 20; color: (Color transparent));
-		add: (Season new range: 21; color: (Color indexedColors at: 5));
-		add: (Season new range: 22; color: (Color transparent));
-		add: (Season new range: 23; color: (Color indexedColors at: 5));
+		add: (Season new range: 20; color: (Color indexedColors at: 193));
+		add: (Season new range: 21; color: (Color transparent));
+		add: (Season new range: 22; color: (Color indexedColors at: 5));
+		add: (Season new range: 23; color: (Color transparent));
 		add: (Season new range: 24; color: (Color indexedColors at: 5));
-		add: (Season new range: 25; color: (Color transparent));
-		add: (Season new range: 26; color: (Color indexedColors at: 226));
+		add: (Season new range: 25; color: (Color indexedColors at: 5));
+		add: (Season new range: 26; color: (Color transparent));
 		add: (Season new range: 27; color: (Color indexedColors at: 226));
-		add: (Season new range: 28; color: (Color transparent));
-		add: (Season new range: 29; color: (Color indexedColors at: 226));
-		add: (Season new range: 30; color: (Color transparent));
-		add: (Season new range: 31; color: (Color indexedColors at: 45));
+		add: (Season new range: 28; color: (Color indexedColors at: 226));
+		add: (Season new range: 29; color: (Color transparent));
+		add: (Season new range: 30; color: (Color indexedColors at: 226));
+		add: (Season new range: 31; color: (Color transparent));
 		add: (Season new range: 32; color: (Color indexedColors at: 45));
-		add: (Season new range: 33; color: (Color transparent));
-		add: (Season new range: 34; color: (Color indexedColors at: 45));
-		add: (Season new range: 35; color: (Color transparent));
+		add: (Season new range: 33; color: (Color indexedColors at: 45));
+		add: (Season new range: 34; color: (Color transparent));
+		add: (Season new range: 35; color: (Color indexedColors at: 45));
 		add: (Season new range: 36; color: (Color transparent));
-		add: (Season new range: 37; color: (Color indexedColors at: 7));
-		add: (Season new range: 38; color: (Color transparent));
-		add: (Season new range: 39; color: (Color indexedColors at: 7));
+		add: (Season new range: 37; color: (Color transparent));
+		add: (Season new range: 38; color: (Color indexedColors at: 7));
+		add: (Season new range: 39; color: (Color transparent));
+		add: (Season new range: 40; color: (Color indexedColors at: 7));
 		yourself
 		! !
+
+!EstateToken methodsFor: 'initialization' stamp: 'dhn 5/16/2019 16:22:37'!
+initialize
+
+	super initialize.
+	
+	labelArea _ LayoutMorph newColumn 
+		layoutSpec: LayoutSpec useAll;
+		color: Color transparent;
+		name: 'label area';
+		separation: 1;
+		padding: #center.
+	labelArea addMorph: self makeIdArea.
+
+	self addMorphFront: labelArea! !
+
+!EstateToken methodsFor: 'initialization' stamp: 'dhn 5/16/2019 16:21:16'!
+layoutSubmorphs
+
+	labelArea morphExtent: self morphExtent! !
+
+!EstateToken methodsFor: 'initialization' stamp: 'dhn 5/16/2019 16:25:00'!
+makeIdArea
+	"Lay out the area for the players' name"
+	| area |
+	
+	area _ LayoutMorph newRow
+		color: Color transparent;
+		name: #id;
+		padding: #center.
+	
+	id _ (StringMorph contents: 'Player') 
+		emphasis: AbstractFont boldCode;
+		font: (AbstractFont familyName: 'DejaVu' aroundPointSize: 10).
+		
+	area addMorph: id.
+	^ area layoutSpec: (LayoutSpec  proportionalWidth: 1.0)! !
+
+!EstateToken methodsFor: 'operations' stamp: 'dhn 5/16/2019 18:33:55'!
+moved
+	"Perform the results of the move"
+	
+	"model doSpace."
+	model enableAll: {'End Turn'}! !
+
+!EstateToken methodsFor: 'operations' stamp: 'dhn 5/16/2019 16:28:16'!
+position: aCell
+	"Position the receiver over the board cell numbered by aCell"
+	| horiz |
+	
+	self morphPosition: self posAdjust.
+	horiz _ (model cells at: aCell) morphPosition x.
+	self morphPosition: (self morphPosition translatedBy: (horiz@0))! !
 
 !Monopoly methodsFor: 'accessing' stamp: 'dhn 5/15/2019 12:43:43'!
 describe
@@ -624,7 +773,7 @@ displayNumbers
 			setBalloonText: 'cash held by ', ea identity;
 			font: (AbstractFont familyName: 'DejaVu' pointSize: 18))]! !
 
-!Monopoly methodsFor: 'operation' stamp: 'dhn 5/15/2019 12:50:33'!
+!Monopoly methodsFor: 'operation' stamp: 'dhn 5/16/2019 15:44:22'!
 doTour
 	"Start the tour of the board"
 	| choice resp |
@@ -637,7 +786,7 @@ doTour
 		[resp ~= ''] whileTrue: [
 			resp _ FillInTheBlankMorph request: 'Board starting where?' initialAnswer: resp.
 			(resp notEmpty and: [resp asNumber > 0]) ifTrue: [
-				self showSeasons: (model parseSeasonsAt: resp asNumber).
+				self showSeasons:  resp asNumber.
 				self model cellsAt: resp asNumber]]].
 	model enableAll: {'Players'. 'Tour'}
 	! !
@@ -647,12 +796,12 @@ quitGame
 	(self confirm: 'Are you sure you want to quit ', Monopoly asString, '?')
 		ifTrue: [model quitGame]! !
 
-!Monopoly methodsFor: 'operation' stamp: 'dhn 5/15/2019 12:48:41'!
+!Monopoly methodsFor: 'operation' stamp: 'dhn 5/16/2019 19:02:12'!
 showToken
 	"Establish the size and position of the token"
 	| w h |
-	
-	w _ self morphExtent x * 0.13.
+	self halt.
+	w _ self morphExtent x * 0.06.
 	h _ w * 0.5.
 	model token 
 		morphExtent: w@h;
@@ -737,11 +886,13 @@ initialize
 
 	super initialize! !
 
-!Monopoly methodsFor: 'initialization' stamp: 'dhn 5/15/2019 21:30:36'!
-layoutSubmorphs
-
-    super layoutSubmorphs.
-    self board morphExtent: self board owner morphExtent! !
+!Monopoly methodsFor: 'initialization' stamp: 'dhn 5/16/2019 15:50:43'!
+makeAuctionButton
+	"Answer the 'Auction' button"
+	
+	^ (GameButtonMorph label: 'Auction' action: #showAssetAuction state: true model: self)
+		layoutSpec: self class buttonLayoutSpec;
+		setBalloonText: 'Start an auction for assets'! !
 
 !Monopoly methodsFor: 'initialization' stamp: 'dhn 5/15/2019 12:32:55'!
 makeButtonArea
@@ -802,6 +953,30 @@ makeCellsArea
 		
 ! !
 
+!Monopoly methodsFor: 'initialization' stamp: 'dhn 5/16/2019 15:55:45'!
+makeEndTurnButton
+	"Answer the 'End Turn' button"
+	
+	^ (GameButtonMorph label: 'End Turn' action: #endTurn state: false model: model)
+		layoutSpec: self class buttonLayoutSpec;
+		setBalloonText: 'Let the next player have a turn. Not enabled as long as Move is enabled.'! !
+
+!Monopoly methodsFor: 'initialization' stamp: 'dhn 5/16/2019 15:53:59'!
+makeHistoryButton
+	"Answer the 'History' button"
+	
+	^ (GameButtonMorph label: 'History' action: #showHistory state: true model: self)
+		layoutSpec: self class buttonLayoutSpec;
+		setBalloonText: 'Show a graph of players'' cash flow'! !
+
+!Monopoly methodsFor: 'initialization' stamp: 'dhn 5/16/2019 15:57:25'!
+makeMoveButton
+	"Answer the 'Move' button"
+	
+	^ (GameButtonMorph label: 'Move' action: #move state: true model: model)
+		layoutSpec: self class buttonLayoutSpec;
+		setBalloonText: 'Move the player from one to twelve spaces, based on the "roll" of the dice.'! !
+
 !Monopoly methodsFor: 'initialization' stamp: 'dhn 5/15/2019 12:34:19'!
 makeNumbersArea
 	"Lay out the area for player cash on hand"
@@ -833,7 +1008,15 @@ makeOthersArea
 		name: #others;
 		padding: #center! !
 
-!Monopoly methodsFor: 'initialization' stamp: 'dhn 5/15/2019 12:38:06'!
+!Monopoly methodsFor: 'initialization' stamp: 'dhn 5/16/2019 15:52:41'!
+makePurchasesButton
+	"Answer the 'Purchases' button"
+	
+	^ (GameButtonMorph label: 'Purchase' action: #showOpts state: true model: self)
+		layoutSpec: self class buttonLayoutSpec;
+		setBalloonText: 'Buy property, houses, or hotels.'! !
+
+!Monopoly methodsFor: 'initialization' stamp: 'dhn 5/16/2019 15:24:00'!
 makeSeasonsArea
 	"Lay out the area for seasons"
 	
@@ -842,76 +1025,56 @@ makeSeasonsArea
 			proportionalWidth: 1.0
 			proportionalHeight: 0.08
 			minorDirectionPadding: #center).
+	1 to: model class cellsForGame do: [ :n |
+		seasonsArea addMorph: (LayoutMorph newRow name: #season)].
 	^ seasonsArea
-			color: Color lightGreen;
+			color: Color transparent;
 			name: #seasons! !
 
-!Monopoly methodsFor: 'initialization' stamp: 'dhn 5/15/2019 12:41:45'!
+!Monopoly methodsFor: 'initialization' stamp: 'dhn 5/16/2019 15:48:28'!
+makeShowStatsButton
+	"Answer the 'Stats' button"
+	
+	^ (GameButtonMorph label: 'Stats' action: #showStats state: true model: self)
+		layoutSpec: self class buttonLayoutSpec;
+		setBalloonText: 'Lots of information here'! !
+
+!Monopoly methodsFor: 'initialization' stamp: 'dhn 5/16/2019 15:49:38'!
 playButtonSet
 	"Answer the buttons used to play the game"
 
 	buttonArea 
 		removeAllMorphs;
 		addMorph: self makeShowStatsButton;
-		addMorph: self makePayLoanButton;
 		addMorph: self makeAuctionButton;
 		addMorph: self makePurchasesButton;
 		addMorph: self makeHistoryButton;
 		addMorph: self makeEndTurnButton;
-		addMorph: self makeDoJobButton;
 		addMorph: (model moveButton: self makeMoveButton);
 		addMorph: self makeQuitGameButton.
 ! !
 
-!Monopoly methodsFor: 'initialization' stamp: 'dhn 5/15/2019 12:39:32'!
+!Monopoly methodsFor: 'initialization' stamp: 'dhn 5/16/2019 19:00:01'!
 setupToken: aPlayer
 	"Place the player's token on the board"
-	| w h |
 	
-	w _ owner morphExtent x * 0.13.
-	h _ w * 0.5.
 	model token id contents: aPlayer identity.
-	model token doubled contents: aPlayer doubledString.
+	model token doubled contents: ''.
 	model token 
 		color: aPlayer color;
-		morphExtent: w@h;
 		morphPosition: owner morphExtent * (0.006@0.72).
 	pasteup addMorph: model token.
 	^ model token! !
 
-!Monopoly methodsFor: 'initialization' stamp: 'dhn 5/15/2019 12:59:54'!
-showSeasons: associations 
-	"Display the seasons contained in associations"
-	| width set bm txt |
-			
-	seasonsArea removeAllMorphs.
-	width _ layoutMorph morphWidth / self class cellsForGame.
-	set _ OrderedCollection new.
-	associations do: [:k | 	| first last sea |
-			first _ k key x - 1.
-			last _ k key y.
-			bm _ LayoutMorph newRow
-				padding: #center;
-				name: #season.
-			seasonsArea addMorph: bm
-				layoutSpec: (LayoutSpec proportionalWidth: width * (last - first) proportionalHeight: 1.0).
-			sea _ k value.
-			bm color: sea color.
-			txt _ StringMorph new
-				emphasis: 1;  "emphasis: bold=1"
-				font: (AbstractFont familyName: 'DejaVu' pointSize: 18).
-			bm addMorph: txt..
-			txt color: (sea textColor
-				ifTrue: [Color white]
-				ifFalse: [Color black]).
-			txt contents: sea desc.
-			"dx _ Construction ironMap.
-			(dx includesKey: sea desc asSymbol)
-				ifTrue: [txt
-						setBalloonText: ('Requires ' , (dx at: sea desc asSymbol) asString)].
-			set add: txt"
-			].
-	^ set! !
+!Monopoly methodsFor: 'initialization' stamp: 'dhn 5/16/2019 13:32:18'!
+showSeasons: anIndex 
+	"Display the seasons starting at anIndex"
+	| ndx seas |
+	
+	ndx _ (1 to: model class season size) atWrap: anIndex.
+	seas _ (model seasonsFrom: ndx) reversed.
+	1 to: seasonsArea submorphs size do: [ :n |
+		(seasonsArea submorphs at: n) color: (seas at: n) color]! !
 
 !Monopoly methodsFor: 'initialization' stamp: 'dhn 5/15/2019 12:40:40'!
 startButtonSet
@@ -925,14 +1088,13 @@ startButtonSet
 		addMorph: self makeQuitGameButton.
 ! !
 
-!Monopoly methodsFor: 'initialization' stamp: 'dhn 5/15/2019 12:42:02'!
+!Monopoly methodsFor: 'initialization' stamp: 'dhn 5/16/2019 16:00:49'!
 startGame
 	"Change the buttons and start the game"
 	
 	self playButtonSet.
 	model playerIndex: 0. "retain players in order of entry"
 	model 
-		testGoal;
 		nextPlayer.
 	model initialButtonState! !
 
@@ -1095,7 +1257,7 @@ includeInNewMorphMenu
 	
 	^ true! !
 
-!Monopoly class methodsFor: 'instance creation' stamp: 'dhn 5/15/2019 17:21:36'!
+!Monopoly class methodsFor: 'instance creation' stamp: 'dhn 5/16/2019 13:04:48'!
 start
 	"Start the Monopoly game"
 	| win world |
@@ -1122,7 +1284,7 @@ start
 		addMorph: win makeCellsArea.
 	win model positionBoardTo: 1.
 	win startButtonSet.
-	win showSeasons: (win model parseSeasonsAt: 1).
+	win showSeasons: 1.
 	
 	"Now do open it"
 	world _ Processor activeProcess animatedUI.
