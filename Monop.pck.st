@@ -1,6 +1,6 @@
-'From Cuis 5.0 of 7 November 2016 [latest update: #3744] on 16 May 2019 at 7:03:06 pm'!
+'From Cuis 5.0 of 7 November 2016 [latest update: #3744] on 16 May 2019 at 10:01:20 pm'!
 'Description A port from Squeak of a simulation of Monopoly.'!
-!provides: 'Monop' 1 17!
+!provides: 'Monop' 1 18!
 !requires: 'Game' 1 44 nil!
 SystemOrganization addCategory: #'Monop-View'!
 SystemOrganization addCategory: #'Monop-Model'!
@@ -335,14 +335,14 @@ setUpSpaces
 			routine: ('space', ix asString) asSymbol)].
 	^ col! !
 
-!Estate methodsFor: 'initialization' stamp: 'dhn 5/16/2019 18:52:28'!
+!Estate methodsFor: 'initialization' stamp: 'dhn 5/16/2019 21:38:03'!
 setUpToken
 	"Answer a token, used throughout the game, for the current player."
 	| tok |
 	
 	tok _ EstateToken newFor: self.
 	tok openInWorld: world.
-	tok morphExtent: world morphExtent * (0.045@0.050).
+	tok morphExtent: world morphExtent * (0.055@0.090).
 	tok morphPosition: tok posAdjust.
 	tokenPos _ tok morphPosition.
 	tok delete. 	"not needed until next player"
@@ -680,6 +680,12 @@ makeIdArea
 	area addMorph: id.
 	^ area layoutSpec: (LayoutSpec  proportionalWidth: 1.0)! !
 
+!EstateToken methodsFor: 'initialization' stamp: 'dhn 5/16/2019 21:21:20'!
+posAdjust
+	"Answer the positionfor the token"
+	
+	^ (model world morphExtent x * 0.015) @ (model world morphExtent y * 8 / 10)! !
+
 !EstateToken methodsFor: 'operations' stamp: 'dhn 5/16/2019 18:33:55'!
 moved
 	"Perform the results of the move"
@@ -881,6 +887,12 @@ buildMorphicWindow
 	model when: #showSeasons: send: #showSeasons: to: self with: #index.
 ! !
 
+!Monopoly methodsFor: 'initialization' stamp: 'dhn 5/16/2019 21:50:15'!
+getPlayers
+	"Get the names of 2 to 8 players"
+	
+	self getPlayers: 8! !
+
 !Monopoly methodsFor: 'initialization' stamp: 'dhn 5/15/2019 12:16:23'!
 initialize
 
@@ -1054,7 +1066,7 @@ playButtonSet
 		addMorph: self makeQuitGameButton.
 ! !
 
-!Monopoly methodsFor: 'initialization' stamp: 'dhn 5/16/2019 19:00:01'!
+!Monopoly methodsFor: 'initialization' stamp: 'dhn 5/16/2019 20:41:52'!
 setupToken: aPlayer
 	"Place the player's token on the board"
 	
@@ -1062,7 +1074,7 @@ setupToken: aPlayer
 	model token doubled contents: ''.
 	model token 
 		color: aPlayer color;
-		morphPosition: owner morphExtent * (0.006@0.72).
+		morphPosition: owner morphExtent * (0.003@0.72).
 	pasteup addMorph: model token.
 	^ model token! !
 
