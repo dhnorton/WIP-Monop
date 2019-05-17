@@ -1,6 +1,6 @@
-'From Cuis 5.0 of 7 November 2016 [latest update: #3744] on 16 May 2019 at 10:01:20 pm'!
+'From Cuis 5.0 of 7 November 2016 [latest update: #3744] on 17 May 2019 at 12:49:13 pm'!
 'Description A port from Squeak of a simulation of Monopoly.'!
-!provides: 'Monop' 1 18!
+!provides: 'Monop' 1 19!
 !requires: 'Game' 1 44 nil!
 SystemOrganization addCategory: #'Monop-View'!
 SystemOrganization addCategory: #'Monop-Model'!
@@ -34,6 +34,16 @@ GameBoard subclass: #Monopoly
 	category: 'Monop-View'!
 !classDefinition: 'Monopoly class' category: #'Monop-View'!
 Monopoly class
+	instanceVariableNames: ''!
+
+!classDefinition: #ForSale category: #'Monop-View'!
+GameView subclass: #ForSale
+	instanceVariableNames: 'buttonsArea textPane auctionButton buyButton'
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'Monop-View'!
+!classDefinition: 'ForSale class' category: #'Monop-View'!
+ForSale class
 	instanceVariableNames: ''!
 
 !classDefinition: #Square category: #'Monop-Model'!
@@ -158,7 +168,7 @@ Tax class
 
 !classDefinition: #Developer category: #'Monop-Model'!
 Gamer subclass: #Developer
-	instanceVariableNames: 'cards'
+	instanceVariableNames: 'cards doubles property jail goAgain special'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Monop-Model'!
@@ -216,16 +226,6 @@ Card subclass: #Repair
 Repair class
 	instanceVariableNames: ''!
 
-!classDefinition: #Player category: #'Monop-Model'!
-Object subclass: #Player
-	instanceVariableNames: 'name roll cards cash doubles passedGo property jail position goAgain special'
-	classVariableNames: ''
-	poolDictionaries: ''
-	category: 'Monop-Model'!
-!classDefinition: 'Player class' category: #'Monop-Model'!
-Player class
-	instanceVariableNames: ''!
-
 
 !Estate commentStamp: '<historical>' prior: 0!
 The model for the Monopoly board.!
@@ -237,6 +237,9 @@ A token for a player in Monopoly.!
 Simulation of the Monopoly board game.
 
 Monopoly start.!
+
+!ForSale commentStamp: '<historical>' prior: 0!
+A window for buying or auctioning an unowned property.!
 
 !Square commentStamp: '<historical>' prior: 0!
 A square on the board.!
@@ -274,6 +277,9 @@ A square which provides a breather from the rent race.!
 !Tax commentStamp: '<historical>' prior: 0!
 A square which demands payment of tax.!
 
+!Developer commentStamp: '<historical>' prior: 0!
+A player in Monopoly.!
+
 !Card commentStamp: '<historical>' prior: 0!
 A card model for Monopoly.!
 
@@ -288,14 +294,6 @@ A card that specifies a payment by the player.!
 
 !Repair commentStamp: '<historical>' prior: 0!
 A card that demands repairs on owned properties.!
-
-!Player commentStamp: '<historical>' prior: 0!
-A player in Monopoly.!
-
-!Player methodsFor: 'as yet unclassified'!
-name
-        "Answer the Player's name."
-    ^name! !
 
 !Estate methodsFor: 'initialization' stamp: 'dhn 5/16/2019 18:26:09'!
 initialButtonState
@@ -349,7 +347,7 @@ setUpToken
 	^ tok
 	! !
 
-!Estate methodsFor: 'initialization' stamp: 'dhn 5/15/2019 12:03:05'!
+!Estate methodsFor: 'initialization' stamp: 'dhn 5/17/2019 12:31:57'!
 setupPlayer: aName color: aColor
 	"Establish a player named aName and colored aColor"
 	| pl |
@@ -1309,6 +1307,56 @@ start
 	^ win
 ! !
 
+!ForSale methodsFor: 'initialization' stamp: 'dhn 5/17/2019 11:56:46'!
+buildMorphicWindow
+	"Lay out the window for buying or auctioning a property"
+	
+	buttonsArea _ (LayoutMorph newRow)
+		name: #buttons;
+		layoutSpec: (LayoutSpec 
+			proportionalWidth: 1.0
+			proportionalHeight: 0.15
+			minorDirectionPadding: #center).
+	buttonsArea
+		addMorph: self makeAuctionButton;
+		addMorph: self makeBuyButton;
+		padding: #center.
+					
+	textPane _ (TextModelMorph
+		withModel: (TextModel withText: '')) 	"note the different model specification"
+			askBeforeDiscardingEdits: false;	"discard changes to the text"
+			name: 'deed'. 	"give the TextModelMorph a name which will appear in the halos"
+
+	self layoutMorph
+		addMorph: textPane;
+		addMorph: buttonsArea! !
+
+!ForSale methodsFor: 'initialization' stamp: 'dhn 5/17/2019 11:50:10'!
+makeAuctionButton
+	"Answer the 'Auction' button"
+	
+	auctionButton _ GameButtonMorph label: 'Auction' action: #upForAuction state: true model: self.
+	auctionButton 
+		morphExtent: 70@20;
+		setBalloonText: 'Assemble the bidders and begin the auction'.
+	^ auctionButton! !
+
+!ForSale methodsFor: 'initialization' stamp: 'dhn 5/17/2019 12:01:11'!
+makeBuyButton
+	"Answer the 'Buy' button"
+	
+	buyButton _ GameButtonMorph label: 'Buy' action: #buyIt state: true model: self.
+	buyButton 
+		morphExtent: 70@20;
+		setBalloonText: 'Buy the property'.
+	^ buyButton! !
+
+!ForSale class methodsFor: 'class initialization' stamp: 'dhn 5/17/2019 11:30:31'!
+viewPosition
+	"Answer the basic position for instances of this class"
+	
+	^ Display center! !
+
 !Square methodsFor: 'as yet unclassified'!
 position
         "Answer the value of the position variable."
@@ -1693,15 +1741,230 @@ type: aPosition
         at: 38 put: #luxury: .
     ^methods at: aPosition! !
 
-!Developer methodsFor: 'initialization' stamp: 'dhn 5/14/2019 18:12:45'!
+!Developer methodsFor: 'as yet unclassified' stamp: 'dhn 5/17/2019 12:29:19'!
+assess: anInteger
+        "Reduce the player's cash by anInteger. If he becomes
+        insolvent, take appropriate measures."
+    self cash: self cash - anInteger.
+    self cash < 0
+        ifTrue: [
+		GamePopUp 
+			inform: self name, ' is out of money and operating at a deficit of ', self cash printString,'.' 
+			title: 'IN THE RED!!!!!!'].! !
+
+!Developer methodsFor: 'as yet unclassified' stamp: 'dhn 5/17/2019 12:29:19'!
+attempt
+        "Count an attempt to roll out of jail and answer whether
+        the limit has been reached."
+    self goAgain: false.
+    ^3 > (jail at: 2 put: ( jail at: 2 ) + 1)! !
+
+!Developer methodsFor: 'as yet unclassified' stamp: 'dhn 5/17/2019 12:29:19'!
+cardOut: aRoll
+	"Attempt to get out of jail using a 'get out of jail free' card
+	and aRoll, which thus far has been unrevealed."
+	
+	self cards notNil
+		ifTrue: [
+			( aRoll at: 1 ) = ( aRoll at: 2 )
+				ifFalse: [ 
+					self goAgain: false.
+ 					GamePopUp 
+						inform: self name,' has just used a card to get out of jail.' 
+						title: 'Get Out of Jail Free Card!!']
+				ifTrue: [
+					GamePopUp 
+						inform: self name,' has just rolled doubles after using a card to get out of jail.' 
+						title: 'Wasted a Card!!'].
+		self jail: false with: 0]
+		ifFalse: [
+			GamePopUp 
+				inform: self name,' has no get out of jail cards.' 
+				title: 'Must Pay Out'.
+			self payOut: aRoll]! !
+
+!Developer methodsFor: 'as yet unclassified' stamp: 'dhn 5/17/2019 12:29:19'!
+cards
+        "Answer a 'Get Out of Jail Free' card, or nil if none."
+    cards notEmpty
+        ifTrue: [ ^cards removeLast ]
+        ifFalse: [ ^nil ].! !
+
+!Developer methodsFor: 'as yet unclassified' stamp: 'dhn 5/17/2019 12:29:19'!
+cards: aCard
+        "Add a 'Get Out of Jail Free' card to a Player's collection."
+    cards add: aCard.! !
+
+!Developer methodsFor: 'as yet unclassified' stamp: 'dhn 5/17/2019 12:29:19'!
+doubles
+        "Answer the Player's number of consecutive doubles."
+    ^doubles! !
+
+!Developer methodsFor: 'as yet unclassified' stamp: 'dhn 5/17/2019 12:29:19'!
+doubles: anInteger
+        "Set the Player's number of consecutive doubles."
+    doubles := anInteger.! !
+
+!Developer methodsFor: 'as yet unclassified' stamp: 'dhn 5/17/2019 12:29:19'!
+goAgain
+        "Answer the 'go again' indicator (whether or not the
+        player should go again after a roll)."
+    ^goAgain! !
+
+!Developer methodsFor: 'as yet unclassified' stamp: 'dhn 5/17/2019 12:29:19'!
+goAgain: aBoolean
+        "Set the 'go again' indicator to aBoolean."
+    goAgain := aBoolean.! !
+
+!Developer methodsFor: 'as yet unclassified' stamp: 'dhn 5/17/2019 12:29:19'!
+inJail
+        "Answer whether the player is in jail or not."
+    ^jail first! !
+
+!Developer methodsFor: 'as yet unclassified' stamp: 'dhn 5/17/2019 12:46:13'!
 initialize
 
 	cash _ 1500.
 	debt _ 0.
-	cards _ OrderedCollection new.
 	assets _ OrderedCollection new.
 	history _ OrderedCollection with: self netAssets.
+	cards := OrderedCollection new.
+	self
+		jail: false with: 0;
+		doubles: 0;
+		special: false! !
+
+!Developer methodsFor: 'as yet unclassified' stamp: 'dhn 5/17/2019 12:29:19'!
+jail: aBoolean with: anInteger
+        "Set the jail state array as (aBoolean anInteger),
+        where anInteger is the number of attempts to roll out."
+    jail := Array with: aBoolean with: anInteger! !
+
+!Developer methodsFor: 'as yet unclassified' stamp: 'dhn 5/17/2019 12:29:19'!
+normalWith: theDice
+        "Move while in the normal state (not in jail) by using theDice."
+    | posn move ivories |
+    ivories := theDice repeat: 2 from: 1 to: 6.
+    ( ivories at: 1 ) = ( ivories at: 2 ) ifTrue: [
+        self doubles: self doubles + 1.
+        self doubles < 3
+            ifFalse: [ self toJail; threeDoubles ] ].
+    move := ( ivories at: 1 ) + ( ivories at: 2 ).
+    self roll: move.
+    posn := ( move + self position ) rem: 40.
+    posn = 0 ifTrue: [posn := 40].
+    self position: posn.
+"    self result: ( squares at: self position )."! !
+
+!Developer methodsFor: 'as yet unclassified' stamp: 'dhn 5/17/2019 12:29:19'!
+passedGo
+        "Answer whether the Player passed Go."
+    ^passedGo! !
+
+!Developer methodsFor: 'as yet unclassified' stamp: 'dhn 5/17/2019 12:29:19'!
+passedGo: aBoolean
+        "Set the indicator as to whether the player passed Go."
+    passedGo := aBoolean.! !
+
+!Developer methodsFor: 'as yet unclassified' stamp: 'dhn 5/17/2019 12:29:19'!
+payOut: aRoll
+	"Pay to get out of jail, then move using aRoll."
+	
+	self assess: 50;
+	jail: false with: 0.
+	( aRoll at: 1 ) = ( aRoll at: 2 )
+		ifTrue: [
+			GamePopUp 
+				inform: self name,' has just wasted $50.' 
+				title: 'Rolled Doubles after Paying Out']
+		ifFalse: [
+			GamePopUp 
+				inform: self name,' has paid a $50 fine and has been released from jail.' 
+				title: 'Paid the Fine']
 ! !
+
+!Developer methodsFor: 'as yet unclassified' stamp: 'dhn 5/17/2019 12:29:19'!
+property
+        "Answer the player's property."
+    ^property! !
+
+!Developer methodsFor: 'as yet unclassified' stamp: 'dhn 5/17/2019 12:29:19'!
+propertyAdd: aProperty
+        "Add aProperty to the Player's collection."
+    property add: aProperty.! !
+
+!Developer methodsFor: 'as yet unclassified' stamp: 'dhn 5/17/2019 12:29:19'!
+propertyRemove: aProperty
+        "Remove aProperty from the Player's collection."
+    ^property remove: aProperty ifAbsent: [ ^nil ].! !
+
+!Developer methodsFor: 'as yet unclassified' stamp: 'dhn 5/17/2019 12:29:19'!
+roll
+        "Answer the sum of the Player's roll of the dice."
+    ^roll! !
+
+!Developer methodsFor: 'as yet unclassified' stamp: 'dhn 5/17/2019 12:29:19'!
+roll: anInteger
+        "Set the sum of the Player's roll of the dice."
+    roll := anInteger.! !
+
+!Developer methodsFor: 'as yet unclassified' stamp: 'dhn 5/17/2019 12:29:19'!
+rollOut: aRoll
+	"Answer whether a player can move out of jail using aRoll,
+	which thus far has been unrevealed."
+	| reply |
+	
+	( aRoll at: 1 ) = ( aRoll at: 2 )
+		ifFalse: [
+			self attempt
+				ifTrue: [
+					GamePopUp 
+						inform: self name,' has failed in an attempt to roll out of jail.' 
+						title: 'Failure to Roll Out'.
+					reply := false ]
+				ifFalse: [ 
+					GamePopUp 
+						inform: self name,' has failed in three attempts to roll out of jail.' 
+						title: 'Had to Pay Out'.
+					self payOut: aRoll.
+					reply := true ] ]
+		ifTrue: [ 
+			self 
+				jail: false with: 0;
+				doubles: 0.
+			GamePopUp 
+				inform: self name,' has just rolled doubles and escaped jail.' 
+				title: 'Successful Roll Out!!'.
+			reply := true ].
+	^ reply! !
+
+!Developer methodsFor: 'as yet unclassified' stamp: 'dhn 5/17/2019 12:29:19'!
+special
+        "Answer the special instance variable."
+    ^special! !
+
+!Developer methodsFor: 'as yet unclassified' stamp: 'dhn 5/17/2019 12:29:19'!
+special: aBoolean
+        "Set the special instance variable."
+    special := aBoolean.! !
+
+!Developer methodsFor: 'as yet unclassified' stamp: 'dhn 5/17/2019 12:29:19'!
+threeDoubles
+	"Notify player of the result of rolling too many doubles."
+
+	GamePopUp 
+		inform: self name,' has rolled doubles three times in a row. ' 
+		title: 'Too Many Doubles'
+! !
+
+!Developer methodsFor: 'as yet unclassified' stamp: 'dhn 5/17/2019 12:29:19'!
+toJail
+        "Send the player to jail."
+    self goAgain: false;
+         jail: true with: 0;
+        passedGo: false;
+        position: 10;
+        doubles: 0.! !
 
 !Card methodsFor: 'accessing' stamp: 'dhn 5/13/2019 22:07:12'!
 amount
@@ -1937,259 +2200,3 @@ of: anArray for: aString
     ^super new
         amount: anArray;
         fortune: aString.! !
-
-!Player methodsFor: 'as yet unclassified' stamp: 'dhn 5/14/2019 14:09:52'!
-assess: anInteger
-        "Reduce the player's cash by anInteger. If he becomes
-        insolvent, take appropriate measures."
-    self cash: self cash - anInteger.
-    self cash < 0
-        ifTrue: [
-		GamePopUp 
-			inform: self name, ' is out of money and operating at a deficit of ', self cash printString,'.' 
-			title: 'IN THE RED!!!!!!'].! !
-
-!Player methodsFor: 'as yet unclassified'!
-attempt
-        "Count an attempt to roll out of jail and answer whether
-        the limit has been reached."
-    self goAgain: false.
-    ^3 > (jail at: 2 put: ( jail at: 2 ) + 1)! !
-
-!Player methodsFor: 'as yet unclassified' stamp: 'dhn 5/14/2019 14:25:31'!
-cardOut: aRoll
-	"Attempt to get out of jail using a 'get out of jail free' card
-	and aRoll, which thus far has been unrevealed."
-	
-	self cards notNil
-		ifTrue: [
-			( aRoll at: 1 ) = ( aRoll at: 2 )
-				ifFalse: [ 
-					self goAgain: false.
- 					GamePopUp 
-						inform: self name,' has just used a card to get out of jail.' 
-						title: 'Get Out of Jail Free Card!!']
-				ifTrue: [
-					GamePopUp 
-						inform: self name,' has just rolled doubles after using a card to get out of jail.' 
-						title: 'Wasted a Card!!'].
-		self jail: false with: 0]
-		ifFalse: [
-			GamePopUp 
-				inform: self name,' has no get out of jail cards.' 
-				title: 'Must Pay Out'.
-			self payOut: aRoll]! !
-
-!Player methodsFor: 'as yet unclassified'!
-cards
-        "Answer a 'Get Out of Jail Free' card, or nil if none."
-    cards notEmpty
-        ifTrue: [ ^cards removeLast ]
-        ifFalse: [ ^nil ].! !
-
-!Player methodsFor: 'as yet unclassified'!
-cards: aCard
-        "Add a 'Get Out of Jail Free' card to a Player's collection."
-    cards add: aCard.! !
-
-!Player methodsFor: 'as yet unclassified'!
-cash
-        "Answer the Player's cash."
-    ^cash! !
-
-!Player methodsFor: 'as yet unclassified'!
-cash: anInteger
-        "Set the Player's cash."
-    cash := anInteger.! !
-
-!Player methodsFor: 'as yet unclassified'!
-doubles
-        "Answer the Player's number of consecutive doubles."
-    ^doubles! !
-
-!Player methodsFor: 'as yet unclassified'!
-doubles: anInteger
-        "Set the Player's number of consecutive doubles."
-    doubles := anInteger.! !
-
-!Player methodsFor: 'as yet unclassified'!
-goAgain
-        "Answer the 'go again' indicator (whether or not the
-        player should go again after a roll)."
-    ^goAgain! !
-
-!Player methodsFor: 'as yet unclassified'!
-goAgain: aBoolean
-        "Set the 'go again' indicator to aBoolean."
-    goAgain := aBoolean.! !
-
-!Player methodsFor: 'as yet unclassified'!
-inJail
-        "Answer whether the player is in jail or not."
-    ^jail first! !
-
-!Player methodsFor: 'as yet unclassified'!
-initialize
-        "Establish the initial state of a Player."
-    property := Set new.
-    cards := OrderedCollection new.
-    self cash: 1300;
-        jail: false with: 0;
-        doubles: 0;
-        special: false;
-        position: 40.! !
-
-!Player methodsFor: 'as yet unclassified'!
-jail: aBoolean with: anInteger
-        "Set the jail state array as (aBoolean anInteger),
-        where anInteger is the number of attempts to roll out."
-    jail := Array with: aBoolean with: anInteger! !
-
-!Player methodsFor: 'as yet unclassified'!
-name: aString
-        "Set the Player's name."
-    name := aString.
-    ^self! !
-
-!Player methodsFor: 'as yet unclassified'!
-normalWith: theDice
-        "Move while in the normal state (not in jail) by using theDice."
-    | posn move ivories |
-    ivories := theDice repeat: 2 from: 1 to: 6.
-    ( ivories at: 1 ) = ( ivories at: 2 ) ifTrue: [
-        self doubles: self doubles + 1.
-        self doubles < 3
-            ifFalse: [ self toJail; threeDoubles ] ].
-    move := ( ivories at: 1 ) + ( ivories at: 2 ).
-    self roll: move.
-    posn := ( move + self position ) rem: 40.
-    posn = 0 ifTrue: [posn := 40].
-    self position: posn.
-"    self result: ( squares at: self position )."! !
-
-!Player methodsFor: 'as yet unclassified'!
-passedGo
-        "Answer whether the Player passed Go."
-    ^passedGo! !
-
-!Player methodsFor: 'as yet unclassified'!
-passedGo: aBoolean
-        "Set the indicator as to whether the player passed Go."
-    passedGo := aBoolean.! !
-
-!Player methodsFor: 'as yet unclassified' stamp: 'dhn 5/14/2019 14:34:28'!
-payOut: aRoll
-	"Pay to get out of jail, then move using aRoll."
-	
-	self assess: 50;
-	jail: false with: 0.
-	( aRoll at: 1 ) = ( aRoll at: 2 )
-		ifTrue: [
-			GamePopUp 
-				inform: self name,' has just wasted $50.' 
-				title: 'Rolled Doubles after Paying Out']
-		ifFalse: [
-			GamePopUp 
-				inform: self name,' has paid a $50 fine and has been released from jail.' 
-				title: 'Paid the Fine']
-! !
-
-!Player methodsFor: 'as yet unclassified'!
-position
-        "Answer the Player's position on the board."
-    ^position! !
-
-!Player methodsFor: 'as yet unclassified'!
-position: anInteger
-        "Set the Player's position on the board."
-    position := anInteger.! !
-
-!Player methodsFor: 'as yet unclassified'!
-property
-        "Answer the player's property."
-    ^property! !
-
-!Player methodsFor: 'as yet unclassified'!
-propertyAdd: aProperty
-        "Add aProperty to the Player's collection."
-    property add: aProperty.! !
-
-!Player methodsFor: 'as yet unclassified'!
-propertyRemove: aProperty
-        "Remove aProperty from the Player's collection."
-    ^property remove: aProperty ifAbsent: [ ^nil ].! !
-
-!Player methodsFor: 'as yet unclassified'!
-roll
-        "Answer the sum of the Player's roll of the dice."
-    ^roll! !
-
-!Player methodsFor: 'as yet unclassified'!
-roll: anInteger
-        "Set the sum of the Player's roll of the dice."
-    roll := anInteger.! !
-
-!Player methodsFor: 'as yet unclassified' stamp: 'dhn 5/14/2019 14:45:04'!
-rollOut: aRoll
-	"Answer whether a player can move out of jail using aRoll,
-	which thus far has been unrevealed."
-	| reply |
-	
-	( aRoll at: 1 ) = ( aRoll at: 2 )
-		ifFalse: [
-			self attempt
-				ifTrue: [
-					GamePopUp 
-						inform: self name,' has failed in an attempt to roll out of jail.' 
-						title: 'Failure to Roll Out'.
-					reply := false ]
-				ifFalse: [ 
-					GamePopUp 
-						inform: self name,' has failed in three attempts to roll out of jail.' 
-						title: 'Had to Pay Out'.
-					self payOut: aRoll.
-					reply := true ] ]
-		ifTrue: [ 
-			self 
-				jail: false with: 0;
-				doubles: 0.
-			GamePopUp 
-				inform: self name,' has just rolled doubles and escaped jail.' 
-				title: 'Successful Roll Out!!'.
-			reply := true ].
-	^ reply! !
-
-!Player methodsFor: 'as yet unclassified'!
-special
-        "Answer the special instance variable."
-    ^special! !
-
-!Player methodsFor: 'as yet unclassified'!
-special: aBoolean
-        "Set the special instance variable."
-    special := aBoolean.! !
-
-!Player methodsFor: 'as yet unclassified' stamp: 'dhn 5/14/2019 14:47:29'!
-threeDoubles
-	"Notify player of the result of rolling too many doubles."
-
-	GamePopUp 
-		inform: self name,' has rolled doubles three times in a row. ' 
-		title: 'Too Many Doubles'
-! !
-
-!Player methodsFor: 'as yet unclassified'!
-toJail
-        "Send the player to jail."
-    self goAgain: false;
-         jail: true with: 0;
-        passedGo: false;
-        position: 10;
-        doubles: 0.! !
-
-!Player class methodsFor: 'as yet unclassified'!
-new: aString
-        "Establish a new instance of a Player, with name aString."
-    | player |
-    player := super new initialize.
-    ^player name: aString! !
