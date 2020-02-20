@@ -1,6 +1,6 @@
-'From Cuis 5.0 of 7 November 2016 [latest update: #3744] on 20 May 2019 at 11:06:23 pm'!
+'From Cuis 5.0 [latest update: #4042] on 20 February 2020 at 3:45:45 pm'!
 'Description A port from Squeak of a simulation of Monopoly.'!
-!provides: 'Monop' 1 24!
+!provides: 'Monop' 1 25!
 !requires: 'Game' 1 44 nil!
 SystemOrganization addCategory: #'Monop-View'!
 SystemOrganization addCategory: #'Monop-Model'!
@@ -592,12 +592,11 @@ chestCards
 		add: #(#movePlayer: #ahead 40 'Advance to Go.');
 		yourself! !
 
-!Estate class methodsFor: 'instance creation' stamp: 'dhn 5/17/2019 14:26:05'!
+!Estate class methodsFor: 'instance creation' stamp: 'dhn 2/20/2020 15:39:20'!
 describeSpaces
 	"Descriptions for the spaces on the board."
 	
 	^ OrderedCollection new
-		add: #('Go' '(Collect $200)');
 		add: #('Mediterranean Avenue' '$60');
 		add: #('Community Chest' '!!');
 		add: #('Baltic Avenue' '$60');
@@ -637,6 +636,7 @@ describeSpaces
 		add: #('Park Place' '$350');
 		add: #('Luxury Tax' '(Pay $75)');
 		add: #('Boardwalk' '$400');
+		add: #('Go' '(Collect $200)');
 		yourself
 ! !
 
