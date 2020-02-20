@@ -1,6 +1,6 @@
-'From Cuis 5.0 [latest update: #4042] on 20 February 2020 at 6:26:21 pm'!
+'From Cuis 5.0 [latest update: #4042] on 20 February 2020 at 6:37:49 pm'!
 'Description A port from Squeak of a simulation of Monopoly.'!
-!provides: 'Monop' 1 29!
+!provides: 'Monop' 1 30!
 !requires: 'Game' 1 44 nil!
 SystemOrganization addCategory: #'Monop-View'!
 SystemOrganization addCategory: #'Monop-Model'!
@@ -586,7 +586,7 @@ chestCards
 		add: #(#movePlayer: #ahead 40 'Advance to Go.');
 		yourself! !
 
-!Estate class methodsFor: 'instance creation' stamp: 'dhn 2/20/2020 18:25:04'!
+!Estate class methodsFor: 'instance creation' stamp: 'dhn 2/20/2020 18:37:30'!
 describeSpaces
 	"Descriptions for the spaces on the board."
 	
@@ -638,15 +638,20 @@ describeSpaces
 		add: (Lot title: 'Marvin Gardens' price: 280 
 			rents: #(24 120 360 850 1025 1200) house: 150);
 		add: #('Go to Jail' '');
-		add: #('Pacific Avenue' '$300');
-		add: #('North Carolina Avenue' '$300');
+		add: (Lot title: 'Pacific Avenue' price: 300 
+			rents: #(26 130 390 900 1100 1275) house: 200);
+		add: (Lot title: 'North Carolina Avenue' price: 300 
+			rents: #(26 130 390 900 1100 1275) house: 200);
 		add: #('Community Chest' '!!!!!!');
-		add: #('Pennsylvania Avenue' '$320');
+		add: (Lot title: 'Pennsylvania Avenue' price: 320 
+			rents: #(28 150 450 1000 1200 1400) house: 200);
 		add: #('Short Line Railroad' '$200');
 		add: #('Chance' '???');
-		add: #('Park Place' '$350');
+		add: (Lot title: 'Park Place' price: 350 
+			rents: #(35 175 500 1100 1300 1500) house: 200);
 		add: #('Luxury Tax' '(Pay $75)');
-		add: #('Boardwalk' '$400');
+		add: (Lot title: 'Boardwalk' price: 400 
+			rents: #(50 200 600 1400 1700 2000) house: 200);
 		add: #('Go' '(Collect $200)');
 		yourself
 ! !
