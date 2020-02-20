@@ -1,6 +1,6 @@
-'From Cuis 5.0 of 7 November 2016 [latest update: #3744] on 17 May 2019 at 12:49:13 pm'!
+'From Cuis 5.0 of 7 November 2016 [latest update: #3744] on 20 May 2019 at 11:06:23 pm'!
 'Description A port from Squeak of a simulation of Monopoly.'!
-!provides: 'Monop' 1 19!
+!provides: 'Monop' 1 24!
 !requires: 'Game' 1 44 nil!
 SystemOrganization addCategory: #'Monop-View'!
 SystemOrganization addCategory: #'Monop-Model'!
@@ -26,6 +26,16 @@ Token subclass: #EstateToken
 EstateToken class
 	instanceVariableNames: ''!
 
+!classDefinition: #LotView category: #'Monop-View'!
+GameCell subclass: #LotView
+	instanceVariableNames: 'lowerPane'
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'Monop-View'!
+!classDefinition: 'LotView class' category: #'Monop-View'!
+LotView class
+	instanceVariableNames: ''!
+
 !classDefinition: #Monopoly category: #'Monop-View'!
 GameBoard subclass: #Monopoly
 	instanceVariableNames: 'chest chance dice squares players turn numbersArea othersArea seasonsArea'
@@ -44,6 +54,16 @@ GameView subclass: #ForSale
 	category: 'Monop-View'!
 !classDefinition: 'ForSale class' category: #'Monop-View'!
 ForSale class
+	instanceVariableNames: ''!
+
+!classDefinition: #ClearBox category: #'Monop-View'!
+BorderedRectMorph subclass: #ClearBox
+	instanceVariableNames: 'layoutMorph textPane lowerPane'
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'Monop-View'!
+!classDefinition: 'ClearBox class' category: #'Monop-View'!
+ClearBox class
 	instanceVariableNames: ''!
 
 !classDefinition: #Square category: #'Monop-Model'!
@@ -168,7 +188,7 @@ Tax class
 
 !classDefinition: #Developer category: #'Monop-Model'!
 Gamer subclass: #Developer
-	instanceVariableNames: 'cards doubles property jail goAgain special'
+	instanceVariableNames: 'cards doubles jail goAgain special'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Monop-Model'!
@@ -233,6 +253,9 @@ The model for the Monopoly board.!
 !EstateToken commentStamp: '<historical>' prior: 0!
 A token for a player in Monopoly.!
 
+!LotView commentStamp: '<historical>' prior: 0!
+A cell with a text pane, lower pane, and marks pane.!
+
 !Monopoly commentStamp: '<historical>' prior: 0!
 Simulation of the Monopoly board game.
 
@@ -240,6 +263,9 @@ Monopoly start.!
 
 !ForSale commentStamp: '<historical>' prior: 0!
 A window for buying or auctioning an unowned property.!
+
+!ClearBox commentStamp: '<historical>' prior: 0!
+The boxed area of a cell.!
 
 !Square commentStamp: '<historical>' prior: 0!
 A square on the board.!
@@ -361,6 +387,27 @@ setupPlayer: aName color: aColor
 		mgr: self;
 		identity: aName).
 	currentPlayer _ pl! !
+
+!Estate methodsFor: 'operating' stamp: 'dhn 5/17/2019 22:16:04'!
+cellsAt: anIndex 
+	"Show the board starting with spaces at: anIndex."
+	| str |
+	
+	1 to: cellCount do: [:k | 
+		(cells at: k) marksPane removeAllMorphs].
+	
+	1 to: cellCount do: [:m | | sp |
+		sp _ spaces atWrap: anIndex + m - 1.
+		str _ String new writeStream.
+		str nextPutAll: sp label first; newLine.
+		self testMode
+			ifTrue: [str nextPutAll: sp routine asString; newLine].
+		"(cells at: m) textPane
+			model actualContents: str contents."
+		sp marks ifNotEmpty: [
+			(cells at: m) marksPane
+				addAllMorphs: sp marks]]
+! !
 
 !Estate methodsFor: 'operating' stamp: 'dhn 5/14/2019 21:54:08'!
 drawChance
@@ -545,51 +592,51 @@ chestCards
 		add: #(#movePlayer: #ahead 40 'Advance to Go.');
 		yourself! !
 
-!Estate class methodsFor: 'instance creation' stamp: 'dhn 5/16/2019 15:18:39'!
+!Estate class methodsFor: 'instance creation' stamp: 'dhn 5/17/2019 14:26:05'!
 describeSpaces
 	"Descriptions for the spaces on the board."
 	
 	^ OrderedCollection new
-		add: 'Go (Collect $200)';
-		add: 'Mediterranean Avenue $60';
-		add: 'Community Chest';
-		add: 'Baltic Avenue $60';
-		add: 'Income Tax (Pay 10% or $200)';
-		add: 'Reading Railroad $200';
-		add: 'Oriental Avenue $100';
-		add: 'Chance ?';
-		add: 'Vermont Avenue $100';
-		add: 'Connecticut Avenue $120';
-		add: 'In Jail/Just Visiting';
-		add: 'St. Charles Place $140';
-		add: 'Electric Company $150';
-		add: 'States Avenue $140';
-		add: 'Virginia Avenue $160';
-		add: 'Pennsylvania Railroad $200';
-		add: 'St. James Place $180';
-		add: 'Community Chest !!!!';
-		add: 'Tennesee Avenue $180';
-		add: 'New York Avenue $200';
-		add: 'Free Parking';
-		add: 'Kentucky Avenue $220';
-		add: 'Chance ??';
-		add: 'Indiana Avenue $220';
-		add: 'Illinois Avenue $240';
-		add: 'B. & O. Railroad $200';
-		add: 'Atlantic Avenue $260';
-		add: 'Ventnor Avenue $260';
-		add: 'Water Works $150';
-		add: 'Marvin Gardens $280';
-		add: 'Go to Jail';
-		add: 'Pacific Avenue $300';
-		add: 'North Carolina Avenue $300';
-		add: 'Community Chest !!!!!!';
-		add: 'Pennsylvania Avenue $320';
-		add: 'Short Line Railroad $200';
-		add: 'Chance ???';
-		add: 'Park Place $350';
-		add: 'Luxury Tax (Pay $75)';
-		add: 'Boardwalk $400';
+		add: #('Go' '(Collect $200)');
+		add: #('Mediterranean Avenue' '$60');
+		add: #('Community Chest' '!!');
+		add: #('Baltic Avenue' '$60');
+		add: #('Income Tax' '(Pay 10% or $200)');
+		add: #('Reading Railroad' '$200');
+		add: #('Oriental Avenue' '$100');
+		add: #('Chance' '?');
+		add: #('Vermont Avenue' '$100');
+		add: #('Connecticut Avenue' '$120');
+		add: #('In Jail/Just Visiting' '');
+		add: #('St. Charles Place' '$140');
+		add: #('Electric Company' '$150');
+		add: #('States Avenue' '$140');
+		add: #('Virginia Avenue' '$160');
+		add: #('Pennsylvania Railroad' '$200');
+		add: #('St. James Place' '$180');
+		add: #('Community Chest' '!!!!');
+		add: #('Tennesee Avenue' '$180');
+		add: #('New York Avenue' '$200');
+		add: #('Free Parking' '');
+		add: #('Kentucky Avenue' '$220');
+		add: #('Chance' '??');
+		add: #('Indiana Avenue' '$220');
+		add: #('Illinois Avenue' '$240');
+		add: #('B. & O. Railroad' '$200');
+		add: #('Atlantic Avenue' '$260');
+		add: #('Ventnor Avenue' '$260');
+		add: #('Water Works' '$150');
+		add: #('Marvin Gardens' '$280');
+		add: #('Go to Jail' '');
+		add: #('Pacific Avenue' '$300');
+		add: #('North Carolina Avenue' '$300');
+		add: #('Community Chest' '!!!!!!');
+		add: #('Pennsylvania Avenue' '$320');
+		add: #('Short Line Railroad' '$200');
+		add: #('Chance' '???');
+		add: #('Park Place' '$350');
+		add: #('Luxury Tax' '(Pay $75)');
+		add: #('Boardwalk' '$400');
 		yourself
 ! !
 
@@ -699,6 +746,39 @@ position: aCell
 	self morphPosition: self posAdjust.
 	horiz _ (model cells at: aCell) morphPosition x.
 	self morphPosition: (self morphPosition translatedBy: (horiz@0))! !
+
+!LotView methodsFor: 'accessing' stamp: 'dhn 5/17/2019 14:44:43'!
+lowerPane
+	"Answer the value of lowerPane"
+
+	^ lowerPane! !
+
+!LotView methodsFor: 'accessing' stamp: 'dhn 5/17/2019 14:44:43'!
+lowerPane: anObject
+	"Set the value of lowerPane"
+
+	lowerPane _ anObject! !
+
+!LotView methodsFor: 'initialization' stamp: 'dhn 5/17/2019 16:55:41'!
+makeLowerPane
+	"Lay out the lower pane"
+	
+	lowerPane _ (LayoutMorph newRow separation: 0)
+		layoutSpec: (LayoutSpec proportionalWidth: 1.0
+			proportionalHeight: 1.0
+			minorDirectionPadding: #center).
+	lowerPane
+			color: Color transparent;
+			name: #'lower pane';
+			padding: #center.
+			
+	^ lowerPane addMorph: ((StringMorph contents: '') 
+		emphasis: AbstractFont boldCode)! !
+
+!LotView class methodsFor: 'instance creation' stamp: 'dhn 5/17/2019 14:46:07'!
+includeInNewMorphMenu
+	"Not to be instantiated from the menu"
+	^ false! !
 
 !Monopoly methodsFor: 'accessing' stamp: 'dhn 5/15/2019 12:43:43'!
 describe
@@ -923,10 +1003,10 @@ makeButtonArea
 	^ buttonArea
 		! !
 
-!Monopoly methodsFor: 'initialization' stamp: 'dhn 5/15/2019 12:33:28'!
+!Monopoly methodsFor: 'initialization' stamp: 'dhn 5/17/2019 22:10:52'!
 makeCellsArea
 	"Lay out the area which shows some spaces of the board"
-	| cellArea view mm mt |
+	| cellArea box view mm |
 	
 	cellArea _ (LayoutMorph newRow separation: 0)
 		layoutSpec: (LayoutSpec 
@@ -936,16 +1016,13 @@ makeCellsArea
 		name: #'cell area'.
 	
 	1 to: self class cellsForGame do: [:ix |
+		box _ ClearBox new 
+			layoutSpec: (LayoutSpec proportionalWidth: 1 / self class cellsForGame);
+			name: #'clear box'.
 		view _ (CellView newColumn
 			layoutSpec: (LayoutSpec proportionalWidth: 1 / self class cellsForGame);
 			name: #cell).
-		view addMorph: (mt _ (GameCell 
-			textProvider: self
-			textGetter: #describe)
-				layoutSpec: (LayoutSpec proportionalWidth: 1.0);
-				color: self class cellColor;
-				borderWidth: 1;
-				name: 'cell text').
+		view addMorph: box.
 		view addMorph: (mm _ (LayoutMorph newRow separation: 4)
 			layoutSpec: (LayoutSpec 
 				proportionalWidth: 1.0
@@ -954,9 +1031,7 @@ makeCellsArea
 			color: self class cellColor;
 			padding: #center;
 			name: #marks).
-		view 
-			marksPane: mm;
-			textPane: mt.
+		view marksPane: mm.
 		model cells add: view].
 		
 	^ cellArea addAllMorphs: model cells reversed
@@ -1356,6 +1431,87 @@ viewPosition
 	"Answer the basic position for instances of this class"
 	
 	^ Display center! !
+
+!ClearBox methodsFor: 'initialization' stamp: 'dhn 5/20/2019 12:39:52'!
+initialize
+
+	super initialize.
+	layoutMorph _ LayoutMorph newColumn.
+	self 
+		addMorphFront: layoutMorph;
+		borderWidth: 1;
+		color: Color transparent.
+	textPane _ (GameCell 
+		textProvider: self
+		textGetter: #describe)
+			layoutSpec: (LayoutSpec proportionalWidth: 1.0);
+			color: self class cellColor;
+			name: 'cell text'.
+	lowerPane _ (GameCell 
+		textProvider: self
+		textGetter: #describe2)
+			layoutSpec: (LayoutSpec proportionalWidth: 1.0);
+			color: self class cellColor;
+			name: 'lower pane'.
+	layoutMorph 
+		color: Color transparent;
+		addMorph: textPane;
+		addMorph: lowerPane! !
+
+!ClearBox methodsFor: 'initialization' stamp: 'dhn 5/20/2019 23:05:28'!
+layoutSubmorphs
+	"Position and size submorphs so as to reveal the border"
+	
+	layoutMorph submorphs do: [ :ea |
+		ea
+			morphPosition: self morphPosition + 1;
+			morphExtent: self morphExtent - 2]! !
+
+!ClearBox methodsFor: 'accessing' stamp: 'dhn 5/17/2019 21:40:30'!
+describe
+
+	^ ''! !
+
+!ClearBox methodsFor: 'accessing' stamp: 'dhn 5/20/2019 12:20:58'!
+describe2
+	"Text getter for the lower pane"
+
+	^ ''! !
+
+!ClearBox methodsFor: 'accessing' stamp: 'dhn 5/17/2019 21:20:35'!
+lowerPane
+	"Answer the value of lowerPane"
+
+	^ lowerPane! !
+
+!ClearBox methodsFor: 'accessing' stamp: 'dhn 5/17/2019 21:20:35'!
+lowerPane: anObject
+	"Set the value of lowerPane"
+
+	lowerPane _ anObject! !
+
+!ClearBox methodsFor: 'accessing' stamp: 'dhn 5/17/2019 21:20:35'!
+textPane
+	"Answer the value of textPane"
+
+	^ textPane! !
+
+!ClearBox methodsFor: 'accessing' stamp: 'dhn 5/17/2019 21:20:35'!
+textPane: anObject
+	"Set the value of textPane"
+
+	textPane _ anObject! !
+
+!ClearBox class methodsFor: 'class initialization' stamp: 'dhn 5/17/2019 21:42:54'!
+cellColor
+	"Answer the color for a cell"
+	
+	^ Color r: 1.0 g: 0.93 b: 0.83! !
+
+!ClearBox class methodsFor: 'class initialization' stamp: 'dhn 5/17/2019 21:00:17'!
+includeInNewMorphMenu
+	"Not to be instantiated from the menu"
+	^ false! !
 
 !Square methodsFor: 'as yet unclassified'!
 position
@@ -1882,21 +2038,6 @@ payOut: aRoll
 				inform: self name,' has paid a $50 fine and has been released from jail.' 
 				title: 'Paid the Fine']
 ! !
-
-!Developer methodsFor: 'as yet unclassified' stamp: 'dhn 5/17/2019 12:29:19'!
-property
-        "Answer the player's property."
-    ^property! !
-
-!Developer methodsFor: 'as yet unclassified' stamp: 'dhn 5/17/2019 12:29:19'!
-propertyAdd: aProperty
-        "Add aProperty to the Player's collection."
-    property add: aProperty.! !
-
-!Developer methodsFor: 'as yet unclassified' stamp: 'dhn 5/17/2019 12:29:19'!
-propertyRemove: aProperty
-        "Remove aProperty from the Player's collection."
-    ^property remove: aProperty ifAbsent: [ ^nil ].! !
 
 !Developer methodsFor: 'as yet unclassified' stamp: 'dhn 5/17/2019 12:29:19'!
 roll
