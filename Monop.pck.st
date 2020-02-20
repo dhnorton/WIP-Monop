@@ -1,6 +1,6 @@
-'From Cuis 5.0 [latest update: #4042] on 20 February 2020 at 3:45:45 pm'!
+'From Cuis 5.0 [latest update: #4042] on 20 February 2020 at 5:00:52 pm'!
 'Description A port from Squeak of a simulation of Monopoly.'!
-!provides: 'Monop' 1 25!
+!provides: 'Monop' 1 26!
 !requires: 'Game' 1 44 nil!
 SystemOrganization addCategory: #'Monop-View'!
 SystemOrganization addCategory: #'Monop-Model'!
@@ -108,7 +108,7 @@ Property class
 
 !classDefinition: #Lot category: #'Monop-Model'!
 Property subclass: #Lot
-	instanceVariableNames: 'houses'
+	instanceVariableNames: 'houseCost houses'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Monop-Model'!
@@ -277,7 +277,7 @@ A square where bad things occur.!
 The Jail square.!
 
 !Property commentStamp: '<historical>' prior: 0!
-A square which can be bought and sold. If owned and unmortgaged, entitles the owner to collect rent.!
+A square which can be bought and sold. Entitles the owner to collect rent as long as it is unmortgaged.!
 
 !Lot commentStamp: '<historical>' prior: 0!
 A propert which can be developed.!
@@ -347,17 +347,11 @@ moveButton: anObject
 	
 	^ moveButton _ anObject! !
 
-!Estate methodsFor: 'initialization' stamp: 'dhn 5/14/2019 17:48:21'!
+!Estate methodsFor: 'initialization' stamp: 'dhn 2/20/2020 16:50:32'!
 setUpSpaces
 	"Initialize the board spaces"
-	| col |
-	
-	col _ OrderedCollection new.
-	1 to: self class describeSpaces size do: [:ix |
-		col add: (BoardSpace new
-			label: (self class describeSpaces at: ix);
-			routine: ('space', ix asString) asSymbol)].
-	^ col! !
+
+	^ self class describeSpaces! !
 
 !Estate methodsFor: 'initialization' stamp: 'dhn 5/16/2019 21:38:03'!
 setUpToken
@@ -592,12 +586,13 @@ chestCards
 		add: #(#movePlayer: #ahead 40 'Advance to Go.');
 		yourself! !
 
-!Estate class methodsFor: 'instance creation' stamp: 'dhn 2/20/2020 15:39:20'!
+!Estate class methodsFor: 'instance creation' stamp: 'dhn 2/20/2020 16:37:03'!
 describeSpaces
 	"Descriptions for the spaces on the board."
 	
 	^ OrderedCollection new
-		add: #('Mediterranean Avenue' '$60');
+		add: (Lot title: 'Mediterranean Avenue' price: 60 
+			rents: #(2 10 30  90 160 250) house: 50);
 		add: #('Community Chest' '!!');
 		add: #('Baltic Avenue' '$60');
 		add: #('Income Tax' '(Pay 10% or $200)');
@@ -1621,6 +1616,12 @@ price
         "Answer the value of the price variable."
     ^price! !
 
+!Property methodsFor: 'as yet unclassified' stamp: 'dhn 2/20/2020 17:00:11'!
+price: anObject
+        "Set the value of the price variable."
+
+	    price _ anObject! !
+
 !Property methodsFor: 'as yet unclassified' stamp: 'dhn 5/14/2019 14:53:11'!
 rentedBy: aPlayer
 	"Cause aPlayer to pay the rent to the owner of this property."
@@ -1697,10 +1698,17 @@ development
         "Answer the value of development on the lot."
     ^self houses * 50 * ( 1 + self position // 10 )! !
 
-!Lot methodsFor: 'as yet unclassified'!
+!Lot methodsFor: 'as yet unclassified' stamp: 'dhn 2/20/2020 16:55:55'!
 houseCost
         "Answer the cost of a house."
-    ^50 * ( 1 + (self position // 10 ) )! !
+
+	    ^ houseCost! !
+
+!Lot methodsFor: 'as yet unclassified' stamp: 'dhn 2/20/2020 16:55:42'!
+houseCost: anObject
+        "Set the cost of a house."
+
+	    houseCost _ anObject! !
 
 !Lot methodsFor: 'as yet unclassified'!
 houses
@@ -1733,6 +1741,19 @@ for: aPosition title: aString
     lot := super for: aPosition title: aString.
     lot houses: 0.
     ^lot! !
+
+!Lot class methodsFor: 'instance creation' stamp: 'dhn 2/20/2020 16:57:23'!
+title: aTitle price: aPrice rents: array house: aCost
+	"answer an instance of a lot"
+	| lot |
+
+	lot _ self new.
+	lot
+		description: aTitle;
+		price: aPrice;
+		rents: array;
+		houseCost: aCost.
+	^ lot! !
 
 !Railroad methodsFor: 'as yet unclassified'!
 numberOwned
