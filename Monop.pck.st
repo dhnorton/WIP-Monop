@@ -1,6 +1,6 @@
-'From Cuis 5.0 [latest update: #4042] on 20 February 2020 at 5:31:13 pm'!
+'From Cuis 5.0 [latest update: #4042] on 20 February 2020 at 5:48:47 pm'!
 'Description A port from Squeak of a simulation of Monopoly.'!
-!provides: 'Monop' 1 27!
+!provides: 'Monop' 1 28!
 !requires: 'Game' 1 44 nil!
 SystemOrganization addCategory: #'Monop-View'!
 SystemOrganization addCategory: #'Monop-Model'!
@@ -586,7 +586,7 @@ chestCards
 		add: #(#movePlayer: #ahead 40 'Advance to Go.');
 		yourself! !
 
-!Estate class methodsFor: 'instance creation' stamp: 'dhn 2/20/2020 17:15:54'!
+!Estate class methodsFor: 'instance creation' stamp: 'dhn 2/20/2020 17:48:00'!
 describeSpaces
 	"Descriptions for the spaces on the board."
 	
@@ -606,15 +606,21 @@ describeSpaces
 		add: (Lot title: 'Connecticut Avenue' price: 120 
 			rents: #(8 40 100 300 450 600) house: 50);
 		add: #('In Jail/Just Visiting' '');
-		add: #('St. Charles Place' '$140');
+		add: (Lot title: 'St. Charles Place' price: 140 
+			rents: #(10 50 150 450 625 750) house: 100);
 		add: #('Electric Company' '$150');
-		add: #('States Avenue' '$140');
-		add: #('Virginia Avenue' '$160');
+		add: (Lot title: 'States Avenue' price: 140 
+			rents: #(10 50 150 450 625 750) house: 100);
+		add: (Lot title: 'Virginia Avenue' price: 160 
+			rents: #(12 60 180 500 700 900) house: 100);
 		add: #('Pennsylvania Railroad' '$200');
-		add: #('St. James Place' '$180');
+		add: (Lot title: 'St. James Place' price: 180 
+			rents: #(14 70 200 550 750 950) house: 100);
 		add: #('Community Chest' '!!!!');
-		add: #('Tennesee Avenue' '$180');
-		add: #('New York Avenue' '$200');
+		add: (Lot title: 'Tennesee Avenue' price: 180 
+			rents: #(14 70 200 550 750 950) house: 100);
+		add: (Lot title: 'New York Avenue' price: 200 
+			rents: #(16 80 220 600 800 1000) house: 100);
 		add: #('Free Parking' '');
 		add: #('Kentucky Avenue' '$220');
 		add: #('Chance' '??');
