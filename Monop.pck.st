@@ -1,6 +1,6 @@
-'From Cuis 5.0 [latest update: #4042] on 20 February 2020 at 5:48:47 pm'!
+'From Cuis 5.0 [latest update: #4042] on 20 February 2020 at 6:26:21 pm'!
 'Description A port from Squeak of a simulation of Monopoly.'!
-!provides: 'Monop' 1 28!
+!provides: 'Monop' 1 29!
 !requires: 'Game' 1 44 nil!
 SystemOrganization addCategory: #'Monop-View'!
 SystemOrganization addCategory: #'Monop-Model'!
@@ -586,7 +586,7 @@ chestCards
 		add: #(#movePlayer: #ahead 40 'Advance to Go.');
 		yourself! !
 
-!Estate class methodsFor: 'instance creation' stamp: 'dhn 2/20/2020 17:48:00'!
+!Estate class methodsFor: 'instance creation' stamp: 'dhn 2/20/2020 18:25:04'!
 describeSpaces
 	"Descriptions for the spaces on the board."
 	
@@ -622,15 +622,21 @@ describeSpaces
 		add: (Lot title: 'New York Avenue' price: 200 
 			rents: #(16 80 220 600 800 1000) house: 100);
 		add: #('Free Parking' '');
-		add: #('Kentucky Avenue' '$220');
+		add: (Lot title: 'Kentucky Avenue' price: 220 
+			rents: #(18 90 250 700 875 1050) house: 150);
 		add: #('Chance' '??');
-		add: #('Indiana Avenue' '$220');
-		add: #('Illinois Avenue' '$240');
+		add: (Lot title: 'Indiana Avenue' price: 220 
+			rents: #(18 90 250 700 875 1050) house: 150);
+		add: (Lot title: 'Illinois Avenue' price: 240 
+			rents: #(20 100 300 750 925 1100) house: 150);
 		add: #('B. & O. Railroad' '$200');
-		add: #('Atlantic Avenue' '$260');
-		add: #('Ventnor Avenue' '$260');
+		add: (Lot title: 'Atlantic Avenue' price: 260 
+			rents: #(22 110 330 800 975 1150) house: 150);
+		add: (Lot title: 'Ventnor Avenue' price: 260 
+			rents: #(22 110 330 800 975 1150) house: 150);
 		add: #('Water Works' '$150');
-		add: #('Marvin Gardens' '$280');
+		add: (Lot title: 'Marvin Gardens' price: 280 
+			rents: #(24 120 360 850 1025 1200) house: 150);
 		add: #('Go to Jail' '');
 		add: #('Pacific Avenue' '$300');
 		add: #('North Carolina Avenue' '$300');
