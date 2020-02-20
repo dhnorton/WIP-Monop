@@ -1,6 +1,6 @@
-'From Cuis 5.0 [latest update: #4042] on 20 February 2020 at 5:00:52 pm'!
+'From Cuis 5.0 [latest update: #4042] on 20 February 2020 at 5:31:13 pm'!
 'Description A port from Squeak of a simulation of Monopoly.'!
-!provides: 'Monop' 1 26!
+!provides: 'Monop' 1 27!
 !requires: 'Game' 1 44 nil!
 SystemOrganization addCategory: #'Monop-View'!
 SystemOrganization addCategory: #'Monop-Model'!
@@ -586,7 +586,7 @@ chestCards
 		add: #(#movePlayer: #ahead 40 'Advance to Go.');
 		yourself! !
 
-!Estate class methodsFor: 'instance creation' stamp: 'dhn 2/20/2020 16:37:03'!
+!Estate class methodsFor: 'instance creation' stamp: 'dhn 2/20/2020 17:15:54'!
 describeSpaces
 	"Descriptions for the spaces on the board."
 	
@@ -594,13 +594,17 @@ describeSpaces
 		add: (Lot title: 'Mediterranean Avenue' price: 60 
 			rents: #(2 10 30  90 160 250) house: 50);
 		add: #('Community Chest' '!!');
-		add: #('Baltic Avenue' '$60');
+		add: (Lot title: 'Baltic Avenue' price: 60 
+			rents: #(4 20 60 180 320 450) house: 50);
 		add: #('Income Tax' '(Pay 10% or $200)');
 		add: #('Reading Railroad' '$200');
-		add: #('Oriental Avenue' '$100');
+		add: (Lot title: 'Oriental Avenue' price: 100 
+			rents: #(6 30 90 270 400 550) house: 50);
 		add: #('Chance' '?');
-		add: #('Vermont Avenue' '$100');
-		add: #('Connecticut Avenue' '$120');
+		add: (Lot title: 'Vermont Avenue' price: 100 
+			rents: #(6 30 90 270 400 550) house: 50);
+		add: (Lot title: 'Connecticut Avenue' price: 120 
+			rents: #(8 40 100 300 450 600) house: 50);
 		add: #('In Jail/Just Visiting' '');
 		add: #('St. Charles Place' '$140');
 		add: #('Electric Company' '$150');
@@ -1693,36 +1697,36 @@ for: aPosition title: aString
     property initialize: aPosition.
     ^property! !
 
-!Lot methodsFor: 'as yet unclassified'!
-development
-        "Answer the value of development on the lot."
-    ^self houses * 50 * ( 1 + self position // 10 )! !
-
-!Lot methodsFor: 'as yet unclassified' stamp: 'dhn 2/20/2020 16:55:55'!
+!Lot methodsFor: 'accessing' stamp: 'dhn 2/20/2020 16:55:55'!
 houseCost
         "Answer the cost of a house."
 
 	    ^ houseCost! !
 
-!Lot methodsFor: 'as yet unclassified' stamp: 'dhn 2/20/2020 16:55:42'!
+!Lot methodsFor: 'accessing' stamp: 'dhn 2/20/2020 16:55:42'!
 houseCost: anObject
         "Set the cost of a house."
 
 	    houseCost _ anObject! !
 
-!Lot methodsFor: 'as yet unclassified'!
+!Lot methodsFor: 'accessing'!
 houses
         "Answer the value of the houses variable."
     ^houses! !
 
-!Lot methodsFor: 'as yet unclassified'!
+!Lot methodsFor: 'accessing'!
 houses: anInteger
         "Set the value of the houses variable.
         Values 0 through 4 indicate how many houses.
         Value 5 means hotel."
     houses := anInteger.! !
 
-!Lot methodsFor: 'as yet unclassified'!
+!Lot methodsFor: 'operating'!
+development
+        "Answer the value of development on the lot."
+    ^self houses * 50 * ( 1 + self position // 10 )! !
+
+!Lot methodsFor: 'operating'!
 rent: aPlayer
         "Answer the rent for this property in its current state.
         The parameter aPlayer is unused for Lot, but retained
@@ -1733,6 +1737,12 @@ rent: aPlayer
     ( self complete and: [ self houses = 0 ] )
         ifTrue: [ ^2 * ( rents at: 1) ].
     ^rents at: ( self houses + 1 )! !
+
+!Lot methodsFor: 'initialization' stamp: 'dhn 2/20/2020 17:23:26'!
+initialize
+
+	mortgaged _ false.
+	houses _ 0.	! !
 
 !Lot class methodsFor: 'as yet unclassified'!
 for: aPosition title: aString
