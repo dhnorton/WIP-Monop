@@ -1,6 +1,6 @@
-'From Cuis 5.0 [latest update: #4042] on 20 February 2020 at 6:37:49 pm'!
+'From Cuis 5.0 [latest update: #4042] on 20 February 2020 at 8:11:54 pm'!
 'Description A port from Squeak of a simulation of Monopoly.'!
-!provides: 'Monop' 1 30!
+!provides: 'Monop' 1 31!
 !requires: 'Game' 1 44 nil!
 SystemOrganization addCategory: #'Monop-View'!
 SystemOrganization addCategory: #'Monop-Model'!
@@ -586,7 +586,7 @@ chestCards
 		add: #(#movePlayer: #ahead 40 'Advance to Go.');
 		yourself! !
 
-!Estate class methodsFor: 'instance creation' stamp: 'dhn 2/20/2020 18:37:30'!
+!Estate class methodsFor: 'instance creation' stamp: 'dhn 2/20/2020 20:08:07'!
 describeSpaces
 	"Descriptions for the spaces on the board."
 	
@@ -597,7 +597,7 @@ describeSpaces
 		add: (Lot title: 'Baltic Avenue' price: 60 
 			rents: #(4 20 60 180 320 450) house: 50);
 		add: #('Income Tax' '(Pay 10% or $200)');
-		add: #('Reading Railroad' '$200');
+		add: (Railroad new description: 'Reading Railroad');
 		add: (Lot title: 'Oriental Avenue' price: 100 
 			rents: #(6 30 90 270 400 550) house: 50);
 		add: #('Chance' '?');
@@ -608,12 +608,12 @@ describeSpaces
 		add: #('In Jail/Just Visiting' '');
 		add: (Lot title: 'St. Charles Place' price: 140 
 			rents: #(10 50 150 450 625 750) house: 100);
-		add: #('Electric Company' '$150');
+		add: (Utility new description: 'Electric Company');
 		add: (Lot title: 'States Avenue' price: 140 
 			rents: #(10 50 150 450 625 750) house: 100);
 		add: (Lot title: 'Virginia Avenue' price: 160 
 			rents: #(12 60 180 500 700 900) house: 100);
-		add: #('Pennsylvania Railroad' '$200');
+		add: (Railroad new description: 'Pennsylvania Railroad');
 		add: (Lot title: 'St. James Place' price: 180 
 			rents: #(14 70 200 550 750 950) house: 100);
 		add: #('Community Chest' '!!!!');
@@ -629,12 +629,12 @@ describeSpaces
 			rents: #(18 90 250 700 875 1050) house: 150);
 		add: (Lot title: 'Illinois Avenue' price: 240 
 			rents: #(20 100 300 750 925 1100) house: 150);
-		add: #('B. & O. Railroad' '$200');
+		add: (Railroad new description: 'B. & O. Railroad');
 		add: (Lot title: 'Atlantic Avenue' price: 260 
 			rents: #(22 110 330 800 975 1150) house: 150);
 		add: (Lot title: 'Ventnor Avenue' price: 260 
 			rents: #(22 110 330 800 975 1150) house: 150);
-		add: #('Water Works' '$150');
+		add: (Utility new description: 'Water Works');
 		add: (Lot title: 'Marvin Gardens' price: 280 
 			rents: #(24 120 360 850 1025 1200) house: 150);
 		add: #('Go to Jail' '');
@@ -645,7 +645,7 @@ describeSpaces
 		add: #('Community Chest' '!!!!!!');
 		add: (Lot title: 'Pennsylvania Avenue' price: 320 
 			rents: #(28 150 450 1000 1200 1400) house: 200);
-		add: #('Short Line Railroad' '$200');
+		add: (Railroad new description: 'Short Line Railroad');
 		add: #('Chance' '???');
 		add: (Lot title: 'Park Place' price: 350 
 			rents: #(35 175 500 1100 1300 1500) house: 200);
@@ -1706,14 +1706,6 @@ set: aCollection
         "Set the Collection value of the set variable."
     set := aCollection.! !
 
-!Property class methodsFor: 'as yet unclassified'!
-for: aPosition title: aString
-        "Answer a property at aPosition, titled aString."
-    | property |
-    property := super for: aPosition title: aString.
-    property initialize: aPosition.
-    ^property! !
-
 !Lot methodsFor: 'accessing' stamp: 'dhn 2/20/2020 16:55:55'!
 houseCost
         "Answer the cost of a house."
@@ -1761,14 +1753,6 @@ initialize
 	mortgaged _ false.
 	houses _ 0.	! !
 
-!Lot class methodsFor: 'as yet unclassified'!
-for: aPosition title: aString
-        "Answer a lot at aPosition, titled aString."
-    | lot |
-    lot := super for: aPosition title: aString.
-    lot houses: 0.
-    ^lot! !
-
 !Lot class methodsFor: 'instance creation' stamp: 'dhn 2/20/2020 16:57:23'!
 title: aTitle price: aPrice rents: array house: aCost
 	"answer an instance of a lot"
@@ -1782,7 +1766,7 @@ title: aTitle price: aPrice rents: array house: aCost
 		houseCost: aCost.
 	^ lot! !
 
-!Railroad methodsFor: 'as yet unclassified'!
+!Railroad methodsFor: 'operating'!
 numberOwned
         "Private - answer how many of the set are owned
         by self owner."
@@ -1792,7 +1776,7 @@ numberOwned
     owns notEmpty ifTrue: [ ^owns size ]
                              ifFalse: [ ^nil ].! !
 
-!Railroad methodsFor: 'as yet unclassified'!
+!Railroad methodsFor: 'operating'!
 rent: aPlayer
         "Answer the rent for this property in its current state."
     | amt |
@@ -1804,7 +1788,13 @@ rent: aPlayer
             amt := 2 * amt ].
     ^amt! !
 
-!Utility methodsFor: 'as yet unclassified' stamp: 'dhn 5/14/2019 15:30:21'!
+!Railroad methodsFor: 'initialization' stamp: 'dhn 2/20/2020 20:00:29'!
+initialize
+
+	price _ 200.
+	mortgaged _ false.! !
+
+!Utility methodsFor: 'operating' stamp: 'dhn 5/14/2019 15:30:21'!
 rent: aPlayer
         "Answer the rent for this property in its current state."
     | amt |
@@ -1817,6 +1807,12 @@ rent: aPlayer
         ifTrue: [ aPlayer special: false.
             amt := 10 * (DieMorph new) ].
     ^amt! !
+
+!Utility methodsFor: 'initialization' stamp: 'dhn 2/20/2020 20:10:11'!
+initialize
+
+	price _ 150.
+	mortgaged _ false.! !
 
 !Risk methodsFor: 'as yet unclassified'!
 board
