@@ -1,6 +1,6 @@
-'From Cuis 5.0 [latest update: #4042] on 20 February 2020 at 8:11:54 pm'!
+'From Cuis 5.0 [latest update: #4042] on 20 February 2020 at 9:15:41 pm'!
 'Description A port from Squeak of a simulation of Monopoly.'!
-!provides: 'Monop' 1 31!
+!provides: 'Monop' 1 32!
 !requires: 'Game' 1 44 nil!
 SystemOrganization addCategory: #'Monop-View'!
 SystemOrganization addCategory: #'Monop-Model'!
@@ -146,26 +146,6 @@ Square subclass: #Risk
 Risk class
 	instanceVariableNames: ''!
 
-!classDefinition: #Chance category: #'Monop-Model'!
-Risk subclass: #Chance
-	instanceVariableNames: ''
-	classVariableNames: ''
-	poolDictionaries: ''
-	category: 'Monop-Model'!
-!classDefinition: 'Chance class' category: #'Monop-Model'!
-Chance class
-	instanceVariableNames: ''!
-
-!classDefinition: #Chest category: #'Monop-Model'!
-Risk subclass: #Chest
-	instanceVariableNames: ''
-	classVariableNames: ''
-	poolDictionaries: ''
-	category: 'Monop-Model'!
-!classDefinition: 'Chest class' category: #'Monop-Model'!
-Chest class
-	instanceVariableNames: ''!
-
 !classDefinition: #Shelter category: #'Monop-Model'!
 Square subclass: #Shelter
 	instanceVariableNames: ''
@@ -280,7 +260,7 @@ The Jail square.!
 A square which can be bought and sold. Entitles the owner to collect rent as long as it is unmortgaged.!
 
 !Lot commentStamp: '<historical>' prior: 0!
-A propert which can be developed.!
+A property which can be developed.!
 
 !Railroad commentStamp: '<historical>' prior: 0!
 A railroad property.!
@@ -290,12 +270,6 @@ A utility property.!
 
 !Risk commentStamp: '<historical>' prior: 0!
 A square which can specify a risk or a reward.!
-
-!Chance commentStamp: '<historical>' prior: 0!
-A Chance card.!
-
-!Chest commentStamp: '<historical>' prior: 0!
-A Community Chest card.!
 
 !Shelter commentStamp: '<historical>' prior: 0!
 A square which provides a breather from the rent race.!
@@ -1834,61 +1808,6 @@ result: aPlayer
         "Effect the result of randomly picking one of the cards."
     (cards at: (DieMorph new cards size) first)
         result: aPlayer! !
-
-!Chance class methodsFor: 'as yet unclassified'!
-setup: aSquare
-        "Answer the values for the Chance deck, establishing the
-        square to which the members of the deck are associated."
-    | deck |
-    deck := OrderedCollection new
-        add: (Move with: #relative: to: -3 for: 'Go back three spaces.');
-        add: (Move with: #summarily: to: 10 for: 'Go to Jail.');
-        add: (Move with: #direct: to: 39 for: 'Advance to Boardwalk.');
-        add: (Pay of: -150 for: 'Building and loan matures - collect $150.');
-        add: (Pay with: #toEach: of: 50 for: 'You''ve been elected Chairman of the Board. Pay each player $50.');
-        add: (Pay of: -50 for: 'Bank pays you dividend of $50.');
-        add: (Pay of: 15 for: 'Pay poor tax of $15.');
-        add: (Move with: #direct: to: 11 for: 'Advance to St. Charles Place.');
-        add: (Move with: #nearRR: for: 'Advance token to the nearest Railroad and pay the owner twice the rent to which he is otherwise entitled.');
-        add: (Move with: #nearRR: for: 'Advance token to the nearest Railroad and pay the owner twice the rent to which he is otherwise entitled.');
-        add: (Move with: #direct: to: 24 for: 'Advance token to Illinois Avenue.');
-        add: (Repair of: #(25 100) for:'Make general repairs on all your property: $25 per house; $100 per hotel.');
-        add: (Move with: #nearUt: for: 'Advance token to the nearest utility. Roll the dice and pay the owner 10 times the amount shown. If unowned, you may buy it from the bank.');
-        add: (GetOut for: 'Get out of Jail free. This card may be kept until needed.');
-        add: (GetOut for: 'Get out of Jail free. This card may be kept until needed.');
-        add: (Move with: #direct: to: 5 for: 'Take a ride on the Reading Railroad. If you pass go, collect $200.');
-        add: (Move with: #direct: to: 40 for: 'Advance to Go.');
-        yourself.
-    deck do: [ :card | card square: aSquare].
-    ^deck! !
-
-!Chest class methodsFor: 'as yet unclassified'!
-setup: aSquare
-        "Answer the values for the Community Chest deck,
-        establishing the square to which the members of the deck
-        are associated."
-    | deck |
-    deck := OrderedCollection new
-        add: (Move with: #summarily: to: 10 for: 'Go to Jail.');
-        add: (Pay of: -100 for: 'Xmas fund matures - collect $100.');
-        add: (Pay of: -100 for: 'Life insurance matures - collect $100.');
-        add: (Pay of: -25 for: 'Receive for services $25.');
-        add: (Pay of: -100 for: 'Inherit $100.');
-        add: (Pay of: -45 for: 'From sale of stock you get $45.');
-        add: (Pay of: -10 for: 'You''ve won second prize in a beauty contest - $10.');
-        add: (Pay of: -200 for: 'Bank error in your favor - collect $200.');
-        add: (Pay of: 150 for: 'Pay school tax of $150.');
-        add: (Pay of: 100 for: 'Pay hospital $100.');
-        add: (Pay with: #fromEach: of: 50 for: 'Grand opera opening night: collect $50 from every player.');
-        add: (Pay of: 50 for: 'Doctors fee - pay $50.');
-        add: (Pay of: -20 for: 'Income tax refund - collect $20.');
-        add: (Repair of: #(40 115) for: 'Make street repairs: $40 per house; $115 per hotel.');
-        add: (GetOut for: 'Get out of Jail free. This card may be kept until needed.');
-        add: (GetOut for: 'Get out of Jail free. This card may be kept until needed.');
-        add: (Move with: #direct: to: 40 for: 'Advance to Go.');
-        yourself.
-    deck do: [ :card | card square: aSquare].
-    ^deck! !
 
 !Shelter methodsFor: 'as yet unclassified' stamp: 'dhn 5/14/2019 15:36:03'!
 result: aPlayer
