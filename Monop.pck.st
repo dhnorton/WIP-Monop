@@ -1,6 +1,6 @@
-'From Cuis 5.0 [latest update: #4042] on 21 February 2020 at 1:38:18 pm'!
+'From Cuis 5.0 [latest update: #4042] on 21 February 2020 at 4:54:37 pm'!
 'Description Simulation of the board game "Monopoly".'!
-!provides: 'Monop' 1 35!
+!provides: 'Monop' 1 36!
 !requires: 'Game' 1 44 nil!
 SystemOrganization addCategory: #'Monop-View'!
 SystemOrganization addCategory: #'Monop-Model'!
@@ -321,11 +321,17 @@ moveButton: anObject
 	
 	^ moveButton _ anObject! !
 
-!Estate methodsFor: 'initialization' stamp: 'dhn 2/20/2020 16:50:32'!
+!Estate methodsFor: 'initialization' stamp: 'dhn 2/21/2020 14:56:25'!
 setUpSpaces
 	"Initialize the board spaces"
-
-	^ self class describeSpaces! !
+	| col |
+	
+	col _ OrderedCollection new.
+	1 to: self class describeSpaces size do: [:ix |
+		col add: (BoardSpace new
+			label: (self class describeSpaces at: ix);
+			routine: ('space', ix asString) asSymbol)].
+	^ col! !
 
 !Estate methodsFor: 'initialization' stamp: 'dhn 5/16/2019 21:38:03'!
 setUpToken
@@ -356,7 +362,7 @@ setupPlayer: aName color: aColor
 		identity: aName).
 	currentPlayer _ pl! !
 
-!Estate methodsFor: 'operating' stamp: 'dhn 5/17/2019 22:16:04'!
+!Estate methodsFor: 'operating' stamp: 'dhn 2/21/2020 16:50:51'!
 cellsAt: anIndex 
 	"Show the board starting with spaces at: anIndex."
 	| str |
@@ -367,7 +373,7 @@ cellsAt: anIndex
 	1 to: cellCount do: [:m | | sp |
 		sp _ spaces atWrap: anIndex + m - 1.
 		str _ String new writeStream.
-		str nextPutAll: sp label first; newLine.
+		str nextPutAll: sp label; newLine.
 		self testMode
 			ifTrue: [str nextPutAll: sp routine asString; newLine].
 		"(cells at: m) textPane
@@ -632,73 +638,106 @@ chestCards
 		add: #(#movePlayer: #ahead 40 'Advance to Go.');
 		yourself! !
 
-!Estate class methodsFor: 'instance creation' stamp: 'dhn 2/20/2020 20:08:07'!
+!Estate class methodsFor: 'instance creation' stamp: 'dhn 2/21/2020 16:41:05'!
 describeSpaces
 	"Descriptions for the spaces on the board."
 	
 	^ OrderedCollection new
-		add: (Lot title: 'Mediterranean Avenue' price: 60 
-			rents: #(2 10 30  90 160 250) house: 50);
-		add: #('Community Chest' '!!');
-		add: (Lot title: 'Baltic Avenue' price: 60 
-			rents: #(4 20 60 180 320 450) house: 50);
-		add: #('Income Tax' '(Pay 10% or $200)');
-		add: (Railroad new description: 'Reading Railroad');
-		add: (Lot title: 'Oriental Avenue' price: 100 
-			rents: #(6 30 90 270 400 550) house: 50);
-		add: #('Chance' '?');
-		add: (Lot title: 'Vermont Avenue' price: 100 
-			rents: #(6 30 90 270 400 550) house: 50);
-		add: (Lot title: 'Connecticut Avenue' price: 120 
-			rents: #(8 40 100 300 450 600) house: 50);
-		add: #('In Jail/Just Visiting' '');
-		add: (Lot title: 'St. Charles Place' price: 140 
-			rents: #(10 50 150 450 625 750) house: 100);
-		add: (Utility new description: 'Electric Company');
-		add: (Lot title: 'States Avenue' price: 140 
-			rents: #(10 50 150 450 625 750) house: 100);
-		add: (Lot title: 'Virginia Avenue' price: 160 
-			rents: #(12 60 180 500 700 900) house: 100);
-		add: (Railroad new description: 'Pennsylvania Railroad');
-		add: (Lot title: 'St. James Place' price: 180 
-			rents: #(14 70 200 550 750 950) house: 100);
-		add: #('Community Chest' '!!!!');
-		add: (Lot title: 'Tennesee Avenue' price: 180 
-			rents: #(14 70 200 550 750 950) house: 100);
-		add: (Lot title: 'New York Avenue' price: 200 
-			rents: #(16 80 220 600 800 1000) house: 100);
-		add: #('Free Parking' '');
-		add: (Lot title: 'Kentucky Avenue' price: 220 
-			rents: #(18 90 250 700 875 1050) house: 150);
-		add: #('Chance' '??');
-		add: (Lot title: 'Indiana Avenue' price: 220 
-			rents: #(18 90 250 700 875 1050) house: 150);
-		add: (Lot title: 'Illinois Avenue' price: 240 
-			rents: #(20 100 300 750 925 1100) house: 150);
-		add: (Railroad new description: 'B. & O. Railroad');
-		add: (Lot title: 'Atlantic Avenue' price: 260 
-			rents: #(22 110 330 800 975 1150) house: 150);
-		add: (Lot title: 'Ventnor Avenue' price: 260 
-			rents: #(22 110 330 800 975 1150) house: 150);
-		add: (Utility new description: 'Water Works');
-		add: (Lot title: 'Marvin Gardens' price: 280 
-			rents: #(24 120 360 850 1025 1200) house: 150);
-		add: #('Go to Jail' '');
-		add: (Lot title: 'Pacific Avenue' price: 300 
-			rents: #(26 130 390 900 1100 1275) house: 200);
-		add: (Lot title: 'North Carolina Avenue' price: 300 
-			rents: #(26 130 390 900 1100 1275) house: 200);
-		add: #('Community Chest' '!!!!!!');
-		add: (Lot title: 'Pennsylvania Avenue' price: 320 
-			rents: #(28 150 450 1000 1200 1400) house: 200);
-		add: (Railroad new description: 'Short Line Railroad');
-		add: #('Chance' '???');
-		add: (Lot title: 'Park Place' price: 350 
-			rents: #(35 175 500 1100 1300 1500) house: 200);
-		add: #('Luxury Tax' '(Pay $75)');
-		add: (Lot title: 'Boardwalk' price: 400 
-			rents: #(50 200 600 1400 1700 2000) house: 200);
-		add: #('Go' '(Collect $200)');
+		add: 'Mediterranean Avenue
+		
+		$60';
+		add: 'Community Chest';
+		add: 'Baltic Avenue
+		
+		$60';
+		add: 'Income Tax
+		
+		(Pay 10% or $200)';
+		add:  'Reading Railroad
+		
+		$200';
+		add: 'Oriental Avenue
+		
+		$100';
+		add: 'Chance';
+		add: 'Vermont Avenue
+		
+		$100';
+		add: 'Connecticut Avenue
+		
+		$120';
+		add: 'In Jail
+		
+		Just Visiting';
+		add: 'St. Charles Place
+		
+		$140';
+		add: 'Electric Company';
+		add: 'States Avenue
+		
+		$140';
+		add: 'Virginia Avenue
+		$160';
+		add: 'Pennsylvania Railroad
+		
+		$200';
+		add: 'St. James Place
+		
+		$180';
+		add: 'Community Chest';
+		add: 'Tennesee Avenue
+		
+		$180';
+		add: 'New York Avenue
+		
+		$200';
+		add: 'Free Parking';
+		add: 'Kentucky Avenue
+		
+		$220';
+		add: 'Chance';
+		add: 'Indiana Avenue
+		
+		$220';
+		add: 'Illinois Avenue
+		
+		$240';
+		add: 'B. & O. Railroad';
+		add: 'Atlantic Avenue
+		
+		$260';
+		add: 'Ventnor Avenue
+		
+		$260';
+		add: 'Water Works';
+		add: 'Marvin Gardens
+		
+		$280';
+		add: 'Go to Jail';
+		add: 'Pacific Avenue
+		
+		$300';
+		add: 'North Carolina Avenue
+		
+		$300';
+		add: 'Community Chest';
+		add: 'Pennsylvania Avenue
+		
+		$320';
+		add: 'Short Line Railroad';
+		add: 'Chance';
+		add: 'Park Place
+		
+		$350';
+		add: 'Luxury Tax
+		
+		(Pay $75)';
+		add: 'Boardwalk
+		
+		$400';
+		add: 'Go
+		
+		(Collect $200)';
 		yourself
 ! !
 
@@ -749,6 +788,76 @@ season
 		add: (Season new range: 40; color: (Color indexedColors at: 7));
 		yourself
 		! !
+
+!Estate class methodsFor: 'instance creation' stamp: 'dhn 2/21/2020 16:07:00'!
+spaceAttributes
+	"Data for the spaces on the board."
+	
+	^ OrderedCollection new
+		add: (Lot title: 'Mediterranean Avenue' price: 60 
+			rents: #(2 10 30  90 160 250) house: 50);
+		add: (Risk new title: 'Community Chest');
+		add: (Lot title: 'Baltic Avenue' price: 60 
+			rents: #(4 20 60 180 320 450) house: 50);
+		add: (Tax new title: 'Income Tax');
+		add: (Railroad new description: 'Reading Railroad');
+		add: (Lot title: 'Oriental Avenue' price: 100 
+			rents: #(6 30 90 270 400 550) house: 50);
+		add: (Risk new title: 'Chance');
+		add: (Lot title: 'Vermont Avenue' price: 100 
+			rents: #(6 30 90 270 400 550) house: 50);
+		add: (Lot title: 'Connecticut Avenue' price: 120 
+			rents: #(8 40 100 300 450 600) house: 50);
+		add: (Shelter new title: 'In Jail/Just Visiting');
+		add: (Lot title: 'St. Charles Place' price: 140 
+			rents: #(10 50 150 450 625 750) house: 100);
+		add: (Utility new description: 'Electric Company');
+		add: (Lot title: 'States Avenue' price: 140 
+			rents: #(10 50 150 450 625 750) house: 100);
+		add: (Lot title: 'Virginia Avenue' price: 160 
+			rents: #(12 60 180 500 700 900) house: 100);
+		add: (Railroad new description: 'Pennsylvania Railroad');
+		add: (Lot title: 'St. James Place' price: 180 
+			rents: #(14 70 200 550 750 950) house: 100);
+		add: (Risk new title: 'Community Chest');
+		add: (Lot title: 'Tennesee Avenue' price: 180 
+			rents: #(14 70 200 550 750 950) house: 100);
+		add: (Lot title: 'New York Avenue' price: 200 
+			rents: #(16 80 220 600 800 1000) house: 100);
+		add: (Shelter new title: 'Free Parking');
+		add: (Lot title: 'Kentucky Avenue' price: 220 
+			rents: #(18 90 250 700 875 1050) house: 150);
+		add: (Risk new title: 'Chance');
+		add: (Lot title: 'Indiana Avenue' price: 220 
+			rents: #(18 90 250 700 875 1050) house: 150);
+		add: (Lot title: 'Illinois Avenue' price: 240 
+			rents: #(20 100 300 750 925 1100) house: 150);
+		add: (Railroad new description: 'B. & O. Railroad');
+		add: (Lot title: 'Atlantic Avenue' price: 260 
+			rents: #(22 110 330 800 975 1150) house: 150);
+		add: (Lot title: 'Ventnor Avenue' price: 260 
+			rents: #(22 110 330 800 975 1150) house: 150);
+		add: (Utility new description: 'Water Works');
+		add: (Lot title: 'Marvin Gardens' price: 280 
+			rents: #(24 120 360 850 1025 1200) house: 150);
+		add: (Risk new title: 'Go to Jail');
+		add: (Lot title: 'Pacific Avenue' price: 300 
+			rents: #(26 130 390 900 1100 1275) house: 200);
+		add: (Lot title: 'North Carolina Avenue' price: 300 
+			rents: #(26 130 390 900 1100 1275) house: 200);
+		add: (Risk new title: 'Community Chest');
+		add: (Lot title: 'Pennsylvania Avenue' price: 320 
+			rents: #(28 150 450 1000 1200 1400) house: 200);
+		add: (Railroad new description: 'Short Line Railroad');
+		add: (Risk new title: 'Chance');
+		add: (Lot title: 'Park Place' price: 350 
+			rents: #(35 175 500 1100 1300 1500) house: 200);
+		add: (Tax new title: 'Luxury Tax');
+		add: (Lot title: 'Boardwalk' price: 400 
+			rents: #(50 200 600 1400 1700 2000) house: 200);
+		add: (Shelter new title: 'Go');
+		yourself
+! !
 
 !Estate class methodsFor: 'operating' stamp: 'dhn 2/21/2020 12:10:16'!
 routines
