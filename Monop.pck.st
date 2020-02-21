@@ -1,6 +1,6 @@
-'From Cuis 5.0 [latest update: #4042] on 21 February 2020 at 11:34:35 am'!
+'From Cuis 5.0 [latest update: #4042] on 21 February 2020 at 1:38:18 pm'!
 'Description Simulation of the board game "Monopoly".'!
-!provides: 'Monop' 1 34!
+!provides: 'Monop' 1 35!
 !requires: 'Game' 1 44 nil!
 SystemOrganization addCategory: #'Monop-View'!
 SystemOrganization addCategory: #'Monop-Model'!
@@ -441,6 +441,32 @@ exceptCurrent: anAmount
 	currentPlayer tally: ttl negated
 ! !
 
+!Estate methodsFor: 'operating' stamp: 'dhn 2/21/2020 13:03:28'!
+goToJail
+	"Go directly back to jail."
+
+	self testRoutine.! !
+
+!Estate methodsFor: 'operating' stamp: 'dhn 2/21/2020 12:48:21'!
+incomeTax
+	"Charge an amount based on the larger of 10% of assets or $200."
+
+	self testRoutine.! !
+
+!Estate methodsFor: 'operating' stamp: 'dhn 2/21/2020 12:43:13'!
+landlord
+	"React as the owner."
+	"If unowned, the 'owner' is the bank and the property will be sold or auctioned."
+	"If owned, rent will be collected."
+
+	self testRoutine.! !
+
+!Estate methodsFor: 'operating' stamp: 'dhn 2/21/2020 12:59:31'!
+luxuryTax
+	"Charge a flat $75."
+
+	self testRoutine.! !
+
 !Estate methodsFor: 'operating' stamp: 'dhn 5/14/2019 21:48:46'!
 moveMoney: anArray
 	"Shuffle cash per specs in anArray"
@@ -482,12 +508,24 @@ numbersReport
 			nextPutAll: 'Cash: $';
 			nextPutAll: currentPlayer cash truncated printStringWithCommas]! !
 
+!Estate methodsFor: 'operating' stamp: 'dhn 2/21/2020 13:04:21'!
+parkFree
+	"Cool it."
+
+	self testRoutine.! !
+
 !Estate methodsFor: 'operating' stamp: 'dhn 5/16/2019 15:21:32'!
 positionBoardTo: anIndex 
 	"Change the location on the board"
 	
 	self cellsAt: anIndex.
 	self triggerEvent: #showSeasons: with: anIndex! !
+
+!Estate methodsFor: 'operating' stamp: 'dhn 2/21/2020 13:02:23'!
+salary
+	"Pay player $200."
+
+	self testRoutine.! !
 
 !Estate methodsFor: 'operating' stamp: 'dhn 5/16/2019 11:59:40'!
 seasonAt: aPosition
@@ -511,6 +549,34 @@ seasonsFrom: anIndex
 testMode
 
 	^ false! !
+
+!Estate methodsFor: 'operating' stamp: 'dhn 2/21/2020 12:56:47'!
+testRoutine
+	"Debug."
+	| where what |
+	
+	where _ self class describeSpaces at: currentPlayer position.
+	what _ where title,
+		where price 
+			ifNil: ['']
+			ifNotNil: [' $', where price asString].
+	self halt.! !
+
+!Estate methodsFor: 'operating' stamp: 'dhn 2/21/2020 12:43:52'!
+trainTrip
+	"Ride or purchase."
+	"If unowned, the 'owner' is the bank and the RR will be sold or auctioned."
+	"If owned, the ticket price will be charged based on the number of RRs owned."
+
+	self testRoutine.! !
+
+!Estate methodsFor: 'operating' stamp: 'dhn 2/21/2020 12:44:06'!
+utilityBill
+	"React as the owner."
+	"If unowned, the 'owner' is the bank and the utility will be sold or auctioned."
+	"If owned, a charge will be collected based on the roll and the number owned."
+
+	self testRoutine.! !
 
 !Estate class methodsFor: 'instance creation' stamp: 'dhn 5/14/2019 17:07:12'!
 cellsForGame
@@ -684,18 +750,18 @@ season
 		yourself
 		! !
 
-!Estate class methodsFor: 'operating' stamp: 'dhn 2/21/2020 11:30:05'!
+!Estate class methodsFor: 'operating' stamp: 'dhn 2/21/2020 12:10:16'!
 routines
 	"Answer the routines for each space on the board"
 	
 	^ OrderedCollection new
 		add: #landlord;	"Mediterranean"
-		add: #chestCard;
+		add: #drawChest;
 		add: #landlord;	"Baltic"
 		add: #incomeTax;
 		add: #trainTrip;	"Reading RR"
 		add: #landlord;	"Oriental"
-		add: #chanceCard;
+		add: #drawChance;
 		add: #landlord;	"Vermont"
 		add: #landlord;	"Connecticut"
 		add: #justVisit;	"Jail"
@@ -705,12 +771,12 @@ routines
 		add: #landlord;	"Virginia"
 		add: #trainTrip;	"Pennsylvania RR"
 		add: #landlord;	"St. James"
-		add: #chestCard;
+		add: #drawChest;
 		add: #landlord;	"Tennesee"
 		add: #landlord;	"New York"
 		add: #parkFree;
 		add: #landlord;	"Kentucky"
-		add: #chanceCard;
+		add: #drawChance;
 		add: #landlord;	"Indiana"
 		add: #landlord;	"Illinois"
 		add: #trainTrip;	"B. & O. RR"
@@ -721,10 +787,10 @@ routines
 		add: #goToJail;
 		add: #landlord;	"Pacific"
 		add: #landlord;	"North Carolina"
-		add: #chestCard;
+		add: #drawChest;
 		add: #landlord;	"Pennsylvania"
 		add: #trainTrip;	"Short Line RR"
-		add: #chanceCard;
+		add: #drawChance;
 		add: #landlord;	"Park Place"
 		add: #luxuryTax;
 		add: #landlord;	"Boardwalk"
