@@ -1,6 +1,6 @@
-'From Cuis 5.0 [latest update: #4042] on 20 February 2020 at 9:25:29 pm'!
+'From Cuis 5.0 [latest update: #4042] on 21 February 2020 at 11:34:35 am'!
 'Description Simulation of the board game "Monopoly".'!
-!provides: 'Monop' 1 33!
+!provides: 'Monop' 1 34!
 !requires: 'Game' 1 44 nil!
 SystemOrganization addCategory: #'Monop-View'!
 SystemOrganization addCategory: #'Monop-Model'!
@@ -377,6 +377,12 @@ cellsAt: anIndex
 				addAllMorphs: sp marks]]
 ! !
 
+!Estate methodsFor: 'operating' stamp: 'dhn 2/21/2020 10:42:06'!
+doSpace
+	"Perform the method associated with the space where the player is"
+
+	^ self perform: (self class routines atWrap: self currentPlayer position)! !
+
 !Estate methodsFor: 'operating' stamp: 'dhn 5/14/2019 21:54:08'!
 drawChance
 	"Draw a Chance card"
@@ -677,6 +683,53 @@ season
 		add: (Season new range: 40; color: (Color indexedColors at: 7));
 		yourself
 		! !
+
+!Estate class methodsFor: 'operating' stamp: 'dhn 2/21/2020 11:30:05'!
+routines
+	"Answer the routines for each space on the board"
+	
+	^ OrderedCollection new
+		add: #landlord;	"Mediterranean"
+		add: #chestCard;
+		add: #landlord;	"Baltic"
+		add: #incomeTax;
+		add: #trainTrip;	"Reading RR"
+		add: #landlord;	"Oriental"
+		add: #chanceCard;
+		add: #landlord;	"Vermont"
+		add: #landlord;	"Connecticut"
+		add: #justVisit;	"Jail"
+		add: #landlord;	"St. Charles"
+		add: #utilityBill;
+		add: #landlord;	"States"
+		add: #landlord;	"Virginia"
+		add: #trainTrip;	"Pennsylvania RR"
+		add: #landlord;	"St. James"
+		add: #chestCard;
+		add: #landlord;	"Tennesee"
+		add: #landlord;	"New York"
+		add: #parkFree;
+		add: #landlord;	"Kentucky"
+		add: #chanceCard;
+		add: #landlord;	"Indiana"
+		add: #landlord;	"Illinois"
+		add: #trainTrip;	"B. & O. RR"
+		add: #landlord;	"Atlantic"
+		add: #landlord;	"Ventnor"
+		add: #utilityBill;
+		add: #landlord;	"Marvin Gardens"
+		add: #goToJail;
+		add: #landlord;	"Pacific"
+		add: #landlord;	"North Carolina"
+		add: #chestCard;
+		add: #landlord;	"Pennsylvania"
+		add: #trainTrip;	"Short Line RR"
+		add: #chanceCard;
+		add: #landlord;	"Park Place"
+		add: #luxuryTax;
+		add: #landlord;	"Boardwalk"
+		add: #salary;
+		yourself! !
 
 !EstateToken methodsFor: 'initialization' stamp: 'dhn 5/16/2019 16:22:37'!
 initialize
