@@ -1,6 +1,6 @@
-'From Cuis 5.0 [latest update: #4042] on 20 February 2020 at 9:15:41 pm'!
-'Description A port from Squeak of a simulation of Monopoly.'!
-!provides: 'Monop' 1 32!
+'From Cuis 5.0 [latest update: #4042] on 20 February 2020 at 9:25:29 pm'!
+'Description Simulation of the board game "Monopoly".'!
+!provides: 'Monop' 1 33!
 !requires: 'Game' 1 44 nil!
 SystemOrganization addCategory: #'Monop-View'!
 SystemOrganization addCategory: #'Monop-Model'!
