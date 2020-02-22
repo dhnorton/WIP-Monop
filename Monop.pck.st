@@ -1,6 +1,6 @@
-'From Cuis 5.0 [latest update: #4042] on 21 February 2020 at 9:15:43 pm'!
+'From Cuis 5.0 [latest update: #4042] on 22 February 2020 at 11:39:22 am'!
 'Description Simulation of the board game "Monopoly".'!
-!provides: 'Monop' 1 38!
+!provides: 'Monop' 1 39!
 !requires: 'Game' 1 44 nil!
 SystemOrganization addCategory: #'Monop-View'!
 SystemOrganization addCategory: #'Monop-Model'!
@@ -360,27 +360,6 @@ setupPlayer: aName color: aColor
 		mgr: self;
 		identity: aName).
 	currentPlayer _ pl! !
-
-!Estate methodsFor: 'operating' stamp: 'dhn 2/21/2020 16:50:51'!
-cellsAt: anIndex 
-	"Show the board starting with spaces at: anIndex."
-	| str |
-	
-	1 to: cellCount do: [:k | 
-		(cells at: k) marksPane removeAllMorphs].
-	
-	1 to: cellCount do: [:m | | sp |
-		sp _ spaces atWrap: anIndex + m - 1.
-		str _ String new writeStream.
-		str nextPutAll: sp label; newLine.
-		self testMode
-			ifTrue: [str nextPutAll: sp routine asString; newLine].
-		"(cells at: m) textPane
-			model actualContents: str contents."
-		sp marks ifNotEmpty: [
-			(cells at: m) marksPane
-				addAllMorphs: sp marks]]
-! !
 
 !Estate methodsFor: 'operating' stamp: 'dhn 2/21/2020 10:42:06'!
 doSpace
@@ -1576,7 +1555,7 @@ includeInNewMorphMenu
 	
 	^ true! !
 
-!Monopoly class methodsFor: 'instance creation' stamp: 'dhn 5/16/2019 13:04:48'!
+!Monopoly class methodsFor: 'instance creation' stamp: 'dhn 2/22/2020 11:29:29'!
 start
 	"Start the Monopoly game"
 	| win world |
@@ -1601,7 +1580,7 @@ start
 	win board
 		addMorph: win makeSeasonsArea;
 		addMorph: win makeCellsArea.
-	win model positionBoardTo: 1.
+	win model positionBoardTo: 40.
 	win startButtonSet.
 	win showSeasons: 1.
 	
