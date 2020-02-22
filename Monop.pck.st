@@ -1,6 +1,6 @@
-'From Cuis 5.0 [latest update: #4042] on 22 February 2020 at 4:10:23 pm'!
+'From Cuis 5.0 [latest update: #4042] on 22 February 2020 at 4:33:09 pm'!
 'Description Simulation of the board game "Monopoly".'!
-!provides: 'Monop' 1 40!
+!provides: 'Monop' 1 41!
 !requires: 'Game' 1 44 nil!
 SystemOrganization addCategory: #'Monop-View'!
 SystemOrganization addCategory: #'Monop-Model'!
@@ -1172,6 +1172,40 @@ getPlayers
 	"Get the names of 2 to 8 players"
 	
 	self getPlayers: 8! !
+
+!Monopoly methodsFor: 'initialization' stamp: 'dhn 2/22/2020 16:27:20'!
+getPlayers: count
+	"Get the names of two to count players"
+	| x y cnt clrs |
+
+	model disableAll: {'Players'. 'Tour'}.
+	clrs _ Token colors shuffled.
+	cnt _ 0.
+	x _ FillInTheBlankMorph request: 'First player''s name?' initialAnswer: ''.
+	x 
+		ifEmpty: [
+			model enableAll: {'Players'. 'Tour'}.
+			^ nil]
+		ifNotEmpty: [
+			cnt _ cnt + 1.
+			model setupPlayer: x color: (clrs at: cnt)].
+	
+	[cnt < count] whileTrue: [
+		y _ FillInTheBlankMorph request: 'Next player''s name?' initialAnswer: ''.
+		y
+			ifEmpty: [
+				cnt > 1 
+					ifTrue: [self startGame]
+					ifFalse: [
+						model players: OrderedCollection new.
+						model enableAll: {'Players'. 'Tour'}].
+				^ nil]
+			ifNotEmpty: [
+				cnt _ cnt + 1.
+				model setupPlayer: y color: (clrs at: cnt)]].
+		
+	self startGame
+! !
 
 !Monopoly methodsFor: 'initialization' stamp: 'dhn 5/15/2019 12:16:23'!
 initialize
