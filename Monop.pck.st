@@ -1,6 +1,6 @@
-'From Cuis 5.0 [latest update: #4042] on 21 February 2020 at 4:54:37 pm'!
+'From Cuis 5.0 [latest update: #4042] on 21 February 2020 at 8:45:13 pm'!
 'Description Simulation of the board game "Monopoly".'!
-!provides: 'Monop' 1 36!
+!provides: 'Monop' 1 37!
 !requires: 'Game' 1 44 nil!
 SystemOrganization addCategory: #'Monop-View'!
 SystemOrganization addCategory: #'Monop-Model'!
@@ -1193,6 +1193,12 @@ getPlayers
 initialize
 
 	super initialize! !
+
+!Monopoly methodsFor: 'initialization' stamp: 'dhn 2/21/2020 20:15:51'!
+layoutSubmorphs
+
+    super layoutSubmorphs.
+    self board morphExtent: self board owner morphExtent! !
 
 !Monopoly methodsFor: 'initialization' stamp: 'dhn 5/16/2019 15:50:43'!
 makeAuctionButton
