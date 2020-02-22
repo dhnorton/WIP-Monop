@@ -1,6 +1,6 @@
-'From Cuis 5.0 [latest update: #4042] on 21 February 2020 at 8:45:13 pm'!
+'From Cuis 5.0 [latest update: #4042] on 21 February 2020 at 9:15:43 pm'!
 'Description Simulation of the board game "Monopoly".'!
-!provides: 'Monop' 1 37!
+!provides: 'Monop' 1 38!
 !requires: 'Game' 1 44 nil!
 SystemOrganization addCategory: #'Monop-View'!
 SystemOrganization addCategory: #'Monop-Model'!
@@ -321,7 +321,7 @@ moveButton: anObject
 	
 	^ moveButton _ anObject! !
 
-!Estate methodsFor: 'initialization' stamp: 'dhn 2/21/2020 14:56:25'!
+!Estate methodsFor: 'initialization' stamp: 'dhn 2/21/2020 20:49:06'!
 setUpSpaces
 	"Initialize the board spaces"
 	| col |
@@ -329,8 +329,7 @@ setUpSpaces
 	col _ OrderedCollection new.
 	1 to: self class describeSpaces size do: [:ix |
 		col add: (BoardSpace new
-			label: (self class describeSpaces at: ix);
-			routine: ('space', ix asString) asSymbol)].
+			label: (self class describeSpaces at: ix))].
 	^ col! !
 
 !Estate methodsFor: 'initialization' stamp: 'dhn 5/16/2019 21:38:03'!
@@ -583,6 +582,12 @@ utilityBill
 	"If owned, a charge will be collected based on the roll and the number owned."
 
 	self testRoutine.! !
+
+!Estate methodsFor: 'accessing' stamp: 'dhn 2/21/2020 20:55:59'!
+spaces
+	"Answer the value of spaces."
+	
+	^ spaces! !
 
 !Estate class methodsFor: 'instance creation' stamp: 'dhn 5/14/2019 17:07:12'!
 cellsForGame
@@ -1227,10 +1232,10 @@ makeButtonArea
 	^ buttonArea
 		! !
 
-!Monopoly methodsFor: 'initialization' stamp: 'dhn 5/17/2019 22:10:52'!
+!Monopoly methodsFor: 'initialization' stamp: 'dhn 2/21/2020 21:13:08'!
 makeCellsArea
 	"Lay out the area which shows some spaces of the board"
-	| cellArea box view mm |
+	| cellArea view mm mt |
 	
 	cellArea _ (LayoutMorph newRow separation: 0)
 		layoutSpec: (LayoutSpec 
@@ -1240,13 +1245,16 @@ makeCellsArea
 		name: #'cell area'.
 	
 	1 to: self class cellsForGame do: [:ix |
-		box _ ClearBox new 
-			layoutSpec: (LayoutSpec proportionalWidth: 1 / self class cellsForGame);
-			name: #'clear box'.
 		view _ (CellView newColumn
 			layoutSpec: (LayoutSpec proportionalWidth: 1 / self class cellsForGame);
 			name: #cell).
-		view addMorph: box.
+		view addMorph: (mt _ (GameCell 
+			textProvider: self
+			textGetter: #describe)
+				layoutSpec: (LayoutSpec proportionalWidth: 1.0);
+				color: self class cellColor;
+				borderWidth: 1;
+				name: 'cell text').
 		view addMorph: (mm _ (LayoutMorph newRow separation: 4)
 			layoutSpec: (LayoutSpec 
 				proportionalWidth: 1.0
@@ -1255,7 +1263,9 @@ makeCellsArea
 			color: self class cellColor;
 			padding: #center;
 			name: #marks).
-		view marksPane: mm.
+		view 
+			marksPane: mm;
+			textPane: mt.
 		model cells add: view].
 		
 	^ cellArea addAllMorphs: model cells reversed
