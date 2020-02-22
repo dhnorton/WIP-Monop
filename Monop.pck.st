@@ -1,6 +1,6 @@
-'From Cuis 5.0 [latest update: #4042] on 22 February 2020 at 11:39:22 am'!
+'From Cuis 5.0 [latest update: #4042] on 22 February 2020 at 4:10:23 pm'!
 'Description Simulation of the board game "Monopoly".'!
-!provides: 'Monop' 1 39!
+!provides: 'Monop' 1 40!
 !requires: 'Game' 1 44 nil!
 SystemOrganization addCategory: #'Monop-View'!
 SystemOrganization addCategory: #'Monop-Model'!
@@ -622,11 +622,14 @@ chestCards
 		add: #(#movePlayer: #ahead 40 'Advance to Go.');
 		yourself! !
 
-!Estate class methodsFor: 'instance creation' stamp: 'dhn 2/21/2020 16:41:05'!
+!Estate class methodsFor: 'instance creation' stamp: 'dhn 2/22/2020 16:05:17'!
 describeSpaces
 	"Descriptions for the spaces on the board."
 	
 	^ OrderedCollection new
+		add: 'Go
+		
+		(Collect $200)';
 		add: 'Mediterranean Avenue
 		
 		$60';
@@ -719,9 +722,6 @@ describeSpaces
 		add: 'Boardwalk
 		
 		$400';
-		add: 'Go
-		
-		(Collect $200)';
 		yourself
 ! !
 
@@ -1555,7 +1555,7 @@ includeInNewMorphMenu
 	
 	^ true! !
 
-!Monopoly class methodsFor: 'instance creation' stamp: 'dhn 2/22/2020 11:29:29'!
+!Monopoly class methodsFor: 'instance creation' stamp: 'dhn 2/22/2020 16:05:55'!
 start
 	"Start the Monopoly game"
 	| win world |
@@ -1580,7 +1580,7 @@ start
 	win board
 		addMorph: win makeSeasonsArea;
 		addMorph: win makeCellsArea.
-	win model positionBoardTo: 40.
+	win model positionBoardTo: 1.
 	win startButtonSet.
 	win showSeasons: 1.
 	
