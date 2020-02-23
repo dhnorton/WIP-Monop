@@ -1,6 +1,6 @@
-'From Cuis 5.0 [latest update: #4042] on 23 February 2020 at 2:49:46 pm'!
+'From Cuis 5.0 [latest update: #4042] on 23 February 2020 at 3:44:54 pm'!
 'Description Simulation of the board game "Monopoly".'!
-!provides: 'Monop' 1 45!
+!provides: 'Monop' 1 46!
 !requires: 'Game' 1 44 nil!
 SystemOrganization addCategory: #'Monop-View'!
 SystemOrganization addCategory: #'Monop-Model'!
@@ -368,11 +368,12 @@ initialButtonState
 	self enableAll: {'Move'. 'History'. 'Stats'}.
 	self disableAll: {'End Turn'. 'Purchase'. 'Auction'}! !
 
-!Estate methodsFor: 'initialization' stamp: 'dhn 2/22/2020 17:22:22'!
+!Estate methodsFor: 'initialization' stamp: 'dhn 2/23/2020 15:41:02'!
 initialize
 
-	super initialize.
-	spaces _ self setUpSpaces.
+	players _ OrderedCollection new.
+	cells _ OrderedCollection new.
+	spaces _ self class spaceAttributes.
 	spaceFreq _ GameHistogram ofSize: spaces size.
 	cellCount _ self class cellsForGame.
 	won _ false.
@@ -389,13 +390,6 @@ moveButton: anObject
 	"Set the value of moveButton"
 	
 	^ moveButton _ anObject! !
-
-!Estate methodsFor: 'initialization' stamp: 'dhn 2/23/2020 13:27:01'!
-setUpSpaces
-	"Initialize the board spaces"
-	
-	^ self class spaceAttributes
-! !
 
 !Estate methodsFor: 'initialization' stamp: 'dhn 5/16/2019 21:38:03'!
 setUpToken
@@ -426,11 +420,11 @@ setupPlayer: aName color: aColor
 		identity: aName).
 	currentPlayer _ pl! !
 
-!Estate methodsFor: 'operating' stamp: 'dhn 2/22/2020 20:14:07'!
+!Estate methodsFor: 'operating' stamp: 'dhn 2/23/2020 15:00:26'!
 doSpace
 	"Perform the method associated with the space where the player is"
 
-	^ self perform: (self class spaceAttributes atWrap: self currentPlayer position) routine! !
+	^ self perform: (spaces atWrap: self currentPlayer position) routine! !
 
 !Estate methodsFor: 'operating' stamp: 'dhn 2/22/2020 17:30:09'!
 drawChance
@@ -607,16 +601,13 @@ testMode
 
 	^ false! !
 
-!Estate methodsFor: 'operating' stamp: 'dhn 2/22/2020 17:13:35'!
+!Estate methodsFor: 'operating' stamp: 'dhn 2/23/2020 15:03:37'!
 testRoutine
 	"Debug."
 	| where what |
 	
 	where _ self class spaceAttributes at: currentPlayer position.
-	what _ where description,
-		(where price 
-			ifNil: ['']
-			ifNotNil: [' $', where price asString]).
+	what _ where label.
 	Transcript show: what; newLine.
 	self enableAll: {'End Turn'}.! !
 
@@ -695,109 +686,6 @@ chestCards
 		add: #(#getOut: nil nil 'Get out of Jail free. This card may be kept until needed.');
 		add: #(#movePlayer: #ahead 40 'Advance to Go.');
 		yourself! !
-
-!Estate class methodsFor: 'instance creation' stamp: 'dhn 2/22/2020 16:05:17'!
-describeSpaces
-	"Descriptions for the spaces on the board."
-	
-	^ OrderedCollection new
-		add: 'Go
-		
-		(Collect $200)';
-		add: 'Mediterranean Avenue
-		
-		$60';
-		add: 'Community Chest';
-		add: 'Baltic Avenue
-		
-		$60';
-		add: 'Income Tax
-		
-		(Pay 10% or $200)';
-		add:  'Reading Railroad
-		
-		$200';
-		add: 'Oriental Avenue
-		
-		$100';
-		add: 'Chance';
-		add: 'Vermont Avenue
-		
-		$100';
-		add: 'Connecticut Avenue
-		
-		$120';
-		add: 'In Jail
-		
-		Just Visiting';
-		add: 'St. Charles Place
-		
-		$140';
-		add: 'Electric Company';
-		add: 'States Avenue
-		
-		$140';
-		add: 'Virginia Avenue
-		$160';
-		add: 'Pennsylvania Railroad
-		
-		$200';
-		add: 'St. James Place
-		
-		$180';
-		add: 'Community Chest';
-		add: 'Tennesee Avenue
-		
-		$180';
-		add: 'New York Avenue
-		
-		$200';
-		add: 'Free Parking';
-		add: 'Kentucky Avenue
-		
-		$220';
-		add: 'Chance';
-		add: 'Indiana Avenue
-		
-		$220';
-		add: 'Illinois Avenue
-		
-		$240';
-		add: 'B. & O. Railroad';
-		add: 'Atlantic Avenue
-		
-		$260';
-		add: 'Ventnor Avenue
-		
-		$260';
-		add: 'Water Works';
-		add: 'Marvin Gardens
-		
-		$280';
-		add: 'Go to Jail';
-		add: 'Pacific Avenue
-		
-		$300';
-		add: 'North Carolina Avenue
-		
-		$300';
-		add: 'Community Chest';
-		add: 'Pennsylvania Avenue
-		
-		$320';
-		add: 'Short Line Railroad';
-		add: 'Chance';
-		add: 'Park Place
-		
-		$350';
-		add: 'Luxury Tax
-		
-		(Pay $75)';
-		add: 'Boardwalk
-		
-		$400';
-		yourself
-! !
 
 !Estate class methodsFor: 'instance creation' stamp: 'dhn 5/16/2019 15:17:44'!
 season
@@ -2188,6 +2076,18 @@ result: aPlayer
             ' landed. Doubles = ', aPlayer doubles printString,
             '; cash = $', aPlayer cash printString, '.'.
     aPlayer special: false.! !
+
+!Jail methodsFor: 'initialization' stamp: 'dhn 2/23/2020 15:11:20'!
+initialize
+
+	super initialize.
+	routine _ #justVisit! !
+
+!Park methodsFor: 'initialization' stamp: 'dhn 2/23/2020 15:12:12'!
+initialize
+
+	super initialize.
+	routine _ #parkFree! !
 
 !Tax methodsFor: 'as yet unclassified' stamp: 'dhn 5/14/2019 15:39:28'!
 income: aPlayer
