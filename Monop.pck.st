@@ -1,6 +1,6 @@
-'From Cuis 5.0 [latest update: #4042] on 23 February 2020 at 3:44:54 pm'!
+'From Cuis 5.0 [latest update: #4042] on 23 February 2020 at 3:52:35 pm'!
 'Description Simulation of the board game "Monopoly".'!
-!provides: 'Monop' 1 46!
+!provides: 'Monop' 1 47!
 !requires: 'Game' 1 44 nil!
 SystemOrganization addCategory: #'Monop-View'!
 SystemOrganization addCategory: #'Monop-Model'!
@@ -804,53 +804,6 @@ spaceAttributes
 			rents: #(50 200 600 1400 1700 2000) house: 200);
 		yourself
 ! !
-
-!Estate class methodsFor: 'operating' stamp: 'dhn 2/22/2020 16:52:18'!
-routines
-	"Answer the routines for each space on the board"
-	
-	^ OrderedCollection new
-		add: #salary;
-		add: #landlord;	"Mediterranean"
-		add: #drawChest;
-		add: #landlord;	"Baltic"
-		add: #incomeTax;
-		add: #trainTrip;	"Reading RR"
-		add: #landlord;	"Oriental"
-		add: #drawChance;
-		add: #landlord;	"Vermont"
-		add: #landlord;	"Connecticut"
-		add: #justVisit;	"Jail"
-		add: #landlord;	"St. Charles"
-		add: #utilityBill;
-		add: #landlord;	"States"
-		add: #landlord;	"Virginia"
-		add: #trainTrip;	"Pennsylvania RR"
-		add: #landlord;	"St. James"
-		add: #drawChest;
-		add: #landlord;	"Tennesee"
-		add: #landlord;	"New York"
-		add: #parkFree;
-		add: #landlord;	"Kentucky"
-		add: #drawChance;
-		add: #landlord;	"Indiana"
-		add: #landlord;	"Illinois"
-		add: #trainTrip;	"B. & O. RR"
-		add: #landlord;	"Atlantic"
-		add: #landlord;	"Ventnor"
-		add: #utilityBill;
-		add: #landlord;	"Marvin Gardens"
-		add: #goToJail;
-		add: #landlord;	"Pacific"
-		add: #landlord;	"North Carolina"
-		add: #drawChest;
-		add: #landlord;	"Pennsylvania"
-		add: #trainTrip;	"Short Line RR"
-		add: #drawChance;
-		add: #landlord;	"Park Place"
-		add: #luxuryTax;
-		add: #landlord;	"Boardwalk"
-		yourself! !
 
 !EstateToken methodsFor: 'initialization' stamp: 'dhn 5/16/2019 16:22:37'!
 initialize
