@@ -1,6 +1,6 @@
-'From Cuis 5.0 [latest update: #4042] on 23 February 2020 at 1:53:05 pm'!
+'From Cuis 5.0 [latest update: #4042] on 23 February 2020 at 2:49:46 pm'!
 'Description Simulation of the board game "Monopoly".'!
-!provides: 'Monop' 1 44!
+!provides: 'Monop' 1 45!
 !requires: 'Game' 1 44 nil!
 SystemOrganization addCategory: #'Monop-View'!
 SystemOrganization addCategory: #'Monop-Model'!
@@ -68,7 +68,7 @@ ClearBox class
 
 !classDefinition: #Square category: #'Monop-Model'!
 BoardSpace subclass: #Square
-	instanceVariableNames: 'position title'
+	instanceVariableNames: 'position title price'
 	classVariableNames: 'Prices Rents Sets'
 	poolDictionaries: ''
 	category: 'Monop-Model'!
@@ -88,7 +88,7 @@ Hazard class
 
 !classDefinition: #Property category: #'Monop-Model'!
 Square subclass: #Property
-	instanceVariableNames: 'mortgaged price rents set'
+	instanceVariableNames: 'mortgaged rents set'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Monop-Model'!
@@ -128,7 +128,7 @@ Utility class
 
 !classDefinition: #Risk category: #'Monop-Model'!
 Square subclass: #Risk
-	instanceVariableNames: 'cards board price'
+	instanceVariableNames: 'cards board'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Monop-Model'!
@@ -158,7 +158,7 @@ Chest class
 
 !classDefinition: #Shelter category: #'Monop-Model'!
 Square subclass: #Shelter
-	instanceVariableNames: 'price'
+	instanceVariableNames: ''
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Monop-Model'!
@@ -198,7 +198,7 @@ Park class
 
 !classDefinition: #Tax category: #'Monop-Model'!
 Square subclass: #Tax
-	instanceVariableNames: 'type price'
+	instanceVariableNames: 'type'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Monop-Model'!
@@ -1834,6 +1834,16 @@ includeInNewMorphMenu
 	"Not to be instantiated from the menu"
 	^ false! !
 
+!Square methodsFor: 'accessing' stamp: 'dhn 2/23/2020 14:35:57'!
+label: anObject
+	"Set the value of label"
+
+	label _ anObject,
+		(self price 
+			ifNil: ['']
+			ifNotNil: [' $', self price asString])
+! !
+
 !Square methodsFor: 'accessing'!
 position
         "Answer the value of the position variable."
@@ -1843,6 +1853,12 @@ position
 position: anInteger
         "Set the value of the position variable."
     position := anInteger.! !
+
+!Square methodsFor: 'accessing' stamp: 'dhn 2/23/2020 14:42:31'!
+price
+        "Answer the value of the price variable."
+
+	    ^ price! !
 
 !Square methodsFor: 'accessing' stamp: 'dhn 2/22/2020 19:15:59'!
 routine
@@ -1926,11 +1942,6 @@ mortgaged
 mortgaged: aBoolean
         "Set the Boolean value of the mortgaged variable."
     mortgaged := aBoolean.! !
-
-!Property methodsFor: 'as yet unclassified'!
-price
-        "Answer the value of the price variable."
-    ^price! !
 
 !Property methodsFor: 'as yet unclassified' stamp: 'dhn 2/20/2020 17:00:11'!
 price: anObject
@@ -2050,15 +2061,15 @@ initialize
 	houses _ 0.
 	routine _ #landlord! !
 
-!Lot class methodsFor: 'instance creation' stamp: 'dhn 2/23/2020 13:07:30'!
+!Lot class methodsFor: 'instance creation' stamp: 'dhn 2/23/2020 14:46:06'!
 title: aTitle price: aPrice rents: array house: aCost
 	"answer an instance of a lot"
 	| lot |
 
 	lot _ self new.
 	lot
-		label: aTitle;
 		price: aPrice;
+		label: aTitle;
 		rents: array;
 		houseCost: aCost.
 	^ lot! !
@@ -2130,11 +2141,6 @@ initialize: aCollection
         "Establish the initial state by setting the instance variables."
     cards := aCollection.! !
 
-!Risk methodsFor: 'as yet unclassified' stamp: 'dhn 2/22/2020 17:45:40'!
-price
-
-	^ price! !
-
 !Risk methodsFor: 'as yet unclassified' stamp: 'dhn 5/14/2019 15:31:28'!
 result: aPlayer
         "Effect the result of randomly picking one of the cards."
@@ -2152,11 +2158,6 @@ initialize
 
 	super initialize.
 	routine _ #drawChest! !
-
-!Shelter methodsFor: 'as yet unclassified' stamp: 'dhn 2/22/2020 17:55:12'!
-price
-
-	^ price! !
 
 !Shelter methodsFor: 'as yet unclassified' stamp: 'dhn 5/14/2019 15:36:03'!
 result: aPlayer
@@ -2210,11 +2211,6 @@ luxury: aPlayer
 	GamePopUp 
 		inform: aPlayer name, ' has been assessed $75.' 
 		title: self title! !
-
-!Tax methodsFor: 'as yet unclassified' stamp: 'dhn 2/22/2020 18:02:56'!
-price
-
-	^ price! !
 
 !Tax methodsFor: 'as yet unclassified'!
 result: aPlayer
