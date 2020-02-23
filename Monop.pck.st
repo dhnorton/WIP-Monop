@@ -1,6 +1,6 @@
-'From Cuis 5.0 [latest update: #4042] on 22 February 2020 at 4:33:09 pm'!
+'From Cuis 5.0 [latest update: #4042] on 22 February 2020 at 7:10:49 pm'!
 'Description Simulation of the board game "Monopoly".'!
-!provides: 'Monop' 1 41!
+!provides: 'Monop' 1 42!
 !requires: 'Game' 1 44 nil!
 SystemOrganization addCategory: #'Monop-View'!
 SystemOrganization addCategory: #'Monop-Model'!
@@ -138,7 +138,7 @@ Utility class
 
 !classDefinition: #Risk category: #'Monop-Model'!
 Square subclass: #Risk
-	instanceVariableNames: 'cards board'
+	instanceVariableNames: 'cards board price'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Monop-Model'!
@@ -148,7 +148,7 @@ Risk class
 
 !classDefinition: #Shelter category: #'Monop-Model'!
 Square subclass: #Shelter
-	instanceVariableNames: ''
+	instanceVariableNames: 'price'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Monop-Model'!
@@ -158,7 +158,7 @@ Shelter class
 
 !classDefinition: #Tax category: #'Monop-Model'!
 Square subclass: #Tax
-	instanceVariableNames: 'type'
+	instanceVariableNames: 'type price'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Monop-Model'!
@@ -302,7 +302,7 @@ initialButtonState
 	self enableAll: {'Move'. 'History'. 'Stats'}.
 	self disableAll: {'End Turn'. 'Purchase'. 'Auction'}! !
 
-!Estate methodsFor: 'initialization' stamp: 'dhn 5/14/2019 20:16:04'!
+!Estate methodsFor: 'initialization' stamp: 'dhn 2/22/2020 17:22:22'!
 initialize
 
 	super initialize.
@@ -313,7 +313,10 @@ initialize
 	demo _ 0.
 	windowCount _ 0.
 	chances _ self class chanceCards shuffled.
-	chests _ self class chestCards shuffled! !
+	drawnChances _ OrderedCollection new.
+	chests _ self class chestCards shuffled.
+	drawnChests _ OrderedCollection new.
+! !
 
 !Estate methodsFor: 'initialization' stamp: 'dhn 5/16/2019 15:59:01'!
 moveButton: anObject
@@ -367,27 +370,29 @@ doSpace
 
 	^ self perform: (self class routines atWrap: self currentPlayer position)! !
 
-!Estate methodsFor: 'operating' stamp: 'dhn 5/14/2019 21:54:08'!
+!Estate methodsFor: 'operating' stamp: 'dhn 2/22/2020 17:30:09'!
 drawChance
 	"Draw a Chance card"
 	| chan |
 	
 	chan _ self drawCard: chances discard: drawnChances.
+	self testRoutine.
 	self flag: #dhn. "If 'Get out of Jail free' is saved, it must be removed from #drawnChances"
-	self triggerEvent: #chanceDrawn with: chan last.  "open a view of the card"
+"	self triggerEvent: #chanceDrawn with: chan last. 
 	self perform: chan first with: (chan copyFrom: 2 to: 4).
-	self triggerEvent: #itemChange! !
+	self triggerEvent: #itemChange"! !
 
-!Estate methodsFor: 'operating' stamp: 'dhn 5/14/2019 21:54:38'!
+!Estate methodsFor: 'operating' stamp: 'dhn 2/22/2020 17:31:46'!
 drawChest
 	"Draw a Community Chest card"
 	| chan |
 	
 	chan _ self drawCard: chests discard: drawnChests.
-	self triggerEvent: #chestDrawn with: chan last.  "open a view of the card"
+	self testRoutine.
 	self flag: #dhn. "If 'Get out of Jail free' is saved, it must be removed from #drawnChests"
+"	self triggerEvent: #chestDrawn with: chan last.
 	self perform: chan first with: (chan copyFrom: 2 to: 4).
-	self triggerEvent: #itemChange! !
+	self triggerEvent: #itemChange"! !
 
 !Estate methodsFor: 'operating' stamp: 'dhn 5/16/2019 18:38:59'!
 endTurn
@@ -434,6 +439,12 @@ goToJail
 !Estate methodsFor: 'operating' stamp: 'dhn 2/21/2020 12:48:21'!
 incomeTax
 	"Charge an amount based on the larger of 10% of assets or $200."
+
+	self testRoutine.! !
+
+!Estate methodsFor: 'operating' stamp: 'dhn 2/22/2020 17:50:51'!
+justVisit
+	"Just visiting jail."
 
 	self testRoutine.! !
 
@@ -534,17 +545,18 @@ testMode
 
 	^ false! !
 
-!Estate methodsFor: 'operating' stamp: 'dhn 2/21/2020 12:56:47'!
+!Estate methodsFor: 'operating' stamp: 'dhn 2/22/2020 17:13:35'!
 testRoutine
 	"Debug."
 	| where what |
 	
-	where _ self class describeSpaces at: currentPlayer position.
-	what _ where title,
-		where price 
+	where _ self class spaceAttributes at: currentPlayer position.
+	what _ where description,
+		(where price 
 			ifNil: ['']
-			ifNotNil: [' $', where price asString].
-	self halt.! !
+			ifNotNil: [' $', where price asString]).
+	Transcript show: what; newLine.
+	self enableAll: {'End Turn'}.! !
 
 !Estate methodsFor: 'operating' stamp: 'dhn 2/21/2020 12:43:52'!
 trainTrip
@@ -773,26 +785,27 @@ season
 		yourself
 		! !
 
-!Estate class methodsFor: 'instance creation' stamp: 'dhn 2/21/2020 16:07:00'!
+!Estate class methodsFor: 'instance creation' stamp: 'dhn 2/22/2020 18:06:54'!
 spaceAttributes
 	"Data for the spaces on the board."
 	
 	^ OrderedCollection new
+		add: (Shelter new description: 'Go');
 		add: (Lot title: 'Mediterranean Avenue' price: 60 
 			rents: #(2 10 30  90 160 250) house: 50);
-		add: (Risk new title: 'Community Chest');
+		add: (Risk new description: 'Community Chest');
 		add: (Lot title: 'Baltic Avenue' price: 60 
 			rents: #(4 20 60 180 320 450) house: 50);
-		add: (Tax new title: 'Income Tax');
+		add: (Tax new description: 'Income Tax');
 		add: (Railroad new description: 'Reading Railroad');
 		add: (Lot title: 'Oriental Avenue' price: 100 
 			rents: #(6 30 90 270 400 550) house: 50);
-		add: (Risk new title: 'Chance');
+		add: (Risk new description: 'Chance');
 		add: (Lot title: 'Vermont Avenue' price: 100 
 			rents: #(6 30 90 270 400 550) house: 50);
 		add: (Lot title: 'Connecticut Avenue' price: 120 
 			rents: #(8 40 100 300 450 600) house: 50);
-		add: (Shelter new title: 'In Jail/Just Visiting');
+		add: (Shelter new description: 'In Jail/Just Visiting');
 		add: (Lot title: 'St. Charles Place' price: 140 
 			rents: #(10 50 150 450 625 750) house: 100);
 		add: (Utility new description: 'Electric Company');
@@ -803,15 +816,15 @@ spaceAttributes
 		add: (Railroad new description: 'Pennsylvania Railroad');
 		add: (Lot title: 'St. James Place' price: 180 
 			rents: #(14 70 200 550 750 950) house: 100);
-		add: (Risk new title: 'Community Chest');
+		add: (Risk new description: 'Community Chest');
 		add: (Lot title: 'Tennesee Avenue' price: 180 
 			rents: #(14 70 200 550 750 950) house: 100);
 		add: (Lot title: 'New York Avenue' price: 200 
 			rents: #(16 80 220 600 800 1000) house: 100);
-		add: (Shelter new title: 'Free Parking');
+		add: (Shelter new description: 'Free Parking');
 		add: (Lot title: 'Kentucky Avenue' price: 220 
 			rents: #(18 90 250 700 875 1050) house: 150);
-		add: (Risk new title: 'Chance');
+		add: (Risk new description: 'Chance');
 		add: (Lot title: 'Indiana Avenue' price: 220 
 			rents: #(18 90 250 700 875 1050) house: 150);
 		add: (Lot title: 'Illinois Avenue' price: 240 
@@ -824,30 +837,30 @@ spaceAttributes
 		add: (Utility new description: 'Water Works');
 		add: (Lot title: 'Marvin Gardens' price: 280 
 			rents: #(24 120 360 850 1025 1200) house: 150);
-		add: (Risk new title: 'Go to Jail');
+		add: (Risk new description: 'Go to Jail');
 		add: (Lot title: 'Pacific Avenue' price: 300 
 			rents: #(26 130 390 900 1100 1275) house: 200);
 		add: (Lot title: 'North Carolina Avenue' price: 300 
 			rents: #(26 130 390 900 1100 1275) house: 200);
-		add: (Risk new title: 'Community Chest');
+		add: (Risk new description: 'Community Chest');
 		add: (Lot title: 'Pennsylvania Avenue' price: 320 
 			rents: #(28 150 450 1000 1200 1400) house: 200);
 		add: (Railroad new description: 'Short Line Railroad');
-		add: (Risk new title: 'Chance');
+		add: (Risk new description: 'Chance');
 		add: (Lot title: 'Park Place' price: 350 
 			rents: #(35 175 500 1100 1300 1500) house: 200);
-		add: (Tax new title: 'Luxury Tax');
+		add: (Tax new description: 'Luxury Tax');
 		add: (Lot title: 'Boardwalk' price: 400 
 			rents: #(50 200 600 1400 1700 2000) house: 200);
-		add: (Shelter new title: 'Go');
 		yourself
 ! !
 
-!Estate class methodsFor: 'operating' stamp: 'dhn 2/21/2020 12:10:16'!
+!Estate class methodsFor: 'operating' stamp: 'dhn 2/22/2020 16:52:18'!
 routines
 	"Answer the routines for each space on the board"
 	
 	^ OrderedCollection new
+		add: #salary;
 		add: #landlord;	"Mediterranean"
 		add: #drawChest;
 		add: #landlord;	"Baltic"
@@ -887,7 +900,6 @@ routines
 		add: #landlord;	"Park Place"
 		add: #luxuryTax;
 		add: #landlord;	"Boardwalk"
-		add: #salary;
 		yourself! !
 
 !EstateToken methodsFor: 'initialization' stamp: 'dhn 5/16/2019 16:22:37'!
@@ -933,11 +945,11 @@ posAdjust
 	
 	^ (model world morphExtent x * 0.015) @ (model world morphExtent y * 8 / 10)! !
 
-!EstateToken methodsFor: 'operations' stamp: 'dhn 5/16/2019 18:33:55'!
+!EstateToken methodsFor: 'operations' stamp: 'dhn 2/22/2020 16:45:44'!
 moved
 	"Perform the results of the move"
 	
-	"model doSpace."
+	model doSpace.
 	model enableAll: {'End Turn'}! !
 
 !EstateToken methodsFor: 'operations' stamp: 'dhn 5/16/2019 16:28:16'!
@@ -2060,11 +2072,21 @@ initialize: aCollection
         "Establish the initial state by setting the instance variables."
     cards := aCollection.! !
 
+!Risk methodsFor: 'as yet unclassified' stamp: 'dhn 2/22/2020 17:45:40'!
+price
+
+	^ price! !
+
 !Risk methodsFor: 'as yet unclassified' stamp: 'dhn 5/14/2019 15:31:28'!
 result: aPlayer
         "Effect the result of randomly picking one of the cards."
     (cards at: (DieMorph new cards size) first)
         result: aPlayer! !
+
+!Shelter methodsFor: 'as yet unclassified' stamp: 'dhn 2/22/2020 17:55:12'!
+price
+
+	^ price! !
 
 !Shelter methodsFor: 'as yet unclassified' stamp: 'dhn 5/14/2019 15:36:03'!
 result: aPlayer
@@ -2100,6 +2122,11 @@ luxury: aPlayer
 	GamePopUp 
 		inform: aPlayer name, ' has been assessed $75.' 
 		title: self title! !
+
+!Tax methodsFor: 'as yet unclassified' stamp: 'dhn 2/22/2020 18:02:56'!
+price
+
+	^ price! !
 
 !Tax methodsFor: 'as yet unclassified'!
 result: aPlayer
