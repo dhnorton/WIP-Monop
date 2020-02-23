@@ -1,6 +1,6 @@
-'From Cuis 5.0 [latest update: #4042] on 22 February 2020 at 7:10:49 pm'!
+'From Cuis 5.0 [latest update: #4042] on 23 February 2020 at 1:53:05 pm'!
 'Description Simulation of the board game "Monopoly".'!
-!provides: 'Monop' 1 42!
+!provides: 'Monop' 1 44!
 !requires: 'Game' 1 44 nil!
 SystemOrganization addCategory: #'Monop-View'!
 SystemOrganization addCategory: #'Monop-Model'!
@@ -67,7 +67,7 @@ ClearBox class
 	instanceVariableNames: ''!
 
 !classDefinition: #Square category: #'Monop-Model'!
-Asset subclass: #Square
+BoardSpace subclass: #Square
 	instanceVariableNames: 'position title'
 	classVariableNames: 'Prices Rents Sets'
 	poolDictionaries: ''
@@ -84,16 +84,6 @@ Square subclass: #Hazard
 	category: 'Monop-Model'!
 !classDefinition: 'Hazard class' category: #'Monop-Model'!
 Hazard class
-	instanceVariableNames: ''!
-
-!classDefinition: #Jail category: #'Monop-Model'!
-Square subclass: #Jail
-	instanceVariableNames: ''
-	classVariableNames: ''
-	poolDictionaries: ''
-	category: 'Monop-Model'!
-!classDefinition: 'Jail class' category: #'Monop-Model'!
-Jail class
 	instanceVariableNames: ''!
 
 !classDefinition: #Property category: #'Monop-Model'!
@@ -146,6 +136,26 @@ Square subclass: #Risk
 Risk class
 	instanceVariableNames: ''!
 
+!classDefinition: #Chance category: #'Monop-Model'!
+Risk subclass: #Chance
+	instanceVariableNames: ''
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'Monop-Model'!
+!classDefinition: 'Chance class' category: #'Monop-Model'!
+Chance class
+	instanceVariableNames: ''!
+
+!classDefinition: #Chest category: #'Monop-Model'!
+Risk subclass: #Chest
+	instanceVariableNames: ''
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'Monop-Model'!
+!classDefinition: 'Chest class' category: #'Monop-Model'!
+Chest class
+	instanceVariableNames: ''!
+
 !classDefinition: #Shelter category: #'Monop-Model'!
 Square subclass: #Shelter
 	instanceVariableNames: 'price'
@@ -156,6 +166,36 @@ Square subclass: #Shelter
 Shelter class
 	instanceVariableNames: ''!
 
+!classDefinition: #Go category: #'Monop-Model'!
+Shelter subclass: #Go
+	instanceVariableNames: ''
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'Monop-Model'!
+!classDefinition: 'Go class' category: #'Monop-Model'!
+Go class
+	instanceVariableNames: ''!
+
+!classDefinition: #Jail category: #'Monop-Model'!
+Shelter subclass: #Jail
+	instanceVariableNames: ''
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'Monop-Model'!
+!classDefinition: 'Jail class' category: #'Monop-Model'!
+Jail class
+	instanceVariableNames: ''!
+
+!classDefinition: #Park category: #'Monop-Model'!
+Shelter subclass: #Park
+	instanceVariableNames: ''
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'Monop-Model'!
+!classDefinition: 'Park class' category: #'Monop-Model'!
+Park class
+	instanceVariableNames: ''!
+
 !classDefinition: #Tax category: #'Monop-Model'!
 Square subclass: #Tax
 	instanceVariableNames: 'type price'
@@ -164,6 +204,26 @@ Square subclass: #Tax
 	category: 'Monop-Model'!
 !classDefinition: 'Tax class' category: #'Monop-Model'!
 Tax class
+	instanceVariableNames: ''!
+
+!classDefinition: #Income category: #'Monop-Model'!
+Tax subclass: #Income
+	instanceVariableNames: ''
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'Monop-Model'!
+!classDefinition: 'Income class' category: #'Monop-Model'!
+Income class
+	instanceVariableNames: ''!
+
+!classDefinition: #Luxury category: #'Monop-Model'!
+Tax subclass: #Luxury
+	instanceVariableNames: ''
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'Monop-Model'!
+!classDefinition: 'Luxury class' category: #'Monop-Model'!
+Luxury class
 	instanceVariableNames: ''!
 
 !classDefinition: #Developer category: #'Monop-Model'!
@@ -253,9 +313,6 @@ A square on the board.!
 !Hazard commentStamp: '<historical>' prior: 0!
 A square where bad things occur.!
 
-!Jail commentStamp: '<historical>' prior: 0!
-The Jail square.!
-
 !Property commentStamp: '<historical>' prior: 0!
 A square which can be bought and sold. Entitles the owner to collect rent as long as it is unmortgaged.!
 
@@ -274,8 +331,17 @@ A square which can specify a risk or a reward.!
 !Shelter commentStamp: '<historical>' prior: 0!
 A square which provides a breather from the rent race.!
 
+!Jail commentStamp: '<historical>' prior: 0!
+The Jail square.!
+
 !Tax commentStamp: '<historical>' prior: 0!
 A square which demands payment of tax.!
+
+!Income commentStamp: '<historical>' prior: 0!
+Charge the player income tax.!
+
+!Luxury commentStamp: '<historical>' prior: 0!
+Charge the player luxury tax.!
 
 !Developer commentStamp: '<historical>' prior: 0!
 A player in Monopoly.!
@@ -324,16 +390,12 @@ moveButton: anObject
 	
 	^ moveButton _ anObject! !
 
-!Estate methodsFor: 'initialization' stamp: 'dhn 2/21/2020 20:49:06'!
+!Estate methodsFor: 'initialization' stamp: 'dhn 2/23/2020 13:27:01'!
 setUpSpaces
 	"Initialize the board spaces"
-	| col |
 	
-	col _ OrderedCollection new.
-	1 to: self class describeSpaces size do: [:ix |
-		col add: (BoardSpace new
-			label: (self class describeSpaces at: ix))].
-	^ col! !
+	^ self class spaceAttributes
+! !
 
 !Estate methodsFor: 'initialization' stamp: 'dhn 5/16/2019 21:38:03'!
 setUpToken
@@ -364,11 +426,11 @@ setupPlayer: aName color: aColor
 		identity: aName).
 	currentPlayer _ pl! !
 
-!Estate methodsFor: 'operating' stamp: 'dhn 2/21/2020 10:42:06'!
+!Estate methodsFor: 'operating' stamp: 'dhn 2/22/2020 20:14:07'!
 doSpace
 	"Perform the method associated with the space where the player is"
 
-	^ self perform: (self class routines atWrap: self currentPlayer position)! !
+	^ self perform: (self class spaceAttributes atWrap: self currentPlayer position) routine! !
 
 !Estate methodsFor: 'operating' stamp: 'dhn 2/22/2020 17:30:09'!
 drawChance
@@ -785,71 +847,71 @@ season
 		yourself
 		! !
 
-!Estate class methodsFor: 'instance creation' stamp: 'dhn 2/22/2020 18:06:54'!
+!Estate class methodsFor: 'instance creation' stamp: 'dhn 2/23/2020 13:10:47'!
 spaceAttributes
 	"Data for the spaces on the board."
 	
 	^ OrderedCollection new
-		add: (Shelter new description: 'Go');
+		add: (Go new label: 'Go Collect $200');
 		add: (Lot title: 'Mediterranean Avenue' price: 60 
 			rents: #(2 10 30  90 160 250) house: 50);
-		add: (Risk new description: 'Community Chest');
+		add: (Chest new label: 'Community Chest');
 		add: (Lot title: 'Baltic Avenue' price: 60 
 			rents: #(4 20 60 180 320 450) house: 50);
-		add: (Tax new description: 'Income Tax');
-		add: (Railroad new description: 'Reading Railroad');
+		add: (Income new label: 'Income Tax');
+		add: (Railroad new label: 'Reading Railroad');
 		add: (Lot title: 'Oriental Avenue' price: 100 
 			rents: #(6 30 90 270 400 550) house: 50);
-		add: (Risk new description: 'Chance');
+		add: (Chance new label: 'Chance');
 		add: (Lot title: 'Vermont Avenue' price: 100 
 			rents: #(6 30 90 270 400 550) house: 50);
 		add: (Lot title: 'Connecticut Avenue' price: 120 
 			rents: #(8 40 100 300 450 600) house: 50);
-		add: (Shelter new description: 'In Jail/Just Visiting');
+		add: (Jail new label: 'In Jail/Just Visiting');
 		add: (Lot title: 'St. Charles Place' price: 140 
 			rents: #(10 50 150 450 625 750) house: 100);
-		add: (Utility new description: 'Electric Company');
+		add: (Utility new label: 'Electric Company');
 		add: (Lot title: 'States Avenue' price: 140 
 			rents: #(10 50 150 450 625 750) house: 100);
 		add: (Lot title: 'Virginia Avenue' price: 160 
 			rents: #(12 60 180 500 700 900) house: 100);
-		add: (Railroad new description: 'Pennsylvania Railroad');
+		add: (Railroad new label: 'Pennsylvania Railroad');
 		add: (Lot title: 'St. James Place' price: 180 
 			rents: #(14 70 200 550 750 950) house: 100);
-		add: (Risk new description: 'Community Chest');
+		add: (Chest new label: 'Community Chest');
 		add: (Lot title: 'Tennesee Avenue' price: 180 
 			rents: #(14 70 200 550 750 950) house: 100);
 		add: (Lot title: 'New York Avenue' price: 200 
 			rents: #(16 80 220 600 800 1000) house: 100);
-		add: (Shelter new description: 'Free Parking');
+		add: (Park new label: 'Free Parking');
 		add: (Lot title: 'Kentucky Avenue' price: 220 
 			rents: #(18 90 250 700 875 1050) house: 150);
-		add: (Risk new description: 'Chance');
+		add: (Chance new label: 'Chance');
 		add: (Lot title: 'Indiana Avenue' price: 220 
 			rents: #(18 90 250 700 875 1050) house: 150);
 		add: (Lot title: 'Illinois Avenue' price: 240 
 			rents: #(20 100 300 750 925 1100) house: 150);
-		add: (Railroad new description: 'B. & O. Railroad');
+		add: (Railroad new label: 'B. & O. Railroad');
 		add: (Lot title: 'Atlantic Avenue' price: 260 
 			rents: #(22 110 330 800 975 1150) house: 150);
 		add: (Lot title: 'Ventnor Avenue' price: 260 
 			rents: #(22 110 330 800 975 1150) house: 150);
-		add: (Utility new description: 'Water Works');
+		add: (Utility new label: 'Water Works');
 		add: (Lot title: 'Marvin Gardens' price: 280 
 			rents: #(24 120 360 850 1025 1200) house: 150);
-		add: (Risk new description: 'Go to Jail');
+		add: (Hazard new label: 'Go to Jail');
 		add: (Lot title: 'Pacific Avenue' price: 300 
 			rents: #(26 130 390 900 1100 1275) house: 200);
 		add: (Lot title: 'North Carolina Avenue' price: 300 
 			rents: #(26 130 390 900 1100 1275) house: 200);
-		add: (Risk new description: 'Community Chest');
+		add: (Chest new label: 'Community Chest');
 		add: (Lot title: 'Pennsylvania Avenue' price: 320 
 			rents: #(28 150 450 1000 1200 1400) house: 200);
-		add: (Railroad new description: 'Short Line Railroad');
-		add: (Risk new description: 'Chance');
+		add: (Railroad new label: 'Short Line Railroad');
+		add: (Chance new label: 'Chance');
 		add: (Lot title: 'Park Place' price: 350 
 			rents: #(35 175 500 1100 1300 1500) house: 200);
-		add: (Tax new description: 'Luxury Tax');
+		add: (Luxury new label: 'Luxury Tax');
 		add: (Lot title: 'Boardwalk' price: 400 
 			rents: #(50 200 600 1400 1700 2000) house: 200);
 		yourself
@@ -1772,32 +1834,38 @@ includeInNewMorphMenu
 	"Not to be instantiated from the menu"
 	^ false! !
 
-!Square methodsFor: 'as yet unclassified'!
+!Square methodsFor: 'accessing'!
 position
         "Answer the value of the position variable."
     ^position! !
 
-!Square methodsFor: 'as yet unclassified'!
+!Square methodsFor: 'accessing'!
 position: anInteger
         "Set the value of the position variable."
     position := anInteger.! !
 
-!Square methodsFor: 'as yet unclassified'!
+!Square methodsFor: 'accessing' stamp: 'dhn 2/22/2020 19:15:59'!
+routine
+	"Answer the value of routine."
+	
+	^ routine! !
+
+!Square methodsFor: 'accessing'!
+title
+        "Answer the value of the title variable."
+    ^title! !
+
+!Square methodsFor: 'accessing'!
+title: aString
+        "Set the value of the title variable."
+    title := aString.! !
+
+!Square methodsFor: 'operating'!
 result: aPlayer
         "Effect the result of aPlayer landing on the square."
     aPlayer passedGo ifTrue: [
         aPlayer cash: aPlayer cash + 200.
         aPlayer passedGo: false ].! !
-
-!Square methodsFor: 'as yet unclassified'!
-title
-        "Answer the value of the title variable."
-    ^title! !
-
-!Square methodsFor: 'as yet unclassified'!
-title: aString
-        "Set the value of the title variable."
-    title := aString.! !
 
 !Square class methodsFor: 'as yet unclassified'!
 for: aPosition title: aString
@@ -1806,7 +1874,7 @@ for: aPosition title: aString
         position: aPosition;
         title: aString! !
 
-!Hazard methodsFor: 'as yet unclassified' stamp: 'dhn 5/14/2019 12:00:45'!
+!Hazard methodsFor: 'operating' stamp: 'dhn 5/14/2019 12:00:45'!
 result: aPlayer
         "Effect the result of aPlayer landing on 'Go to Jail'."
 
@@ -1818,17 +1886,11 @@ result: aPlayer
             '; cash = $', aPlayer cash printString, '.'.
     aPlayer special: false.! !
 
-!Jail methodsFor: 'as yet unclassified' stamp: 'dhn 5/14/2019 12:01:24'!
-result: aPlayer
-        "Effect the result of aPlayer landing on the square."
+!Hazard methodsFor: 'initialization' stamp: 'dhn 2/23/2020 13:49:06'!
+initialize
 
-    super result: aPlayer.
-    GamePopUp 
-		inform: 'This is where ',
-            aPlayer name,
-            ' landed. Doubles = ', aPlayer doubles printString,
-            '; cash = $', aPlayer cash printString, '.'.
-    aPlayer special: false.! !
+	super initialize.
+	routine _ #goToJail! !
 
 !Property methodsFor: 'as yet unclassified'!
 complete
@@ -1864,16 +1926,6 @@ mortgaged
 mortgaged: aBoolean
         "Set the Boolean value of the mortgaged variable."
     mortgaged := aBoolean.! !
-
-!Property methodsFor: 'as yet unclassified'!
-owner
-        "Answer the owner of the property."
-    ^owner! !
-
-!Property methodsFor: 'as yet unclassified'!
-owner: anObject
-        "Set the value of the owner variable."
-    owner := anObject.! !
 
 !Property methodsFor: 'as yet unclassified'!
 price
@@ -1990,20 +2042,22 @@ rent: aPlayer
         ifTrue: [ ^2 * ( rents at: 1) ].
     ^rents at: ( self houses + 1 )! !
 
-!Lot methodsFor: 'initialization' stamp: 'dhn 2/20/2020 17:23:26'!
+!Lot methodsFor: 'initialization' stamp: 'dhn 2/23/2020 13:42:50'!
 initialize
 
+	super initialize.
 	mortgaged _ false.
-	houses _ 0.	! !
+	houses _ 0.
+	routine _ #landlord! !
 
-!Lot class methodsFor: 'instance creation' stamp: 'dhn 2/20/2020 16:57:23'!
+!Lot class methodsFor: 'instance creation' stamp: 'dhn 2/23/2020 13:07:30'!
 title: aTitle price: aPrice rents: array house: aCost
 	"answer an instance of a lot"
 	| lot |
 
 	lot _ self new.
 	lot
-		description: aTitle;
+		label: aTitle;
 		price: aPrice;
 		rents: array;
 		houseCost: aCost.
@@ -2031,11 +2085,13 @@ rent: aPlayer
             amt := 2 * amt ].
     ^amt! !
 
-!Railroad methodsFor: 'initialization' stamp: 'dhn 2/20/2020 20:00:29'!
+!Railroad methodsFor: 'initialization' stamp: 'dhn 2/23/2020 13:44:26'!
 initialize
 
+	super initialize.
 	price _ 200.
-	mortgaged _ false.! !
+	mortgaged _ false.
+	routine _ #trainTrip! !
 
 !Utility methodsFor: 'operating' stamp: 'dhn 5/14/2019 15:30:21'!
 rent: aPlayer
@@ -2051,11 +2107,13 @@ rent: aPlayer
             amt := 10 * (DieMorph new) ].
     ^amt! !
 
-!Utility methodsFor: 'initialization' stamp: 'dhn 2/20/2020 20:10:11'!
+!Utility methodsFor: 'initialization' stamp: 'dhn 2/23/2020 13:44:39'!
 initialize
 
+	super initialize.
 	price _ 150.
-	mortgaged _ false.! !
+	mortgaged _ false.
+	routine _ #utilityBill! !
 
 !Risk methodsFor: 'as yet unclassified'!
 board
@@ -2083,6 +2141,18 @@ result: aPlayer
     (cards at: (DieMorph new cards size) first)
         result: aPlayer! !
 
+!Chance methodsFor: 'initialization' stamp: 'dhn 2/23/2020 13:43:55'!
+initialize
+
+	super initialize.
+	routine _ #drawChance! !
+
+!Chest methodsFor: 'initialization' stamp: 'dhn 2/23/2020 13:43:45'!
+initialize
+
+	super initialize.
+	routine _ #drawChest! !
+
 !Shelter methodsFor: 'as yet unclassified' stamp: 'dhn 2/22/2020 17:55:12'!
 price
 
@@ -2099,6 +2169,24 @@ result: aPlayer
 			aPlayer doubles printString, '; cash = $', aPlayer cash printString, '.' 
 		title: self title.
 	aPlayer special: false.! !
+
+!Go methodsFor: 'initialization' stamp: 'dhn 2/23/2020 13:39:30'!
+initialize
+
+	super initialize.
+	routine _ #salary! !
+
+!Jail methodsFor: 'as yet unclassified' stamp: 'dhn 5/14/2019 12:01:24'!
+result: aPlayer
+        "Effect the result of aPlayer landing on the square."
+
+    super result: aPlayer.
+    GamePopUp 
+		inform: 'This is where ',
+            aPlayer name,
+            ' landed. Doubles = ', aPlayer doubles printString,
+            '; cash = $', aPlayer cash printString, '.'.
+    aPlayer special: false.! !
 
 !Tax methodsFor: 'as yet unclassified' stamp: 'dhn 5/14/2019 15:39:28'!
 income: aPlayer
@@ -2143,6 +2231,18 @@ type: aPosition
     methods at: 4 put: #income:;
         at: 38 put: #luxury: .
     ^methods at: aPosition! !
+
+!Income methodsFor: 'initialization' stamp: 'dhn 2/23/2020 13:45:18'!
+initialize
+
+	super initialize.
+	routine _ #incomeTax! !
+
+!Luxury methodsFor: 'initialization' stamp: 'dhn 2/23/2020 13:45:30'!
+initialize
+
+	super initialize.
+	routine _ #luxuryTax! !
 
 !Developer methodsFor: 'as yet unclassified' stamp: 'dhn 5/17/2019 12:29:19'!
 assess: anInteger
