@@ -1,6 +1,6 @@
-'From Cuis 5.0 [latest update: #4042] on 23 February 2020 at 8:17:30 pm'!
+'From Cuis 5.0 [latest update: #4042] on 23 February 2020 at 9:24:53 pm'!
 'Description Simulation of the board game "Monopoly".'!
-!provides: 'Monop' 1 49!
+!provides: 'Monop' 1 50!
 !requires: 'Game' 1 44 nil!
 SystemOrganization addCategory: #'Monop-View'!
 SystemOrganization addCategory: #'Monop-Model'!
@@ -8,7 +8,7 @@ SystemOrganization addCategory: #'Monop-Model'!
 
 !classDefinition: #Estate category: #'Monop-Model'!
 Game subclass: #Estate
-	instanceVariableNames: 'demo windowCount moveButton'
+	instanceVariableNames: 'demo windowCount moveButton statsItem'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Monop-Model'!
@@ -54,6 +54,16 @@ GameView subclass: #ForSale
 	category: 'Monop-View'!
 !classDefinition: 'ForSale class' category: #'Monop-View'!
 ForSale class
+	instanceVariableNames: ''!
+
+!classDefinition: #MonopStats category: #'Monop-View'!
+GameView subclass: #MonopStats
+	instanceVariableNames: 'textPane'
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'Monop-View'!
+!classDefinition: 'MonopStats class' category: #'Monop-View'!
+MonopStats class
 	instanceVariableNames: ''!
 
 !classDefinition: #ClearBox category: #'Monop-View'!
@@ -304,6 +314,9 @@ Monopoly start.!
 !ForSale commentStamp: '<historical>' prior: 0!
 A window for buying or auctioning an unowned property.!
 
+!MonopStats commentStamp: '<historical>' prior: 0!
+A Monopoly window which shows statistics about the player's assets, the player, and others.!
+
 !ClearBox commentStamp: '<historical>' prior: 0!
 The boxed area of a cell.!
 
@@ -421,6 +434,48 @@ setupPlayer: aName color: aColor
 		mgr: self;
 		identity: aName).
 	currentPlayer _ pl! !
+
+!Estate methodsFor: 'statistics' stamp: 'dhn 2/23/2020 20:59:01'!
+statsItem
+	"Answer the value of statsItem"
+
+	statsItem ifNil: [statsItem _ 0]. 	"nil is unacceptable during model initialization"
+	^ statsItem! !
+
+!Estate methodsFor: 'statistics' stamp: 'dhn 2/23/2020 20:59:45'!
+statsItem: anObject
+	"Set the value of statsItem"
+	
+	(statsItem _ anObject) ifNotNil: [
+		self triggerEvent: #itemChange.
+		self changed: #statsItem]! !
+
+!Estate methodsFor: 'statistics' stamp: 'dhn 2/23/2020 21:22:13'!
+statsList
+	"Answer a list for the status window"
+	
+	^ {'Yourself'. 'Players'. 'Hints'}! !
+
+!Estate methodsFor: 'statistics' stamp: 'dhn 2/23/2020 21:00:23'!
+statsReport
+	"Answer the status report for the asset listed at statsItem"
+
+	statsItem > 0
+		ifTrue: [^ self statsReport: (self statsList at: statsItem)]
+		ifFalse: [^ '']
+! !
+
+!Estate methodsFor: 'statistics' stamp: 'dhn 2/23/2020 21:00:46'!
+statsReport: aString
+	"Answer the status of an asset named aString, possessed by the current player"
+	| p |
+	
+	p _ currentPlayer assets at: aString ifAbsent: [^ 'No such asset named ', aString].
+	^ String streamContents: [:str |
+		str
+			nextPutAll: p description;
+			nextPut: $:; newLine;
+			nextPutAll: (p reportAsAssetFor: currentPlayer); newLine]! !
 
 !Estate methodsFor: 'operating' stamp: 'dhn 2/23/2020 15:00:26'!
 doSpace
@@ -630,6 +685,13 @@ utilityBill
 	"If owned, a charge will be collected based on the roll and the number owned."
 
 	self testRoutine.! !
+
+!Estate methodsFor: 'operating' stamp: 'dhn 2/23/2020 21:14:06'!
+windowPosition: aPoint
+	"Answer a staggered position for a window"
+	
+	windowCount _ windowCount + 1.
+	^ aPoint + (windowCount * (20@20))! !
 
 !Estate methodsFor: 'accessing' stamp: 'dhn 2/21/2020 20:55:59'!
 spaces
@@ -1301,6 +1363,27 @@ startGame
 		nextPlayer.
 	model initialButtonState! !
 
+!Monopoly methodsFor: 'windows' stamp: 'dhn 2/23/2020 20:47:42'!
+showStats
+	"Open a window on a player's statistics"
+	| pl win |
+		
+	pl _ model currentPlayer.
+	win _ MonopStats openOn: model.
+	win openInWorld: pasteup.
+	win
+		setLabel: pl identity, '''s Statistics';
+		setWindowColor: pl color;
+		morphPosition: self windowPosition;
+		morphExtent: 300 @ 260.
+	model disableAll: {'Stats'}! !
+
+!Monopoly methodsFor: 'windows' stamp: 'dhn 2/23/2020 21:15:08'!
+windowPosition
+	"Answer the position for a window"
+	
+	^ self morphPosition + (model windowPosition: self class viewPositionLeft)! !
+
 !Monopoly class methodsFor: 'as yet unclassified'!
 priceFor: anInteger
         "Return a price for the property at board position anInteger."
@@ -1549,6 +1632,51 @@ viewPosition
 	"Answer the basic position for instances of this class"
 	
 	^ Display center! !
+
+!MonopStats methodsFor: 'termination' stamp: 'dhn 2/23/2020 20:44:15'!
+closeBoxHit
+
+	model 
+		statsItem: nil;
+		enableAll: {'Stats'}.
+	super closeBoxHit! !
+
+!MonopStats methodsFor: 'termination' stamp: 'dhn 2/23/2020 20:44:43'!
+endIt
+	
+	model 
+		statsItem: nil;
+		enableAll: {'Stats'}.
+	self delete! !
+
+!MonopStats methodsFor: 'accessing' stamp: 'dhn 2/23/2020 20:45:16'!
+details
+
+	textPane model actualContents: model statsReport 	"note that the textPane model differs from the model for this view"! !
+
+!MonopStats methodsFor: 'initialization' stamp: 'dhn 2/23/2020 20:43:13'!
+buildMorphicWindow
+	"Lay out the window for statistics"
+	| list |
+	
+	self layoutMorph beRow.
+	list _ (PluggableListMorph
+		model: model
+		listGetter: #statsList
+		indexGetter: #statsItem
+		indexSetter: #statsItem:
+		mainView: self
+		menuGetter: nil
+		keystrokeAction: nil)
+			name: 'stats list'.
+	textPane _ (TextModelMorph
+		withModel: (TextModel withText: '')) 	"note the different model specification"
+			askBeforeDiscardingEdits: false;	"discard changes to the text"
+			name: 'stat description'. 	"give the TextModelMorph a name which will appear in the halos"
+
+	self layoutMorph
+		addMorph: list proportionalWidth: 0.6;
+		addAdjusterAndMorph: textPane layoutSpec: (LayoutSpec useAll)! !
 
 !ClearBox methodsFor: 'initialization' stamp: 'dhn 5/20/2019 12:39:52'!
 initialize
