@@ -1,6 +1,6 @@
-'From Cuis 5.0 [latest update: #4042] on 24 February 2020 at 2:11:30 pm'!
+'From Cuis 5.0 [latest update: #4042] on 24 February 2020 at 5:24:25 pm'!
 'Description Simulation of the board game "Monopoly".'!
-!provides: 'Monop' 1 48!
+!provides: 'Monop' 1 49!
 !requires: 'Game' 1 44 nil!
 SystemOrganization addCategory: #'Monop-View'!
 SystemOrganization addCategory: #'Monop-Model'!
@@ -572,6 +572,31 @@ luxuryTax
 
 	currentPlayer tally: -75.
 	self testRoutine.! !
+
+!Estate methodsFor: 'operating' stamp: 'dhn 2/24/2020 17:22:13'!
+move
+	"Roll the dice"
+	| die1 die2 s |
+	
+	self disableAll: {'Move'}.
+	die1 _ DieMorph new openInWorld: world.
+	die1 model: self.
+	die2 _ DieMorph new openInWorld: world.
+	die2 model: self.
+	currentPlayer die: die1.
+
+	s _ token morphExtent x * 50 / 132.
+	die1 
+		morphExtent: s@s;
+		setDots;
+		referencePosition: token referencePosition - (0@1.5 * token morphHeight).
+	die2 
+		morphExtent: s@s;
+		setDots;
+		referencePosition: token referencePosition - (0@2.5 * token morphHeight).
+
+	die1 show: die1 class faces shuffled.
+	"die2 show: die2 class faces shuffled."! !
 
 !Estate methodsFor: 'operating' stamp: 'dhn 5/14/2019 21:48:46'!
 moveMoney: anArray
