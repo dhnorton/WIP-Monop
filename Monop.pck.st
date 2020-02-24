@@ -1,6 +1,6 @@
-'From Cuis 5.0 [latest update: #4042] on 23 February 2020 at 7:25:27 pm'!
+'From Cuis 5.0 [latest update: #4042] on 23 February 2020 at 8:17:30 pm'!
 'Description Simulation of the board game "Monopoly".'!
-!provides: 'Monop' 1 48!
+!provides: 'Monop' 1 49!
 !requires: 'Game' 1 44 nil!
 SystemOrganization addCategory: #'Monop-View'!
 SystemOrganization addCategory: #'Monop-Model'!
@@ -492,10 +492,11 @@ goToJail
 
 	self testRoutine.! !
 
-!Estate methodsFor: 'operating' stamp: 'dhn 2/21/2020 12:48:21'!
+!Estate methodsFor: 'operating' stamp: 'dhn 2/23/2020 19:46:58'!
 incomeTax
 	"Charge an amount based on the larger of 10% of assets or $200."
 
+	currentPlayer tally: -200.
 	self testRoutine.! !
 
 !Estate methodsFor: 'operating' stamp: 'dhn 2/22/2020 17:50:51'!
@@ -512,10 +513,11 @@ landlord
 
 	self testRoutine.! !
 
-!Estate methodsFor: 'operating' stamp: 'dhn 2/21/2020 12:59:31'!
+!Estate methodsFor: 'operating' stamp: 'dhn 2/23/2020 20:10:24'!
 luxuryTax
 	"Charge a flat $75."
 
+	currentPlayer tally: -75.
 	self testRoutine.! !
 
 !Estate methodsFor: 'operating' stamp: 'dhn 5/14/2019 21:48:46'!
@@ -1683,12 +1685,14 @@ title: aString
         "Set the value of the title variable."
     title := aString.! !
 
-!Square methodsFor: 'operating'!
+!Square methodsFor: 'operating' stamp: 'dhn 2/23/2020 19:50:02'!
 result: aPlayer
-        "Effect the result of aPlayer landing on the square."
-    aPlayer passedGo ifTrue: [
-        aPlayer cash: aPlayer cash + 200.
-        aPlayer passedGo: false ].! !
+	"Effect the result of aPlayer landing on the square."
+	
+	aPlayer passedGo 
+		ifTrue: [
+			aPlayer tally: 200.
+			aPlayer passedGo: false ]! !
 
 !Square class methodsFor: 'as yet unclassified'!
 for: aPosition title: aString
