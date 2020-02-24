@@ -1,6 +1,6 @@
 'From Cuis 5.0 [latest update: #4042] on 23 February 2020 at 9:24:53 pm'!
 'Description Simulation of the board game "Monopoly".'!
-!provides: 'Monop' 1 50!
+!provides: 'Monop' 1 47!
 !requires: 'Game' 1 44 nil!
 SystemOrganization addCategory: #'Monop-View'!
 SystemOrganization addCategory: #'Monop-Model'!
@@ -8,7 +8,7 @@ SystemOrganization addCategory: #'Monop-Model'!
 
 !classDefinition: #Estate category: #'Monop-Model'!
 Game subclass: #Estate
-	instanceVariableNames: 'demo windowCount moveButton statsItem'
+	instanceVariableNames: 'demo windowCount chances drawnChances chests drawnChests moveButton'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Monop-Model'!
@@ -78,7 +78,7 @@ ClearBox class
 
 !classDefinition: #Square category: #'Monop-Model'!
 BoardSpace subclass: #Square
-	instanceVariableNames: 'position title owner price'
+	instanceVariableNames: 'position title price'
 	classVariableNames: 'Prices Rents Sets'
 	poolDictionaries: ''
 	category: 'Monop-Model'!
@@ -138,7 +138,7 @@ Utility class
 
 !classDefinition: #Risk category: #'Monop-Model'!
 Square subclass: #Risk
-	instanceVariableNames: 'board'
+	instanceVariableNames: 'cards board'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Monop-Model'!
@@ -148,7 +148,7 @@ Risk class
 
 !classDefinition: #Chance category: #'Monop-Model'!
 Risk subclass: #Chance
-	instanceVariableNames: 'cards drawnCards'
+	instanceVariableNames: ''
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Monop-Model'!
@@ -158,7 +158,7 @@ Chance class
 
 !classDefinition: #Chest category: #'Monop-Model'!
 Risk subclass: #Chest
-	instanceVariableNames: 'cards drawnCards'
+	instanceVariableNames: ''
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Monop-Model'!
@@ -341,12 +341,6 @@ A utility property.!
 !Risk commentStamp: '<historical>' prior: 0!
 A square which can specify a risk or a reward.!
 
-!Chance commentStamp: '<historical>' prior: 0!
-The deck of Chance cards.!
-
-!Chest commentStamp: '<historical>' prior: 0!
-The deck of Community Chest cards.!
-
 !Shelter commentStamp: '<historical>' prior: 0!
 A square which provides a breather from the rent race.!
 
@@ -387,7 +381,7 @@ initialButtonState
 	self enableAll: {'Move'. 'History'. 'Stats'}.
 	self disableAll: {'End Turn'. 'Purchase'. 'Auction'}! !
 
-!Estate methodsFor: 'initialization' stamp: 'dhn 2/23/2020 18:05:22'!
+!Estate methodsFor: 'initialization' stamp: 'dhn 2/23/2020 15:41:02'!
 initialize
 
 	players _ OrderedCollection new.
@@ -398,6 +392,10 @@ initialize
 	won _ false.
 	demo _ 0.
 	windowCount _ 0.
+	chances _ self class chanceCards shuffled.
+	drawnChances _ OrderedCollection new.
+	chests _ self class chestCards shuffled.
+	drawnChests _ OrderedCollection new.
 ! !
 
 !Estate methodsFor: 'initialization' stamp: 'dhn 5/16/2019 15:59:01'!
@@ -483,22 +481,24 @@ doSpace
 
 	^ self perform: (spaces atWrap: self currentPlayer position) routine! !
 
-!Estate methodsFor: 'operating' stamp: 'dhn 2/23/2020 17:54:45'!
+!Estate methodsFor: 'operating' stamp: 'dhn 2/22/2020 17:30:09'!
 drawChance
 	"Draw a Chance card"
-
-	(spaces at: currentPlayer position) draw.	
+	| chan |
+	
+	chan _ self drawCard: chances discard: drawnChances.
 	self testRoutine.
 	self flag: #dhn. "If 'Get out of Jail free' is saved, it must be removed from #drawnChances"
 "	self triggerEvent: #chanceDrawn with: chan last. 
 	self perform: chan first with: (chan copyFrom: 2 to: 4).
 	self triggerEvent: #itemChange"! !
 
-!Estate methodsFor: 'operating' stamp: 'dhn 2/23/2020 18:00:14'!
+!Estate methodsFor: 'operating' stamp: 'dhn 2/22/2020 17:31:46'!
 drawChest
 	"Draw a Community Chest card"
+	| chan |
 	
-	(spaces at: currentPlayer position) draw.	
+	chan _ self drawCard: chests discard: drawnChests.
 	self testRoutine.
 	self flag: #dhn. "If 'Get out of Jail free' is saved, it must be removed from #drawnChests"
 "	self triggerEvent: #chestDrawn with: chan last.
@@ -658,7 +658,7 @@ testMode
 
 	^ false! !
 
-!Estate methodsFor: 'operating' stamp: 'dhn 2/23/2020 16:24:11'!
+!Estate methodsFor: 'operating' stamp: 'dhn 2/23/2020 15:03:37'!
 testRoutine
 	"Debug."
 	| where what |
@@ -666,8 +666,6 @@ testRoutine
 	where _ self class spaceAttributes at: currentPlayer position.
 	what _ where label.
 	Transcript show: what; newLine.
-	
-	where result: currentPlayer.
 	self enableAll: {'End Turn'}.! !
 
 !Estate methodsFor: 'operating' stamp: 'dhn 2/21/2020 12:43:52'!
@@ -704,6 +702,54 @@ cellsForGame
 	"Answer the number of board spaces shown at one time"
 	
 	^ 13! !
+
+!Estate class methodsFor: 'instance creation' stamp: 'dhn 5/14/2019 20:53:46'!
+chanceCards
+	"Answer the values for the Chance deck."
+
+	^ OrderedCollection new
+		add: #(#movePlayer: #relative: -3 'Go back three spaces.');
+		add: #(#movePlayer: #back 10 'Go to Jail.');
+		add: #(#movePlayer: #ahead 39 'Advance to Boardwalk.');
+		add: #(#moveMoney: nil -150 'Building and loan matures - collect $150.');
+		add: #(#moveMoney: #toEach 50 'You''ve been elected Chairman of the Board. Pay each player $50.');
+		add: #(#moveMoney: nil -50 'Bank pays you dividend of $50.');
+		add: #(#moveMoney: nil 15 'Pay poor tax of $15.');
+		add: #(#movePlayer: #ahead 11 'Advance to St. Charles Place.');
+		add: #(#movePlayer: #ahead #railroad 'Advance token to the nearest Railroad and pay the owner twice the rent to which he is otherwise entitled.');
+		add: #(#movePlayer: #ahead #railroad 'Advance token to the nearest Railroad and pay the owner twice the rent to which he is otherwise entitled.');
+		add: #(#movePlayer: #ahead 24 'Advance token to Illinois Avenue.');
+		add: #(#repair: #(25 100) nil 'Make general repairs on all your property: $25 per house; $100 per hotel.');
+		add: #(#movePlayer: #ahead #utility 'Advance token to the nearest utility. Roll the dice and pay the owner 10 times the amount shown. If unowned, you may buy it from the bank.');
+		add: #(#getOut: nil nil 'Get out of Jail free. This card may be kept until needed.');
+		add: #(#getOut: nil nil 'Get out of Jail free. This card may be kept until needed.');
+		add: #(#movePlayer: #ahead 5 'Take a ride on the Reading Railroad. If you pass go, collect $200.');
+		add: #(#movePlayer: #ahead 40 'Advance to Go.');
+		yourself! !
+
+!Estate class methodsFor: 'instance creation' stamp: 'dhn 5/14/2019 21:48:37'!
+chestCards
+	"Answer the values for the Community Chest deck."
+
+	^ OrderedCollection new
+		add: #(#movePlayer: #back 10 'Go to Jail.');
+		add: #(#moveMoney: nil -100 'Xmas fund matures - collect $100.');
+		add: #(#moveMoney: nil -100 'Life insurance matures - collect $100.');
+		add: #(#moveMoney: nil -25 'Receive for services $25.');
+		add: #(#moveMoney: nil -100 'Inherit $100.');
+		add: #(#moveMoney: nil -45 'From sale of stock you get $45.');
+		add: #(#moveMoney: nil -10 'You''ve won second prize in a beauty contest - $10.');
+		add: #(#moveMoney: nil -200 'Bank error in your favor - collect $200.');
+		add: #(#moveMoney: nil 150 'Pay school tax of $150.');
+		add: #(#moveMoney: nil 100 'Pay hospital $100.');
+		add: #(#moveMoney: #fromEach -50 'Grand opera opening night: collect $50 from every player.');
+		add: #(#moveMoney: nil 50 'Doctors fee - pay $50.');
+		add: #(#moveMoney: nil -20 'Income tax refund - collect $20.');
+		add: #(#repair: #(40 115) nil 'Make street repairs: $40 per house; $115 per hotel.');
+		add: #(#getOut: nil nil 'Get out of Jail free. This card may be kept until needed.');
+		add: #(#getOut: nil nil 'Get out of Jail free. This card may be kept until needed.');
+		add: #(#movePlayer: #ahead 40 'Advance to Go.');
+		yourself! !
 
 !Estate class methodsFor: 'instance creation' stamp: 'dhn 5/16/2019 15:17:44'!
 season
@@ -1769,18 +1815,6 @@ label: anObject
 			ifNotNil: [' $', self price asString])
 ! !
 
-!Square methodsFor: 'accessing' stamp: 'dhn 2/23/2020 16:32:14'!
-owner
-	"Answer the value of owner"
-
-	^ owner! !
-
-!Square methodsFor: 'accessing' stamp: 'dhn 2/23/2020 16:31:55'!
-owner: anObject
-	"Set the value of owner"
-
-	owner := anObject! !
-
 !Square methodsFor: 'accessing'!
 position
         "Answer the value of the position variable."
@@ -1909,13 +1943,13 @@ rents: aCollection
         "Set the Collection value of the rents variable."
     rents := aCollection.! !
 
-!Property methodsFor: 'as yet unclassified' stamp: 'dhn 2/23/2020 16:38:50'!
+!Property methodsFor: 'as yet unclassified' stamp: 'dhn 5/14/2019 15:09:43'!
 result: aPlayer
 	"Effect the result of aPlayer landing on the property."
 	
 	super result: aPlayer.
 	aPlayer special: false.
-"	self owner isNil
+	self owner isNil
 		ifTrue: [self sellTo: aPlayer]
 		ifFalse: [ 
 			aPlayer = self owner
@@ -1926,7 +1960,7 @@ result: aPlayer
 							self owner name, ' landed own his own property. Doubles = ',
 							aPlayer doubles printString,
 							'; cash = $', aPlayer cash printString, '.' 
-						title: self title]]"! !
+						title: self title]]! !
 
 !Property methodsFor: 'as yet unclassified' stamp: 'dhn 5/14/2019 15:28:02'!
 sellTo: aPlayer
@@ -2080,97 +2114,23 @@ initialize: aCollection
         "Establish the initial state by setting the instance variables."
     cards := aCollection.! !
 
-!Risk methodsFor: 'operating' stamp: 'dhn 2/23/2020 17:48:06'!
-drawCard: aDeck discard: aDiscard
-	"Answer a card drawn from the top of aDeck. The card is added to aDiscard collection."
-	| card |
-	
-	aDeck isEmpty 
-		ifFalse: [
-			card _ aDeck removeFirst.
-			aDiscard addFirst: card.
-			^ card]
-		ifTrue: [
-			aDeck addAll: (self scramble: aDiscard).
-			aDiscard removeAll: aDeck.
-			^ self drawCard: aDeck discard: aDiscard]
-! !
+!Risk methodsFor: 'as yet unclassified' stamp: 'dhn 5/14/2019 15:31:28'!
+result: aPlayer
+        "Effect the result of randomly picking one of the cards."
+    (cards at: (DieMorph new cards size) first)
+        result: aPlayer! !
 
-!Chance methodsFor: 'initialization' stamp: 'dhn 2/23/2020 18:03:21'!
+!Chance methodsFor: 'initialization' stamp: 'dhn 2/23/2020 13:43:55'!
 initialize
 
 	super initialize.
-	cards _ self class chanceCards shuffled.
-	drawnCards _ OrderedCollection new.
 	routine _ #drawChance! !
 
-!Chance methodsFor: 'operating' stamp: 'dhn 2/23/2020 18:27:31'!
-draw
-	"Answer the top card from the deck."
-	
-	^ self drawCard: cards discard: drawnCards! !
-
-!Chance class methodsFor: 'instance creation' stamp: 'dhn 2/23/2020 16:44:10'!
-chanceCards
-	"Answer the values for the Chance deck."
-
-	^ OrderedCollection new
-		add: #(#movePlayer: #relative: -3 'Go back three spaces.');
-		add: #(#movePlayer: #back 10 'Go to Jail.');
-		add: #(#movePlayer: #ahead 39 'Advance to Boardwalk.');
-		add: #(#moveMoney: nil -150 'Building and loan matures - collect $150.');
-		add: #(#moveMoney: #toEach 50 'You''ve been elected Chairman of the Board. Pay each player $50.');
-		add: #(#moveMoney: nil -50 'Bank pays you dividend of $50.');
-		add: #(#moveMoney: nil 15 'Pay poor tax of $15.');
-		add: #(#movePlayer: #ahead 11 'Advance to St. Charles Place.');
-		add: #(#movePlayer: #ahead #railroad 'Advance token to the nearest Railroad and pay the owner twice the rent to which he is otherwise entitled.');
-		add: #(#movePlayer: #ahead #railroad 'Advance token to the nearest Railroad and pay the owner twice the rent to which he is otherwise entitled.');
-		add: #(#movePlayer: #ahead 24 'Advance token to Illinois Avenue.');
-		add: #(#repair: #(25 100) nil 'Make general repairs on all your property: $25 per house; $100 per hotel.');
-		add: #(#movePlayer: #ahead #utility 'Advance token to the nearest utility. Roll the dice and pay the owner 10 times the amount shown. If unowned, you may buy it from the bank.');
-		add: #(#getOut: nil nil 'Get out of Jail free. This card may be kept until needed.');
-		add: #(#getOut: nil nil 'Get out of Jail free. This card may be kept until needed.');
-		add: #(#movePlayer: #ahead 5 'Take a ride on the Reading Railroad. If you pass go, collect $200.');
-		add: #(#movePlayer: #ahead 40 'Advance to Go.');
-		yourself! !
-
-!Chest methodsFor: 'initialization' stamp: 'dhn 2/23/2020 18:03:53'!
+!Chest methodsFor: 'initialization' stamp: 'dhn 2/23/2020 13:43:45'!
 initialize
 
 	super initialize.
-	cards _ self class chestCards shuffled.
-	drawnCards _ OrderedCollection new.
 	routine _ #drawChest! !
-
-!Chest methodsFor: 'operating' stamp: 'dhn 2/23/2020 18:27:52'!
-draw
-	"Answer the top card from the deck."
-	
-	^ self drawCard: cards discard: drawnCards! !
-
-!Chest class methodsFor: 'instance creation' stamp: 'dhn 2/23/2020 17:34:52'!
-chestCards
-	"Answer the values for the Community Chest deck."
-
-	^ OrderedCollection new
-		add: #(#movePlayer: #back 10 'Go to Jail.');
-		add: #(#moveMoney: nil -100 'Xmas fund matures - collect $100.');
-		add: #(#moveMoney: nil -100 'Life insurance matures - collect $100.');
-		add: #(#moveMoney: nil -25 'Receive for services $25.');
-		add: #(#moveMoney: nil -100 'Inherit $100.');
-		add: #(#moveMoney: nil -45 'From sale of stock you get $45.');
-		add: #(#moveMoney: nil -10 'You''ve won second prize in a beauty contest - $10.');
-		add: #(#moveMoney: nil -200 'Bank error in your favor - collect $200.');
-		add: #(#moveMoney: nil 150 'Pay school tax of $150.');
-		add: #(#moveMoney: nil 100 'Pay hospital $100.');
-		add: #(#moveMoney: #fromEach -50 'Grand opera opening night: collect $50 from every player.');
-		add: #(#moveMoney: nil 50 'Doctors fee - pay $50.');
-		add: #(#moveMoney: nil -20 'Income tax refund - collect $20.');
-		add: #(#repair: #(40 115) nil 'Make street repairs: $40 per house; $115 per hotel.');
-		add: #(#getOut: nil nil 'Get out of Jail free. This card may be kept until needed.');
-		add: #(#getOut: nil nil 'Get out of Jail free. This card may be kept until needed.');
-		add: #(#movePlayer: #ahead 40 'Advance to Go.');
-		yourself! !
 
 !Shelter methodsFor: 'as yet unclassified' stamp: 'dhn 5/14/2019 15:36:03'!
 result: aPlayer
@@ -2236,6 +2196,13 @@ luxury: aPlayer
 	GamePopUp 
 		inform: aPlayer name, ' has been assessed $75.' 
 		title: self title! !
+
+!Tax methodsFor: 'as yet unclassified'!
+result: aPlayer
+        "Effect the result of aPlayer landing on the square."
+    super result: aPlayer.
+    self perform: (Tax type: position) with: aPlayer.
+    aPlayer special: false.! !
 
 !Tax class methodsFor: 'as yet unclassified'!
 type: aPosition
@@ -2372,6 +2339,11 @@ normalWith: theDice
     posn = 0 ifTrue: [posn := 40].
     self position: posn.
 "    self result: ( squares at: self position )."! !
+
+!Developer methodsFor: 'as yet unclassified' stamp: 'dhn 5/17/2019 12:29:19'!
+passedGo
+        "Answer whether the Player passed Go."
+    ^passedGo! !
 
 !Developer methodsFor: 'as yet unclassified' stamp: 'dhn 5/17/2019 12:29:19'!
 passedGo: aBoolean
