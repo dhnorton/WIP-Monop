@@ -1,6 +1,6 @@
-'From Cuis 5.0 [latest update: #4042] on 23 February 2020 at 9:24:53 pm'!
+'From Cuis 5.0 [latest update: #4042] on 24 February 2020 at 2:11:30 pm'!
 'Description Simulation of the board game "Monopoly".'!
-!provides: 'Monop' 1 47!
+!provides: 'Monop' 1 48!
 !requires: 'Game' 1 44 nil!
 SystemOrganization addCategory: #'Monop-View'!
 SystemOrganization addCategory: #'Monop-Model'!
@@ -8,7 +8,7 @@ SystemOrganization addCategory: #'Monop-Model'!
 
 !classDefinition: #Estate category: #'Monop-Model'!
 Game subclass: #Estate
-	instanceVariableNames: 'demo windowCount chances drawnChances chests drawnChests moveButton'
+	instanceVariableNames: 'demo windowCount chances chests moveButton statsItem'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Monop-Model'!
@@ -381,7 +381,7 @@ initialButtonState
 	self enableAll: {'Move'. 'History'. 'Stats'}.
 	self disableAll: {'End Turn'. 'Purchase'. 'Auction'}! !
 
-!Estate methodsFor: 'initialization' stamp: 'dhn 2/23/2020 15:41:02'!
+!Estate methodsFor: 'initialization' stamp: 'dhn 2/24/2020 13:57:57'!
 initialize
 
 	players _ OrderedCollection new.
@@ -392,10 +392,8 @@ initialize
 	won _ false.
 	demo _ 0.
 	windowCount _ 0.
-	chances _ self class chanceCards shuffled.
-	drawnChances _ OrderedCollection new.
-	chests _ self class chestCards shuffled.
-	drawnChests _ OrderedCollection new.
+	chances _ {self class chanceCards shuffled. OrderedCollection new}.
+	chests _ {self class chestCards shuffled. OrderedCollection new}.
 ! !
 
 !Estate methodsFor: 'initialization' stamp: 'dhn 5/16/2019 15:59:01'!
@@ -440,7 +438,7 @@ statsItem
 	statsItem ifNil: [statsItem _ 0]. 	"nil is unacceptable during model initialization"
 	^ statsItem! !
 
-!Estate methodsFor: 'statistics' stamp: 'dhn 2/23/2020 20:59:45'!
+!Estate methodsFor: 'statistics' stamp: 'dhn 2/24/2020 14:08:19'!
 statsItem: anObject
 	"Set the value of statsItem"
 	
@@ -481,24 +479,24 @@ doSpace
 
 	^ self perform: (spaces atWrap: self currentPlayer position) routine! !
 
-!Estate methodsFor: 'operating' stamp: 'dhn 2/22/2020 17:30:09'!
+!Estate methodsFor: 'operating' stamp: 'dhn 2/24/2020 13:59:40'!
 drawChance
 	"Draw a Chance card"
 	| chan |
 	
-	chan _ self drawCard: chances discard: drawnChances.
+	chan _ self drawCard: chances first discard: chances second.
 	self testRoutine.
 	self flag: #dhn. "If 'Get out of Jail free' is saved, it must be removed from #drawnChances"
 "	self triggerEvent: #chanceDrawn with: chan last. 
 	self perform: chan first with: (chan copyFrom: 2 to: 4).
 	self triggerEvent: #itemChange"! !
 
-!Estate methodsFor: 'operating' stamp: 'dhn 2/22/2020 17:31:46'!
+!Estate methodsFor: 'operating' stamp: 'dhn 2/24/2020 14:00:37'!
 drawChest
 	"Draw a Community Chest card"
 	| chan |
 	
-	chan _ self drawCard: chests discard: drawnChests.
+	chan _ self drawCard: chests first discard: chests second.
 	self testRoutine.
 	self flag: #dhn. "If 'Get out of Jail free' is saved, it must be removed from #drawnChests"
 "	self triggerEvent: #chestDrawn with: chan last.
