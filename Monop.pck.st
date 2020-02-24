@@ -1,6 +1,6 @@
-'From Cuis 5.0 [latest update: #4042] on 24 February 2020 at 5:24:25 pm'!
+'From Cuis 5.0 [latest update: #4042] on 24 February 2020 at 5:42:14 pm'!
 'Description Simulation of the board game "Monopoly".'!
-!provides: 'Monop' 1 49!
+!provides: 'Monop' 1 50!
 !requires: 'Game' 1 44 nil!
 SystemOrganization addCategory: #'Monop-View'!
 SystemOrganization addCategory: #'Monop-Model'!
@@ -479,24 +479,26 @@ doSpace
 
 	^ self perform: (spaces atWrap: self currentPlayer position) routine! !
 
-!Estate methodsFor: 'operating' stamp: 'dhn 2/24/2020 13:59:40'!
+!Estate methodsFor: 'operating' stamp: 'dhn 2/24/2020 17:28:40'!
 drawChance
 	"Draw a Chance card"
 	| chan |
 	
 	chan _ self drawCard: chances first discard: chances second.
+	{'chance: '. chan} print.
 	self testRoutine.
 	self flag: #dhn. "If 'Get out of Jail free' is saved, it must be removed from #drawnChances"
 "	self triggerEvent: #chanceDrawn with: chan last. 
 	self perform: chan first with: (chan copyFrom: 2 to: 4).
 	self triggerEvent: #itemChange"! !
 
-!Estate methodsFor: 'operating' stamp: 'dhn 2/24/2020 14:00:37'!
+!Estate methodsFor: 'operating' stamp: 'dhn 2/24/2020 17:29:26'!
 drawChest
 	"Draw a Community Chest card"
 	| chan |
 	
 	chan _ self drawCard: chests first discard: chests second.
+	{'chest: '. chan} print.
 	self testRoutine.
 	self flag: #dhn. "If 'Get out of Jail free' is saved, it must be removed from #drawnChests"
 "	self triggerEvent: #chestDrawn with: chan last.
