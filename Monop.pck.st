@@ -1,6 +1,6 @@
-'From Cuis 5.0 [latest update: #4042] on 24 February 2020 at 8:51:11 pm'!
+'From Cuis 5.0 [latest update: #4042] on 25 February 2020 at 2:49:12 pm'!
 'Description Simulation of the board game "Monopoly".'!
-!provides: 'Monop' 1 51!
+!provides: 'Monop' 1 52!
 !requires: 'Game' 1 44 nil!
 SystemOrganization addCategory: #'Monop-View'!
 SystemOrganization addCategory: #'Monop-Model'!
@@ -732,36 +732,36 @@ cellsForGame
 	
 	^ 13! !
 
-!Estate class methodsFor: 'instance creation' stamp: 'dhn 5/14/2019 20:53:46'!
+!Estate class methodsFor: 'instance creation' stamp: 'dhn 2/25/2020 14:40:09'!
 chanceCards
 	"Answer the values for the Chance deck."
 
 	^ OrderedCollection new
 		add: #(#movePlayer: #relative: -3 'Go back three spaces.');
-		add: #(#movePlayer: #back 10 'Go to Jail.');
+		add: #(#movePlayer: #back 11 'Go to Jail.');
 		add: #(#movePlayer: #ahead 39 'Advance to Boardwalk.');
 		add: #(#moveMoney: nil -150 'Building and loan matures - collect $150.');
 		add: #(#moveMoney: #toEach 50 'You''ve been elected Chairman of the Board. Pay each player $50.');
 		add: #(#moveMoney: nil -50 'Bank pays you dividend of $50.');
 		add: #(#moveMoney: nil 15 'Pay poor tax of $15.');
-		add: #(#movePlayer: #ahead 11 'Advance to St. Charles Place.');
+		add: #(#movePlayer: #ahead 12 'Advance to St. Charles Place.');
 		add: #(#movePlayer: #ahead #railroad 'Advance token to the nearest Railroad and pay the owner twice the rent to which he is otherwise entitled.');
 		add: #(#movePlayer: #ahead #railroad 'Advance token to the nearest Railroad and pay the owner twice the rent to which he is otherwise entitled.');
-		add: #(#movePlayer: #ahead 24 'Advance token to Illinois Avenue.');
+		add: #(#movePlayer: #ahead 25 'Advance token to Illinois Avenue.');
 		add: #(#repair: #(25 100) nil 'Make general repairs on all your property: $25 per house; $100 per hotel.');
 		add: #(#movePlayer: #ahead #utility 'Advance token to the nearest utility. Roll the dice and pay the owner 10 times the amount shown. If unowned, you may buy it from the bank.');
 		add: #(#getOut: nil nil 'Get out of Jail free. This card may be kept until needed.');
 		add: #(#getOut: nil nil 'Get out of Jail free. This card may be kept until needed.');
 		add: #(#movePlayer: #ahead 5 'Take a ride on the Reading Railroad. If you pass go, collect $200.');
-		add: #(#movePlayer: #ahead 40 'Advance to Go.');
+		add: #(#movePlayer: #ahead 1 'Advance to Go.');
 		yourself! !
 
-!Estate class methodsFor: 'instance creation' stamp: 'dhn 5/14/2019 21:48:37'!
+!Estate class methodsFor: 'instance creation' stamp: 'dhn 2/25/2020 14:40:43'!
 chestCards
 	"Answer the values for the Community Chest deck."
 
 	^ OrderedCollection new
-		add: #(#movePlayer: #back 10 'Go to Jail.');
+		add: #(#movePlayer: #back 11 'Go to Jail.');
 		add: #(#moveMoney: nil -100 'Xmas fund matures - collect $100.');
 		add: #(#moveMoney: nil -100 'Life insurance matures - collect $100.');
 		add: #(#moveMoney: nil -25 'Receive for services $25.');
@@ -777,7 +777,7 @@ chestCards
 		add: #(#repair: #(40 115) nil 'Make street repairs: $40 per house; $115 per hotel.');
 		add: #(#getOut: nil nil 'Get out of Jail free. This card may be kept until needed.');
 		add: #(#getOut: nil nil 'Get out of Jail free. This card may be kept until needed.');
-		add: #(#movePlayer: #ahead 40 'Advance to Go.');
+		add: #(#movePlayer: #ahead 1 'Advance to Go.');
 		yourself! !
 
 !Estate class methodsFor: 'instance creation' stamp: 'dhn 5/16/2019 15:17:44'!
