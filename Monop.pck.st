@@ -1,6 +1,6 @@
-'From Cuis 5.0 [latest update: #4042] on 25 February 2020 at 3:44:49 pm'!
+'From Cuis 5.0 [latest update: #4042] on 25 February 2020 at 4:24:47 pm'!
 'Description Simulation of the board game "Monopoly".'!
-!provides: 'Monop' 1 53!
+!provides: 'Monop' 1 54!
 !requires: 'Game' 1 44 nil!
 SystemOrganization addCategory: #'Monop-View'!
 SystemOrganization addCategory: #'Monop-Model'!
@@ -473,13 +473,14 @@ statsReport: aString
 			nextPut: $:; newLine;
 			nextPutAll: (p reportAsAssetFor: currentPlayer); newLine]! !
 
-!Estate methodsFor: 'operating' stamp: 'dhn 2/24/2020 20:32:27'!
+!Estate methodsFor: 'operating' stamp: 'dhn 2/25/2020 15:47:45'!
 doSpace
 	"Perform the method associated with the space where the player is"
 
 	currentPlayer passedGo 
 		ifTrue: [
 			currentPlayer tally: 200.
+			self triggerEvent: #itemChange.
 			currentPlayer passedGo: false ].
 	^ self perform: (spaces atWrap: self currentPlayer position) routine! !
 
@@ -554,11 +555,12 @@ goToJail
 
 	self testRoutine.! !
 
-!Estate methodsFor: 'operating' stamp: 'dhn 2/23/2020 19:46:58'!
+!Estate methodsFor: 'operating' stamp: 'dhn 2/25/2020 15:48:26'!
 incomeTax
 	"Charge an amount based on the larger of 10% of assets or $200."
 
 	currentPlayer tally: -200.
+	self triggerEvent: #itemChange.
 	self testRoutine.! !
 
 !Estate methodsFor: 'operating' stamp: 'dhn 2/22/2020 17:50:51'!
@@ -575,11 +577,12 @@ landlord
 
 	self testRoutine.! !
 
-!Estate methodsFor: 'operating' stamp: 'dhn 2/23/2020 20:10:24'!
+!Estate methodsFor: 'operating' stamp: 'dhn 2/25/2020 15:48:47'!
 luxuryTax
 	"Charge a flat $75."
 
 	currentPlayer tally: -75.
+	self triggerEvent: #itemChange.
 	self testRoutine.! !
 
 !Estate methodsFor: 'operating' stamp: 'dhn 2/24/2020 17:22:13'!
