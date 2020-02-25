@@ -1,6 +1,6 @@
-'From Cuis 5.0 [latest update: #4042] on 24 February 2020 at 5:42:14 pm'!
+'From Cuis 5.0 [latest update: #4042] on 24 February 2020 at 8:51:11 pm'!
 'Description Simulation of the board game "Monopoly".'!
-!provides: 'Monop' 1 50!
+!provides: 'Monop' 1 51!
 !requires: 'Game' 1 44 nil!
 SystemOrganization addCategory: #'Monop-View'!
 SystemOrganization addCategory: #'Monop-Model'!
@@ -473,10 +473,14 @@ statsReport: aString
 			nextPut: $:; newLine;
 			nextPutAll: (p reportAsAssetFor: currentPlayer); newLine]! !
 
-!Estate methodsFor: 'operating' stamp: 'dhn 2/23/2020 15:00:26'!
+!Estate methodsFor: 'operating' stamp: 'dhn 2/24/2020 20:32:27'!
 doSpace
 	"Perform the method associated with the space where the player is"
 
+	currentPlayer passedGo 
+		ifTrue: [
+			currentPlayer tally: 200.
+			currentPlayer passedGo: false ].
 	^ self perform: (spaces atWrap: self currentPlayer position) routine! !
 
 !Estate methodsFor: 'operating' stamp: 'dhn 2/24/2020 17:28:40'!
@@ -2365,10 +2369,12 @@ normalWith: theDice
     self position: posn.
 "    self result: ( squares at: self position )."! !
 
-!Developer methodsFor: 'as yet unclassified' stamp: 'dhn 5/17/2019 12:29:19'!
+!Developer methodsFor: 'as yet unclassified' stamp: 'dhn 2/24/2020 20:49:55'!
 passedGo
-        "Answer whether the Player passed Go."
-    ^passedGo! !
+	"Answer whether the Player passed Go."
+
+	passedGo ifNil: [passedGo _ false].
+	^ passedGo! !
 
 !Developer methodsFor: 'as yet unclassified' stamp: 'dhn 5/17/2019 12:29:19'!
 passedGo: aBoolean
