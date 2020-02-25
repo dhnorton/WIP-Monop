@@ -1,6 +1,6 @@
-'From Cuis 5.0 [latest update: #4042] on 25 February 2020 at 2:49:12 pm'!
+'From Cuis 5.0 [latest update: #4042] on 25 February 2020 at 3:44:49 pm'!
 'Description Simulation of the board game "Monopoly".'!
-!provides: 'Monop' 1 52!
+!provides: 'Monop' 1 53!
 !requires: 'Game' 1 44 nil!
 SystemOrganization addCategory: #'Monop-View'!
 SystemOrganization addCategory: #'Monop-Model'!
@@ -483,31 +483,31 @@ doSpace
 			currentPlayer passedGo: false ].
 	^ self perform: (spaces atWrap: self currentPlayer position) routine! !
 
-!Estate methodsFor: 'operating' stamp: 'dhn 2/24/2020 17:28:40'!
+!Estate methodsFor: 'operating' stamp: 'dhn 2/25/2020 15:28:31'!
 drawChance
 	"Draw a Chance card"
 	| chan |
 	
 	chan _ self drawCard: chances first discard: chances second.
 	{'chance: '. chan} print.
-	self testRoutine.
+"	self testRoutine."
 	self flag: #dhn. "If 'Get out of Jail free' is saved, it must be removed from #drawnChances"
-"	self triggerEvent: #chanceDrawn with: chan last. 
+"	self triggerEvent: #chanceDrawn with: chan last. "
 	self perform: chan first with: (chan copyFrom: 2 to: 4).
-	self triggerEvent: #itemChange"! !
+	self triggerEvent: #itemChange! !
 
-!Estate methodsFor: 'operating' stamp: 'dhn 2/24/2020 17:29:26'!
+!Estate methodsFor: 'operating' stamp: 'dhn 2/25/2020 15:28:14'!
 drawChest
 	"Draw a Community Chest card"
 	| chan |
 	
 	chan _ self drawCard: chests first discard: chests second.
 	{'chest: '. chan} print.
-	self testRoutine.
+"	self testRoutine."
 	self flag: #dhn. "If 'Get out of Jail free' is saved, it must be removed from #drawnChests"
-"	self triggerEvent: #chestDrawn with: chan last.
+"	self triggerEvent: #chestDrawn with: chan last."
 	self perform: chan first with: (chan copyFrom: 2 to: 4).
-	self triggerEvent: #itemChange"! !
+	self triggerEvent: #itemChange! !
 
 !Estate methodsFor: 'operating' stamp: 'dhn 5/16/2019 18:38:59'!
 endTurn
@@ -544,6 +544,9 @@ exceptCurrent: anAmount
 				ttl _ ttl + anAmount]].
 	currentPlayer tally: ttl negated
 ! !
+
+!Estate methodsFor: 'operating' stamp: 'dhn 2/25/2020 14:58:42'!
+getOut: anObject! !
 
 !Estate methodsFor: 'operating' stamp: 'dhn 2/21/2020 13:03:28'!
 goToJail
@@ -615,6 +618,9 @@ moveMoney: anArray
 		ifTrue: [self exceptCurrent: anArray second]
 ! !
 
+!Estate methodsFor: 'operating' stamp: 'dhn 2/25/2020 14:58:08'!
+movePlayer: anObject! !
+
 !Estate methodsFor: 'operating' stamp: 'dhn 5/16/2019 18:15:44'!
 nextPlayer
 	"Begin the next player's turn"
@@ -657,6 +663,9 @@ positionBoardTo: anIndex
 	
 	self cellsAt: anIndex.
 	self triggerEvent: #showSeasons: with: anIndex! !
+
+!Estate methodsFor: 'operating' stamp: 'dhn 2/25/2020 14:58:26'!
+repair: anObject! !
 
 !Estate methodsFor: 'operating' stamp: 'dhn 2/21/2020 13:02:23'!
 salary
