@@ -1,6 +1,6 @@
-'From Cuis 5.0 [latest update: #4042] on 25 February 2020 at 5:07:25 pm'!
+'From Cuis 5.0 [latest update: #4042] on 25 February 2020 at 5:48:27 pm'!
 'Description Simulation of the board game "Monopoly".'!
-!provides: 'Monop' 1 55!
+!provides: 'Monop' 1 56!
 !requires: 'Game' 1 44 nil!
 SystemOrganization addCategory: #'Monop-View'!
 SystemOrganization addCategory: #'Monop-Model'!
@@ -619,10 +619,13 @@ move
 	die1 show: die1 class faces shuffled.
 	"die2 show: die2 class faces shuffled."! !
 
-!Estate methodsFor: 'operating' stamp: 'dhn 5/14/2019 21:48:46'!
+!Estate methodsFor: 'operating' stamp: 'dhn 2/25/2020 17:29:39'!
 moveMoney: anArray
 	"Shuffle cash per specs in anArray"
 	
+	GamePopUp 
+		inform: anArray last 
+		title: 'Chance or Community Chest'.
 	anArray first ifNil: [currentPlayer tally: anArray second negated].
 	anArray first = #fromEach
 		ifTrue: [self exceptCurrent: anArray second].
