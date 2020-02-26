@@ -1,6 +1,6 @@
-'From Cuis 5.0 [latest update: #4042] on 25 February 2020 at 8:46:27 pm'!
+'From Cuis 5.0 [latest update: #4042] on 26 February 2020 at 6:34:37 pm'!
 'Description Simulation of the board game "Monopoly".'!
-!provides: 'Monop' 1 57!
+!provides: 'Monop' 1 58!
 !requires: 'Game' 1 44 nil!
 SystemOrganization addCategory: #'Monop-View'!
 SystemOrganization addCategory: #'Monop-Model'!
@@ -552,10 +552,12 @@ exceptCurrent: anAmount
 !Estate methodsFor: 'operating' stamp: 'dhn 2/25/2020 14:58:42'!
 getOut: anObject! !
 
-!Estate methodsFor: 'operating' stamp: 'dhn 2/21/2020 13:03:28'!
+!Estate methodsFor: 'operating' stamp: 'dhn 2/26/2020 16:01:04'!
 goToJail
 	"Go directly back to jail."
 
+	token slideLeft: currentPlayer position to: 11.
+	currentPlayer jail: true with: 0.
 	self testRoutine.! !
 
 !Estate methodsFor: 'operating' stamp: 'dhn 2/25/2020 16:49:25'!
@@ -633,7 +635,7 @@ moveMoney: anArray
 		ifTrue: [self exceptCurrent: anArray second]
 ! !
 
-!Estate methodsFor: 'operating' stamp: 'dhn 2/25/2020 19:54:58'!
+!Estate methodsFor: 'operating' stamp: 'dhn 2/26/2020 16:17:24'!
 movePlayer: anArray
 	"Move the player according to the card."
 	| pos |
@@ -646,30 +648,38 @@ movePlayer: anArray
 	anArray first = #ahead
 		ifTrue: [
 			anArray second = #railroad
-				ifTrue: [token slideRight: pos to: self nearestRailroad].
-			anArray second = #utility
-				ifTrue: [token slideRight: pos to: self nearestUtility]
-				ifFalse: [token slideRight: pos to: anArray second]].
+				ifTrue: [token slideRight: pos to: self nearestRailroad]
+				ifFalse: [
+					anArray second = #utility
+						ifTrue: [token slideRight: pos to: self nearestUtility]
+						ifFalse: [token slideRight: pos to: anArray second]]].
 	anArray first = #back
 		ifTrue: [token slideLeft: pos to: anArray second].
 	anArray first = #relative:
 		ifTrue: [token slideLeft: pos to: pos + anArray second]! !
 
-!Estate methodsFor: 'operating' stamp: 'dhn 2/25/2020 19:38:55'!
+!Estate methodsFor: 'operating' stamp: 'dhn 2/26/2020 18:16:49'!
+nearest: anArray to: aPosition
+	"Answer the position nearest to aPosition."
+	| arr pos |
+	
+	arr _ anArray, {anArray last + spaces size}.
+	pos _ arr detect: [:a | a > aPosition] ifNone: [].
+	^ pos = arr last
+		ifTrue: [arr first]
+		ifFalse: [anArray detect: [:a | a > aPosition] ifNone: []]! !
+
+!Estate methodsFor: 'operating' stamp: 'dhn 2/26/2020 17:26:01'!
 nearestRailroad
 	"Answer the position of the nearest railroad."
-	| arr |
 	
-	arr _ #(6 16 26 36 46).
-	^ arr detect: [:a | a > currentPlayer position] ifNone: []! !
+	^ self nearest: self class positionRailroad to: currentPlayer position! !
 
-!Estate methodsFor: 'operating' stamp: 'dhn 2/25/2020 19:41:44'!
+!Estate methodsFor: 'operating' stamp: 'dhn 2/26/2020 17:26:57'!
 nearestUtility
 	"Answer the position of the nearest utility."
-	| arr |
 	
-	arr _ #(13 23 63).
-	^ arr detect: [:a | a > currentPlayer position] ifNone: []! !
+	^ self nearest: self class positionUtility to: currentPlayer position! !
 
 !Estate methodsFor: 'operating' stamp: 'dhn 5/16/2019 18:15:44'!
 nextPlayer
@@ -957,6 +967,18 @@ spaceAttributes
 		yourself
 ! !
 
+!Estate class methodsFor: 'constants' stamp: 'dhn 2/26/2020 17:24:13'!
+positionRailroad
+	"Answer the position of railroads."
+	
+	^ #(6 16 26 36)! !
+
+!Estate class methodsFor: 'constants' stamp: 'dhn 2/26/2020 18:26:43'!
+positionUtility
+	"Answer the position of utilities."
+	
+	^ #(13 29)! !
+
 !EstateToken methodsFor: 'initialization' stamp: 'dhn 5/16/2019 16:22:37'!
 initialize
 
@@ -1016,17 +1038,17 @@ position: aCell
 	horiz _ (model cells at: aCell) morphPosition x.
 	self morphPosition: (self morphPosition translatedBy: (horiz@0))! !
 
-!EstateToken methodsFor: 'operations' stamp: 'dhn 2/25/2020 20:29:06'!
+!EstateToken methodsFor: 'operations' stamp: 'dhn 2/26/2020 15:56:58'!
 slideLeft: from to: to
 	"Slide self when player must go BACK to 'to' from 'from' "
 	| oldPos newPos index n posns limit i final |
 	
 	final _ to.
 	index _ (Interval from: 1 to: model spaces size by: 1) asArray.
-	oldPos _ index atWrap: from - 6.
+	oldPos _ index atWrap: from - 12.
 	model positionBoardTo: oldPos.
-	self position: 7.
-	newPos _ index atWrap: final - 7.
+	self position: 13.
+	newPos _ index atWrap: final - 13.
 	posns _ OrderedCollection new.
 	n _ oldPos.
 	[(index atWrap: n) ~= newPos] whileTrue: [posns add: (index atWrap: n). n _ n - 1].
@@ -1045,16 +1067,18 @@ slideLeft: from to: to
 				self removeActionsForEvent: #morphicStep.
 				arrow delete.
 				model currentPlayer position: final.
+				final = 11 ifTrue: [model currentPlayer jail: true with: 0].
+				model doSpace.
 				model triggerEvent: #endOfMove]].
 	self startSteppingStepTime: 500! !
 
-!EstateToken methodsFor: 'operations' stamp: 'dhn 2/25/2020 20:28:37'!
+!EstateToken methodsFor: 'operations' stamp: 'dhn 2/26/2020 15:19:56'!
 slideRight: from to: to
 	"Slide self when player moves ahead from 'from' to 'to' other than by the Move button"
 	| oldPos newPos index n posns limit i final |
 	
 	final _ to.
-	index _ (Interval from: 1 to: model spaces size by: 1) asArray.
+	index _ (Interval from: 1 to: model spaces size + 1 by: 1) asArray.
 	oldPos _ index atWrap: from.
 	model positionBoardTo: oldPos.
 	self position: 1.
@@ -1076,7 +1100,9 @@ slideRight: from to: to
 				self stopStepping.
 				self removeActionsForEvent: #morphicStep.
 				arrow delete.
+				from > to ifTrue: [model currentPlayer passedGo: true].
 				model currentPlayer position: final.
+				model doSpace.
 				model triggerEvent: #endOfMove]].
 	self startSteppingStepTime: 500! !
 
