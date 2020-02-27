@@ -1,6 +1,6 @@
-'From Cuis 5.0 [latest update: #4042] on 26 February 2020 at 6:34:37 pm'!
+'From Cuis 5.0 [latest update: #4042] on 26 February 2020 at 9:25:27 pm'!
 'Description Simulation of the board game "Monopoly".'!
-!provides: 'Monop' 1 58!
+!provides: 'Monop' 1 59!
 !requires: 'Game' 1 44 nil!
 SystemOrganization addCategory: #'Monop-View'!
 SystemOrganization addCategory: #'Monop-Model'!
@@ -571,10 +571,16 @@ incomeTax
 	self triggerEvent: #itemChange.
 	self testRoutine.! !
 
-!Estate methodsFor: 'operating' stamp: 'dhn 2/22/2020 17:50:51'!
+!Estate methodsFor: 'operating' stamp: 'dhn 2/26/2020 20:30:17'!
 justVisit
 	"Just visiting jail."
 
+	currentPlayer inJail 
+		ifTrue: [
+			GamePopUp 
+				inform: currentPlayer identity, ' will be here a long time.' 
+				title: 'Life Sentence'.
+			self disableAll: {'Move'}].
 	self testRoutine.! !
 
 !Estate methodsFor: 'operating' stamp: 'dhn 2/21/2020 12:43:13'!
@@ -596,30 +602,33 @@ luxuryTax
 	self triggerEvent: #itemChange.
 	self testRoutine.! !
 
-!Estate methodsFor: 'operating' stamp: 'dhn 2/24/2020 17:22:13'!
+!Estate methodsFor: 'operating' stamp: 'dhn 2/26/2020 20:20:44'!
 move
 	"Roll the dice"
 	| die1 die2 s |
 	
-	self disableAll: {'Move'}.
-	die1 _ DieMorph new openInWorld: world.
-	die1 model: self.
-	die2 _ DieMorph new openInWorld: world.
-	die2 model: self.
-	currentPlayer die: die1.
+	currentPlayer inJail
+		ifTrue: [self perform: (spaces atWrap: self currentPlayer position) routine]
+		ifFalse: [
+			self disableAll: {'Move'}.
+			die1 _ DieMorph new openInWorld: world.
+			die1 model: self.
+			die2 _ DieMorph new openInWorld: world.
+			die2 model: self.
+			currentPlayer die: die1.
 
-	s _ token morphExtent x * 50 / 132.
-	die1 
-		morphExtent: s@s;
-		setDots;
-		referencePosition: token referencePosition - (0@1.5 * token morphHeight).
-	die2 
-		morphExtent: s@s;
-		setDots;
-		referencePosition: token referencePosition - (0@2.5 * token morphHeight).
+			s _ token morphExtent x * 50 / 132.
+			die1 
+				morphExtent: s@s;
+				setDots;
+				referencePosition: token referencePosition - (0@1.5 * token morphHeight).
+			die2 
+				morphExtent: s@s;
+				setDots;
+				referencePosition: token referencePosition - (0@2.5 * token morphHeight).
 
-	die1 show: die1 class faces shuffled.
-	"die2 show: die2 class faces shuffled."! !
+			die1 show: die1 class faces shuffled.
+			"die2 show: die2 class faces shuffled."].! !
 
 !Estate methodsFor: 'operating' stamp: 'dhn 2/25/2020 17:29:39'!
 moveMoney: anArray
@@ -801,7 +810,7 @@ cellsForGame
 	
 	^ 13! !
 
-!Estate class methodsFor: 'instance creation' stamp: 'dhn 2/25/2020 17:57:15'!
+!Estate class methodsFor: 'instance creation' stamp: 'dhn 2/26/2020 20:38:20'!
 chanceCards
 	"Answer the values for the Chance deck."
 
@@ -821,7 +830,7 @@ chanceCards
 		add: #(#movePlayer: #ahead #utility 'Advance token to the nearest utility. Roll the dice and pay the owner 10 times the amount shown. If unowned, you may buy it from the bank.');
 		add: #(#getOut: nil nil 'Get out of Jail free. This card may be kept until needed.');
 		add: #(#getOut: nil nil 'Get out of Jail free. This card may be kept until needed.');
-		add: #(#movePlayer: #ahead 5 'Take a ride on the Reading Railroad. If you pass go, collect $200.');
+		add: #(#movePlayer: #ahead 6 'Take a ride on the Reading Railroad. If you pass go, collect $200.');
 		add: #(#movePlayer: #ahead 1 'Advance to Go.');
 		yourself! !
 
