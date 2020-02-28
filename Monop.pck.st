@@ -1,6 +1,6 @@
-'From Cuis 5.0 [latest update: #4042] on 28 February 2020 at 11:15:47 am'!
+'From Cuis 5.0 [latest update: #4042] on 28 February 2020 at 2:21:03 pm'!
 'Description Simulation of the board game "Monopoly".'!
-!provides: 'Monop' 1 61!
+!provides: 'Monop' 1 62!
 !requires: 'Game' 1 44 nil!
 SystemOrganization addCategory: #'Monop-View'!
 SystemOrganization addCategory: #'Monop-Model'!
@@ -8,7 +8,7 @@ SystemOrganization addCategory: #'Monop-Model'!
 
 !classDefinition: #Estate category: #'Monop-Model'!
 Game subclass: #Estate
-	instanceVariableNames: 'demo windowCount chances chests moveButton statsItem rents sets'
+	instanceVariableNames: 'demo windowCount chances chests moveButton statsItem'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Monop-Model'!
@@ -104,7 +104,7 @@ Square subclass: #Property
 	category: 'Monop-Model'!
 !classDefinition: 'Property class' category: #'Monop-Model'!
 Property class
-	instanceVariableNames: ''!
+	instanceVariableNames: 'sets set'!
 
 !classDefinition: #Lot category: #'Monop-Model'!
 Property subclass: #Lot
@@ -808,11 +808,65 @@ windowPosition: aPoint
 	windowCount _ windowCount + 1.
 	^ aPoint + (windowCount * (20@20))! !
 
+!Estate methodsFor: 'accessing' stamp: 'dhn 2/28/2020 13:15:57'!
+chances
+	"Answer the value of chances"
+
+	^ chances! !
+
+!Estate methodsFor: 'accessing' stamp: 'dhn 2/28/2020 13:15:57'!
+chances: anObject
+	"Set the value of chances"
+
+	chances _ anObject! !
+
+!Estate methodsFor: 'accessing' stamp: 'dhn 2/28/2020 13:15:57'!
+chests
+	"Answer the value of chests"
+
+	^ chests! !
+
+!Estate methodsFor: 'accessing' stamp: 'dhn 2/28/2020 13:15:57'!
+chests: anObject
+	"Set the value of chests"
+
+	chests _ anObject! !
+
+!Estate methodsFor: 'accessing' stamp: 'dhn 2/28/2020 13:15:57'!
+demo
+	"Answer the value of demo"
+
+	^ demo! !
+
+!Estate methodsFor: 'accessing' stamp: 'dhn 2/28/2020 13:15:57'!
+demo: anObject
+	"Set the value of demo"
+
+	demo _ anObject! !
+
+!Estate methodsFor: 'accessing' stamp: 'dhn 2/28/2020 13:15:57'!
+moveButton
+	"Answer the value of moveButton"
+
+	^ moveButton! !
+
 !Estate methodsFor: 'accessing' stamp: 'dhn 2/21/2020 20:55:59'!
 spaces
 	"Answer the value of spaces."
 	
 	^ spaces! !
+
+!Estate methodsFor: 'accessing' stamp: 'dhn 2/28/2020 13:15:57'!
+windowCount
+	"Answer the value of windowCount"
+
+	^ windowCount! !
+
+!Estate methodsFor: 'accessing' stamp: 'dhn 2/28/2020 13:15:57'!
+windowCount: anObject
+	"Set the value of windowCount"
+
+	windowCount _ anObject! !
 
 !Estate class methodsFor: 'instance creation' stamp: 'dhn 5/14/2019 17:07:12'!
 cellsForGame
@@ -916,73 +970,73 @@ season
 		yourself
 		! !
 
-!Estate class methodsFor: 'instance creation' stamp: 'dhn 2/23/2020 13:10:47'!
+!Estate class methodsFor: 'instance creation' stamp: 'dhn 2/28/2020 14:14:11'!
 spaceAttributes
 	"Data for the spaces on the board."
 	
 	^ OrderedCollection new
 		add: (Go new label: 'Go Collect $200');
 		add: (Lot title: 'Mediterranean Avenue' price: 60 
-			rents: #(2 10 30  90 160 250) house: 50);
+			rents: #(2 10 30  90 160 250) house: 50 set: #(2 4));
 		add: (Chest new label: 'Community Chest');
 		add: (Lot title: 'Baltic Avenue' price: 60 
-			rents: #(4 20 60 180 320 450) house: 50);
+			rents: #(4 20 60 180 320 450) house: 50 set: #(2 4));
 		add: (Income new label: 'Income Tax');
 		add: (Railroad new label: 'Reading Railroad');
 		add: (Lot title: 'Oriental Avenue' price: 100 
-			rents: #(6 30 90 270 400 550) house: 50);
+			rents: #(6 30 90 270 400 550) house: 50 set: #(7 9 10));
 		add: (Chance new label: 'Chance');
 		add: (Lot title: 'Vermont Avenue' price: 100 
-			rents: #(6 30 90 270 400 550) house: 50);
+			rents: #(6 30 90 270 400 550) house: 50 set: #(7 9 10));
 		add: (Lot title: 'Connecticut Avenue' price: 120 
-			rents: #(8 40 100 300 450 600) house: 50);
+			rents: #(8 40 100 300 450 600) house: 50 set: #(7 9 10));
 		add: (Jail new label: 'In Jail/Just Visiting');
 		add: (Lot title: 'St. Charles Place' price: 140 
-			rents: #(10 50 150 450 625 750) house: 100);
+			rents: #(10 50 150 450 625 750) house: 100 set: #(12 14 15));
 		add: (Utility new label: 'Electric Company');
 		add: (Lot title: 'States Avenue' price: 140 
-			rents: #(10 50 150 450 625 750) house: 100);
+			rents: #(10 50 150 450 625 750) house: 100 set: #(12 14 15));
 		add: (Lot title: 'Virginia Avenue' price: 160 
-			rents: #(12 60 180 500 700 900) house: 100);
+			rents: #(12 60 180 500 700 900) house: 100 set: #(12 14 15));
 		add: (Railroad new label: 'Pennsylvania Railroad');
 		add: (Lot title: 'St. James Place' price: 180 
-			rents: #(14 70 200 550 750 950) house: 100);
+			rents: #(14 70 200 550 750 950) house: 100 set: #(17 19 20));
 		add: (Chest new label: 'Community Chest');
 		add: (Lot title: 'Tennesee Avenue' price: 180 
-			rents: #(14 70 200 550 750 950) house: 100);
+			rents: #(14 70 200 550 750 950) house: 100 set: #(17 19 20));
 		add: (Lot title: 'New York Avenue' price: 200 
-			rents: #(16 80 220 600 800 1000) house: 100);
+			rents: #(16 80 220 600 800 1000) house: 100 set: #(17 19 20));
 		add: (Park new label: 'Free Parking');
 		add: (Lot title: 'Kentucky Avenue' price: 220 
-			rents: #(18 90 250 700 875 1050) house: 150);
+			rents: #(18 90 250 700 875 1050) house: 150 set: #(22 24 25));
 		add: (Chance new label: 'Chance');
 		add: (Lot title: 'Indiana Avenue' price: 220 
-			rents: #(18 90 250 700 875 1050) house: 150);
+			rents: #(18 90 250 700 875 1050) house: 150 set: #(22 24 25));
 		add: (Lot title: 'Illinois Avenue' price: 240 
-			rents: #(20 100 300 750 925 1100) house: 150);
+			rents: #(20 100 300 750 925 1100) house: 150 set: #(22 24 25));
 		add: (Railroad new label: 'B. & O. Railroad');
 		add: (Lot title: 'Atlantic Avenue' price: 260 
-			rents: #(22 110 330 800 975 1150) house: 150);
+			rents: #(22 110 330 800 975 1150) house: 150 set: #(27 28 30));
 		add: (Lot title: 'Ventnor Avenue' price: 260 
-			rents: #(22 110 330 800 975 1150) house: 150);
+			rents: #(22 110 330 800 975 1150) house: 150 set: #(27 28 30));
 		add: (Utility new label: 'Water Works');
 		add: (Lot title: 'Marvin Gardens' price: 280 
-			rents: #(24 120 360 850 1025 1200) house: 150);
+			rents: #(24 120 360 850 1025 1200) house: 150 set: #(27 28 30));
 		add: (Hazard new label: 'Go to Jail');
 		add: (Lot title: 'Pacific Avenue' price: 300 
-			rents: #(26 130 390 900 1100 1275) house: 200);
+			rents: #(26 130 390 900 1100 1275) house: 200 set: #(32 33 35));
 		add: (Lot title: 'North Carolina Avenue' price: 300 
-			rents: #(26 130 390 900 1100 1275) house: 200);
+			rents: #(26 130 390 900 1100 1275) house: 200 set: #(32 33 35));
 		add: (Chest new label: 'Community Chest');
 		add: (Lot title: 'Pennsylvania Avenue' price: 320 
-			rents: #(28 150 450 1000 1200 1400) house: 200);
+			rents: #(28 150 450 1000 1200 1400) house: 200 set: #(32 33 35));
 		add: (Railroad new label: 'Short Line Railroad');
 		add: (Chance new label: 'Chance');
 		add: (Lot title: 'Park Place' price: 350 
-			rents: #(35 175 500 1100 1300 1500) house: 200);
+			rents: #(35 175 500 1100 1300 1500) house: 200 set: #(38 40));
 		add: (Luxury new label: 'Luxury Tax');
 		add: (Lot title: 'Boardwalk' price: 400 
-			rents: #(50 200 600 1400 1700 2000) house: 200);
+			rents: #(50 200 600 1400 1700 2000) house: 200 set: #(38 40));
 		yourself
 ! !
 
@@ -1676,44 +1730,6 @@ setPrices
 	Prices _ arr asOrderedCollection
 ! !
 
-!Monopoly class methodsFor: 'as yet unclassified' stamp: 'dhn 5/14/2019 16:05:27'!
-setSets
-	"Establish initial values for class variable Sets."
-	| arr |
-	
-	arr := Array new: 40.
-	arr
-        at: 01 put: #(1 3);
-        at: 03 put: #(1 3);
-        at: 05 put: #(5 15 25 35);
-        at: 15 put: #(5 15 25 35);
-        at: 25 put: #(5 15 25 35);
-        at: 35 put: #(5 15 25 35);
-        at: 06 put: #(6 8 9);
-        at: 08 put: #(6 8 9);
-        at: 09 put: #(6 8 9);
-        at: 11 put: #(11 13 14);
-        at: 13 put: #(11 13 14);
-        at: 14 put: #(11 13 14);
-        at: 12 put: #(12 28);
-        at: 28 put: #(12 28);
-        at: 16 put: #(16 18 19);
-        at: 18 put: #(16 18 19);
-        at: 19 put: #(16 18 19);
-        at: 21 put: #(21 23 24);
-        at: 23 put: #(21 23 24);
-        at: 24 put: #(21 23 24);
-        at: 26 put: #(26 27 29);
-        at: 27 put: #(26 27 29);
-        at: 29 put: #(26 27 29);
-        at: 31 put: #(31 32 34);
-        at: 32 put: #(31 32 34);
-        at: 34 put: #(31 32 34);
-        at: 37 put: #(37 39);
-        at: 39 put: #(37 39).
-	Sets _ arr asOrderedCollection
-! !
-
 !Monopoly class methodsFor: 'as yet unclassified'!
 setsFor: anInteger
         "Return an ordered collection of sets for
@@ -2060,15 +2076,6 @@ development
     ^0! !
 
 !Property methodsFor: 'as yet unclassified'!
-initialize: aPosition
-        "Establish initial values of variables based on the
-        board position aPosition."
-    price := Monopoly priceFor: aPosition.
-    rents := Monopoly rentFor: aPosition.
-    set := Monopoly setsFor: aPosition.
-    self mortgaged: false.! !
-
-!Property methodsFor: 'as yet unclassified'!
 mortgaged
         "Answer the value of the mortgaged variable."
     ^mortgaged! !
@@ -2143,15 +2150,17 @@ rents: aCollection
         "Set the Collection value of the rents variable."
     rents := aCollection.! !
 
-!Property methodsFor: 'accessing'!
+!Property methodsFor: 'accessing' stamp: 'dhn 2/28/2020 13:39:03'!
 set
-        "Answer the Collection value of the set variable."
-    ^set! !
+	"Answer the value of set"
 
-!Property methodsFor: 'accessing'!
-set: aCollection
-        "Set the Collection value of the set variable."
-    set := aCollection.! !
+	^ set! !
+
+!Property methodsFor: 'accessing' stamp: 'dhn 2/28/2020 13:38:36'!
+set: anObject
+	"Set the value of set"
+
+	set _ anObject! !
 
 !Lot methodsFor: 'accessing' stamp: 'dhn 2/20/2020 16:55:55'!
 houseCost
@@ -2213,6 +2222,20 @@ title: aTitle price: aPrice rents: anArray house: aCost
 		label: aTitle;
 		rents: anArray;
 		houseCost: aCost.
+	^ lot! !
+
+!Lot class methodsFor: 'instance creation' stamp: 'dhn 2/28/2020 13:37:34'!
+title: aTitle price: aPrice rents: anArray house: aCost set: aSet
+	"answer an instance of a lot"
+	| lot |
+
+	lot _ self new.
+	lot
+		price: aPrice;
+		label: aTitle;
+		rents: anArray;
+		houseCost: aCost;
+		set: aSet.
 	^ lot! !
 
 !Railroad methodsFor: 'operating'!
