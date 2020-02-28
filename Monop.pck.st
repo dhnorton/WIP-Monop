@@ -1,6 +1,6 @@
-'From Cuis 5.0 [latest update: #4042] on 26 February 2020 at 9:25:27 pm'!
+'From Cuis 5.0 [latest update: #4042] on 27 February 2020 at 8:29:23 pm'!
 'Description Simulation of the board game "Monopoly".'!
-!provides: 'Monop' 1 59!
+!provides: 'Monop' 1 60!
 !requires: 'Game' 1 44 nil!
 SystemOrganization addCategory: #'Monop-View'!
 SystemOrganization addCategory: #'Monop-Model'!
@@ -8,7 +8,7 @@ SystemOrganization addCategory: #'Monop-Model'!
 
 !classDefinition: #Estate category: #'Monop-Model'!
 Game subclass: #Estate
-	instanceVariableNames: 'demo windowCount chances chests moveButton statsItem'
+	instanceVariableNames: 'demo windowCount chances chests moveButton statsItem rents sets'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Monop-Model'!
@@ -552,12 +552,12 @@ exceptCurrent: anAmount
 !Estate methodsFor: 'operating' stamp: 'dhn 2/25/2020 14:58:42'!
 getOut: anObject! !
 
-!Estate methodsFor: 'operating' stamp: 'dhn 2/26/2020 16:01:04'!
+!Estate methodsFor: 'operating' stamp: 'dhn 2/27/2020 20:12:16'!
 goToJail
 	"Go directly back to jail."
 
 	token slideLeft: currentPlayer position to: 11.
-	currentPlayer jail: true with: 0.
+	"currentPlayer jail: true with: 0."
 	self testRoutine.! !
 
 !Estate methodsFor: 'operating' stamp: 'dhn 2/25/2020 16:49:25'!
@@ -571,25 +571,29 @@ incomeTax
 	self triggerEvent: #itemChange.
 	self testRoutine.! !
 
-!Estate methodsFor: 'operating' stamp: 'dhn 2/26/2020 20:30:17'!
+!Estate methodsFor: 'operating' stamp: 'dhn 2/27/2020 19:55:57'!
 justVisit
 	"Just visiting jail."
 
-	currentPlayer inJail 
+"	currentPlayer inJail 
 		ifTrue: [
 			GamePopUp 
 				inform: currentPlayer identity, ' will be here a long time.' 
 				title: 'Life Sentence'.
-			self disableAll: {'Move'}].
+			self disableAll: {'Move'}]."
 	self testRoutine.! !
 
-!Estate methodsFor: 'operating' stamp: 'dhn 2/21/2020 12:43:13'!
+!Estate methodsFor: 'operating' stamp: 'dhn 2/27/2020 19:52:19'!
 landlord
 	"React as the owner."
 	"If unowned, the 'owner' is the bank and the property will be sold or auctioned."
 	"If owned, rent will be collected."
-
-	self testRoutine.! !
+	| where what |
+	
+	where _ spaces at: currentPlayer position.
+	what _ where label.
+	{what. where rents} print.
+	self enableAll: {'End Turn'}.! !
 
 !Estate methodsFor: 'operating' stamp: 'dhn 2/25/2020 16:48:10'!
 luxuryTax
@@ -775,21 +779,29 @@ testRoutine
 	Transcript show: what; newLine.
 	self enableAll: {'End Turn'}.! !
 
-!Estate methodsFor: 'operating' stamp: 'dhn 2/21/2020 12:43:52'!
+!Estate methodsFor: 'operating' stamp: 'dhn 2/27/2020 19:51:31'!
 trainTrip
 	"Ride or purchase."
 	"If unowned, the 'owner' is the bank and the RR will be sold or auctioned."
 	"If owned, the ticket price will be charged based on the number of RRs owned."
+	| where what |
+	
+	where _ self class spaceAttributes at: currentPlayer position.
+	what _ where label.
+	{what. where rents} print.
+	self enableAll: {'End Turn'}.! !
 
-	self testRoutine.! !
-
-!Estate methodsFor: 'operating' stamp: 'dhn 2/21/2020 12:44:06'!
+!Estate methodsFor: 'operating' stamp: 'dhn 2/27/2020 19:52:35'!
 utilityBill
 	"React as the owner."
 	"If unowned, the 'owner' is the bank and the utility will be sold or auctioned."
 	"If owned, a charge will be collected based on the roll and the number owned."
-
-	self testRoutine.! !
+	| where what |
+	
+	where _ self class spaceAttributes at: currentPlayer position.
+	what _ where label.
+	{what. where rents} print.
+	self enableAll: {'End Turn'}.! !
 
 !Estate methodsFor: 'operating' stamp: 'dhn 2/23/2020 21:14:06'!
 windowPosition: aPoint
@@ -1666,41 +1678,6 @@ setPrices
 	Prices _ arr asOrderedCollection
 ! !
 
-!Monopoly class methodsFor: 'as yet unclassified' stamp: 'dhn 5/14/2019 16:01:42'!
-setRents
-	"Establish initial values for class variable Rents."
-	| arr |
-	
-	arr _ Array new: 40.
-	arr
-        at: 01 put: #(2 10 30 90 160 250);
-        at: 03 put: #(4 20 60 180 320 450);
-        at: 05 put: #(25 50 100 200);
-        at: 15 put: #(25 50 100 200);
-        at: 25 put: #(25 50 100 200);
-        at: 35 put: #(25 50 100 200);
-        at: 06 put: #(6 30 90 270 400 550);
-        at: 08 put: #(6 30 90 270 400 550);
-        at: 09 put: #(8 40 100 300 450 600);
-        at: 11 put: #(10 50 150 450 625 750);
-        at: 13 put: #(10 50 150 450 625 750);
-        at: 14 put: #(12 60 180 500 700 900);
-        at: 16 put: #(14 70 200 550 750 950);
-        at: 18 put: #(14 70 200 550 750 950);
-        at: 19 put: #(16 80 220 600 800 1000);
-        at: 21 put: #(18 90 250 700 875 1050);
-        at: 23 put: #(18 90 250 700 875 1050);
-        at: 24 put: #(20 100 300 750 925 1100);
-        at: 26 put: #(22 110 330 800 975 1150);
-        at: 27 put: #(22 110 330 800 975 1150);
-        at: 29 put: #(24 120 360 850 1025 1200);
-        at: 31 put: #(26 130 390 900 1100 1275);
-        at: 32 put: #(26 130 390 900 1100 1275);
-        at: 34 put: #(28 150 450 1000 1200 1400);
-        at: 37 put: #(35 175 500 1100 1300 1500);
-        at: 39 put: #(50 200 600 1400 1700 2000).
-	Rents _ arr asOrderedCollection! !
-
 !Monopoly class methodsFor: 'as yet unclassified' stamp: 'dhn 5/14/2019 16:05:27'!
 setSets
 	"Establish initial values for class variable Sets."
@@ -2125,11 +2102,6 @@ rentedBy: aPlayer
 	aPlayer assess: pmt.
 	self owner cash: self owner cash + pmt! !
 
-!Property methodsFor: 'as yet unclassified'!
-rents: aCollection
-        "Set the Collection value of the rents variable."
-    rents := aCollection.! !
-
 !Property methodsFor: 'as yet unclassified' stamp: 'dhn 5/14/2019 15:09:43'!
 result: aPlayer
 	"Effect the result of aPlayer landing on the property."
@@ -2162,12 +2134,23 @@ sellTo: aPlayer
                     propertyAdd: self.
                 self owner: aPlayer ].! !
 
-!Property methodsFor: 'as yet unclassified'!
+!Property methodsFor: 'accessing' stamp: 'dhn 2/27/2020 19:35:28'!
+rents
+	"Answer the value of rents"
+
+	^ rents! !
+
+!Property methodsFor: 'accessing'!
+rents: aCollection
+        "Set the Collection value of the rents variable."
+    rents := aCollection.! !
+
+!Property methodsFor: 'accessing'!
 set
         "Answer the Collection value of the set variable."
     ^set! !
 
-!Property methodsFor: 'as yet unclassified'!
+!Property methodsFor: 'accessing'!
 set: aCollection
         "Set the Collection value of the set variable."
     set := aCollection.! !
@@ -2221,8 +2204,8 @@ initialize
 	houses _ 0.
 	routine _ #landlord! !
 
-!Lot class methodsFor: 'instance creation' stamp: 'dhn 2/23/2020 14:46:06'!
-title: aTitle price: aPrice rents: array house: aCost
+!Lot class methodsFor: 'instance creation' stamp: 'dhn 2/27/2020 19:22:40'!
+title: aTitle price: aPrice rents: anArray house: aCost
 	"answer an instance of a lot"
 	| lot |
 
@@ -2230,7 +2213,7 @@ title: aTitle price: aPrice rents: array house: aCost
 	lot
 		price: aPrice;
 		label: aTitle;
-		rents: array;
+		rents: anArray;
 		houseCost: aCost.
 	^ lot! !
 
@@ -2256,12 +2239,13 @@ rent: aPlayer
             amt := 2 * amt ].
     ^amt! !
 
-!Railroad methodsFor: 'initialization' stamp: 'dhn 2/23/2020 13:44:26'!
+!Railroad methodsFor: 'initialization' stamp: 'dhn 2/27/2020 19:54:27'!
 initialize
 
 	super initialize.
 	price _ 200.
 	mortgaged _ false.
+	rents _ #(50 100 150 200).
 	routine _ #trainTrip! !
 
 !Utility methodsFor: 'operating' stamp: 'dhn 5/14/2019 15:30:21'!
@@ -2615,13 +2599,13 @@ threeDoubles
 		title: 'Too Many Doubles'
 ! !
 
-!Developer methodsFor: 'as yet unclassified' stamp: 'dhn 5/17/2019 12:29:19'!
+!Developer methodsFor: 'as yet unclassified' stamp: 'dhn 2/27/2020 20:27:50'!
 toJail
         "Send the player to jail."
     self goAgain: false;
-         jail: true with: 0;
+        "jail: true with: 0;"
         passedGo: false;
-        position: 10;
+        position: 11;
         doubles: 0.! !
 
 !Developer methodsFor: 'accessing' stamp: 'dhn 2/25/2020 20:08:21'!
