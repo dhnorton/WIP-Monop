@@ -1,6 +1,6 @@
-'From Cuis 5.0 [latest update: #4042] on 27 February 2020 at 8:29:23 pm'!
+'From Cuis 5.0 [latest update: #4042] on 28 February 2020 at 11:15:47 am'!
 'Description Simulation of the board game "Monopoly".'!
-!provides: 'Monop' 1 60!
+!provides: 'Monop' 1 61!
 !requires: 'Game' 1 44 nil!
 SystemOrganization addCategory: #'Monop-View'!
 SystemOrganization addCategory: #'Monop-Model'!
@@ -583,17 +583,13 @@ justVisit
 			self disableAll: {'Move'}]."
 	self testRoutine.! !
 
-!Estate methodsFor: 'operating' stamp: 'dhn 2/27/2020 19:52:19'!
+!Estate methodsFor: 'operating' stamp: 'dhn 2/28/2020 10:52:58'!
 landlord
 	"React as the owner."
 	"If unowned, the 'owner' is the bank and the property will be sold or auctioned."
 	"If owned, rent will be collected."
-	| where what |
 	
-	where _ spaces at: currentPlayer position.
-	what _ where label.
-	{what. where rents} print.
-	self enableAll: {'End Turn'}.! !
+	self testReport! !
 
 !Estate methodsFor: 'operating' stamp: 'dhn 2/25/2020 16:48:10'!
 luxuryTax
@@ -769,6 +765,16 @@ testMode
 
 	^ false! !
 
+!Estate methodsFor: 'operating' stamp: 'dhn 2/28/2020 10:51:29'!
+testReport
+	"Show space information in the Transcript."
+	| where what |
+	
+	where _ spaces at: currentPlayer position.
+	what _ where label.
+	{what. where rents. where price. where routine} print.
+	self enableAll: {'End Turn'}.! !
+
 !Estate methodsFor: 'operating' stamp: 'dhn 2/23/2020 15:03:37'!
 testRoutine
 	"Debug."
@@ -779,29 +785,21 @@ testRoutine
 	Transcript show: what; newLine.
 	self enableAll: {'End Turn'}.! !
 
-!Estate methodsFor: 'operating' stamp: 'dhn 2/27/2020 19:51:31'!
+!Estate methodsFor: 'operating' stamp: 'dhn 2/28/2020 10:52:40'!
 trainTrip
 	"Ride or purchase."
 	"If unowned, the 'owner' is the bank and the RR will be sold or auctioned."
 	"If owned, the ticket price will be charged based on the number of RRs owned."
-	| where what |
 	
-	where _ self class spaceAttributes at: currentPlayer position.
-	what _ where label.
-	{what. where rents} print.
-	self enableAll: {'End Turn'}.! !
+	self testReport! !
 
-!Estate methodsFor: 'operating' stamp: 'dhn 2/27/2020 19:52:35'!
+!Estate methodsFor: 'operating' stamp: 'dhn 2/28/2020 10:52:18'!
 utilityBill
 	"React as the owner."
 	"If unowned, the 'owner' is the bank and the utility will be sold or auctioned."
 	"If owned, a charge will be collected based on the roll and the number owned."
-	| where what |
-	
-	where _ self class spaceAttributes at: currentPlayer position.
-	what _ where label.
-	{what. where rents} print.
-	self enableAll: {'End Turn'}.! !
+
+	self testReport! !
 
 !Estate methodsFor: 'operating' stamp: 'dhn 2/23/2020 21:14:06'!
 windowPosition: aPoint
@@ -1059,7 +1057,7 @@ position: aCell
 	horiz _ (model cells at: aCell) morphPosition x.
 	self morphPosition: (self morphPosition translatedBy: (horiz@0))! !
 
-!EstateToken methodsFor: 'operations' stamp: 'dhn 2/26/2020 15:56:58'!
+!EstateToken methodsFor: 'operations' stamp: 'dhn 2/28/2020 10:44:50'!
 slideLeft: from to: to
 	"Slide self when player must go BACK to 'to' from 'from' "
 	| oldPos newPos index n posns limit i final |
@@ -1088,7 +1086,7 @@ slideLeft: from to: to
 				self removeActionsForEvent: #morphicStep.
 				arrow delete.
 				model currentPlayer position: final.
-				final = 11 ifTrue: [model currentPlayer jail: true with: 0].
+				"final = 11 ifTrue: [model currentPlayer jail: true with: 0]."
 				model doSpace.
 				model triggerEvent: #endOfMove]].
 	self startSteppingStepTime: 500! !
