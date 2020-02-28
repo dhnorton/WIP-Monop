@@ -1,6 +1,6 @@
-'From Cuis 5.0 [latest update: #4042] on 28 February 2020 at 2:21:03 pm'!
+'From Cuis 5.0 [latest update: #4042] on 28 February 2020 at 2:28:22 pm'!
 'Description Simulation of the board game "Monopoly".'!
-!provides: 'Monop' 1 62!
+!provides: 'Monop' 1 63!
 !requires: 'Game' 1 44 nil!
 SystemOrganization addCategory: #'Monop-View'!
 SystemOrganization addCategory: #'Monop-Model'!
@@ -38,8 +38,8 @@ LotView class
 
 !classDefinition: #Monopoly category: #'Monop-View'!
 GameBoard subclass: #Monopoly
-	instanceVariableNames: 'chest chance dice squares players turn numbersArea othersArea seasonsArea'
-	classVariableNames: 'Prices Rents Sets'
+	instanceVariableNames: 'numbersArea othersArea seasonsArea'
+	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Monop-View'!
 !classDefinition: 'Monopoly class' category: #'Monop-View'!
@@ -1735,13 +1735,6 @@ setsFor: anInteger
         "Return an ordered collection of sets for
             the property at board position anInteger."
     ^Sets at: anInteger! !
-
-!Monopoly class methodsFor: 'as yet unclassified'!
-setup
-        "Establish initial values for class variables."
-    self setRents;
-        setSets;
-        setPrices.! !
 
 !Monopoly class methodsFor: 'instance creation' stamp: 'dhn 5/15/2019 12:29:04'!
 buttonLayoutSpec
