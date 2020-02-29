@@ -1,6 +1,6 @@
-'From Cuis 5.0 [latest update: #4042] on 28 February 2020 at 2:28:22 pm'!
+'From Cuis 5.0 [latest update: #4042] on 28 February 2020 at 7:50:13 pm'!
 'Description Simulation of the board game "Monopoly".'!
-!provides: 'Monop' 1 63!
+!provides: 'Monop' 1 64!
 !requires: 'Game' 1 44 nil!
 SystemOrganization addCategory: #'Monop-View'!
 SystemOrganization addCategory: #'Monop-Model'!
@@ -98,7 +98,7 @@ Hazard class
 
 !classDefinition: #Property category: #'Monop-Model'!
 Square subclass: #Property
-	instanceVariableNames: 'mortgaged rents set'
+	instanceVariableNames: 'owner mortgaged rents set'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Monop-Model'!
@@ -473,6 +473,27 @@ statsReport: aString
 			nextPut: $:; newLine;
 			nextPutAll: (p reportAsAssetFor: currentPlayer); newLine]! !
 
+!Estate methodsFor: 'operating' stamp: 'dhn 2/28/2020 18:24:22'!
+broker
+	"Represent the property"
+	"If unowned, the 'owner' is the bank and the property will be sold or auctioned."
+	"If owned, rent will be collected."
+	| lot nam |
+	
+	lot _ spaces at: currentPlayer position.
+	nam _ lot title.
+	lot owner
+		ifNil: [
+			GamePopUp 
+				inform: (String streamContents: [:str |
+					str
+						nextPutAll: 'Does ', currentPlayer identity;
+						nextPutAll: ' want to buy ', nam; newLine;
+						nextPutAll: ' for $', lot price asString;
+						nextPut: $?])
+				title: 'For Sale'] 
+		ifNotNil: []! !
+
 !Estate methodsFor: 'operating' stamp: 'dhn 2/25/2020 16:51:31'!
 doSpace
 	"Perform the method associated with the space where the player is"
@@ -583,12 +604,13 @@ justVisit
 			self disableAll: {'Move'}]."
 	self testRoutine.! !
 
-!Estate methodsFor: 'operating' stamp: 'dhn 2/28/2020 10:52:58'!
+!Estate methodsFor: 'operating' stamp: 'dhn 2/28/2020 18:25:14'!
 landlord
 	"React as the owner."
 	"If unowned, the 'owner' is the bank and the property will be sold or auctioned."
 	"If owned, rent will be collected."
-	
+
+	self broker.
 	self testReport! !
 
 !Estate methodsFor: 'operating' stamp: 'dhn 2/25/2020 16:48:10'!
@@ -785,20 +807,22 @@ testRoutine
 	Transcript show: what; newLine.
 	self enableAll: {'End Turn'}.! !
 
-!Estate methodsFor: 'operating' stamp: 'dhn 2/28/2020 10:52:40'!
+!Estate methodsFor: 'operating' stamp: 'dhn 2/28/2020 18:25:38'!
 trainTrip
 	"Ride or purchase."
 	"If unowned, the 'owner' is the bank and the RR will be sold or auctioned."
 	"If owned, the ticket price will be charged based on the number of RRs owned."
 	
+	self broker.
 	self testReport! !
 
-!Estate methodsFor: 'operating' stamp: 'dhn 2/28/2020 10:52:18'!
+!Estate methodsFor: 'operating' stamp: 'dhn 2/28/2020 18:25:49'!
 utilityBill
 	"React as the owner."
 	"If unowned, the 'owner' is the bank and the utility will be sold or auctioned."
 	"If owned, a charge will be collected based on the roll and the number owned."
 
+	self broker.
 	self testReport! !
 
 !Estate methodsFor: 'operating' stamp: 'dhn 2/23/2020 21:14:06'!
@@ -970,7 +994,7 @@ season
 		yourself
 		! !
 
-!Estate class methodsFor: 'instance creation' stamp: 'dhn 2/28/2020 14:14:11'!
+!Estate class methodsFor: 'instance creation' stamp: 'dhn 2/28/2020 19:23:53'!
 spaceAttributes
 	"Data for the spaces on the board."
 	
@@ -982,7 +1006,7 @@ spaceAttributes
 		add: (Lot title: 'Baltic Avenue' price: 60 
 			rents: #(4 20 60 180 320 450) house: 50 set: #(2 4));
 		add: (Income new label: 'Income Tax');
-		add: (Railroad new label: 'Reading Railroad');
+		add: (Railroad title: 'Reading Railroad' price: 200 set: #(6 16 26 36));
 		add: (Lot title: 'Oriental Avenue' price: 100 
 			rents: #(6 30 90 270 400 550) house: 50 set: #(7 9 10));
 		add: (Chance new label: 'Chance');
@@ -993,12 +1017,12 @@ spaceAttributes
 		add: (Jail new label: 'In Jail/Just Visiting');
 		add: (Lot title: 'St. Charles Place' price: 140 
 			rents: #(10 50 150 450 625 750) house: 100 set: #(12 14 15));
-		add: (Utility new label: 'Electric Company');
+		add: (Utility title: 'Electric Company' price: 150 set: #(13 29));
 		add: (Lot title: 'States Avenue' price: 140 
 			rents: #(10 50 150 450 625 750) house: 100 set: #(12 14 15));
 		add: (Lot title: 'Virginia Avenue' price: 160 
 			rents: #(12 60 180 500 700 900) house: 100 set: #(12 14 15));
-		add: (Railroad new label: 'Pennsylvania Railroad');
+		add: (Railroad title: 'Pennsylvania Railroad' price: 200 set: #(6 16 26 36));
 		add: (Lot title: 'St. James Place' price: 180 
 			rents: #(14 70 200 550 750 950) house: 100 set: #(17 19 20));
 		add: (Chest new label: 'Community Chest');
@@ -1014,12 +1038,12 @@ spaceAttributes
 			rents: #(18 90 250 700 875 1050) house: 150 set: #(22 24 25));
 		add: (Lot title: 'Illinois Avenue' price: 240 
 			rents: #(20 100 300 750 925 1100) house: 150 set: #(22 24 25));
-		add: (Railroad new label: 'B. & O. Railroad');
+		add: (Railroad title: 'B. & O. Railroad' price: 200 set: #(6 16 26 36));
 		add: (Lot title: 'Atlantic Avenue' price: 260 
 			rents: #(22 110 330 800 975 1150) house: 150 set: #(27 28 30));
 		add: (Lot title: 'Ventnor Avenue' price: 260 
 			rents: #(22 110 330 800 975 1150) house: 150 set: #(27 28 30));
-		add: (Utility new label: 'Water Works');
+		add: (Utility title: 'Water Works' price: 150 set: #(13 29));
 		add: (Lot title: 'Marvin Gardens' price: 280 
 			rents: #(24 120 360 850 1025 1200) house: 150 set: #(27 28 30));
 		add: (Hazard new label: 'Go to Jail');
@@ -1030,7 +1054,7 @@ spaceAttributes
 		add: (Chest new label: 'Community Chest');
 		add: (Lot title: 'Pennsylvania Avenue' price: 320 
 			rents: #(28 150 450 1000 1200 1400) house: 200 set: #(32 33 35));
-		add: (Railroad new label: 'Short Line Railroad');
+		add: (Railroad title: 'Short Line Railroad' price: 200 set: #(6 16 26 36));
 		add: (Chance new label: 'Chance');
 		add: (Lot title: 'Park Place' price: 350 
 			rents: #(35 175 500 1100 1300 1500) house: 200 set: #(38 40));
@@ -1976,16 +2000,6 @@ includeInNewMorphMenu
 	"Not to be instantiated from the menu"
 	^ false! !
 
-!Square methodsFor: 'accessing' stamp: 'dhn 2/23/2020 14:35:57'!
-label: anObject
-	"Set the value of label"
-
-	label _ anObject,
-		(self price 
-			ifNil: ['']
-			ifNotNil: [' $', self price asString])
-! !
-
 !Square methodsFor: 'accessing'!
 position
         "Answer the value of the position variable."
@@ -2132,6 +2146,18 @@ sellTo: aPlayer
                     propertyAdd: self.
                 self owner: aPlayer ].! !
 
+!Property methodsFor: 'accessing' stamp: 'dhn 2/28/2020 15:03:10'!
+owner
+	"Answer the value of owner"
+
+	^ owner! !
+
+!Property methodsFor: 'accessing' stamp: 'dhn 2/28/2020 15:03:10'!
+owner: anObject
+	"Set the value of owner"
+
+	owner _ anObject! !
+
 !Property methodsFor: 'accessing' stamp: 'dhn 2/27/2020 19:35:28'!
 rents
 	"Answer the value of rents"
@@ -2154,6 +2180,12 @@ set: anObject
 	"Set the value of set"
 
 	set _ anObject! !
+
+!Property methodsFor: 'initialization' stamp: 'dhn 2/28/2020 15:05:10'!
+initialize
+
+	super initialize.
+	owner _ nil! !
 
 !Lot methodsFor: 'accessing' stamp: 'dhn 2/20/2020 16:55:55'!
 houseCost
@@ -2204,20 +2236,7 @@ initialize
 	houses _ 0.
 	routine _ #landlord! !
 
-!Lot class methodsFor: 'instance creation' stamp: 'dhn 2/27/2020 19:22:40'!
-title: aTitle price: aPrice rents: anArray house: aCost
-	"answer an instance of a lot"
-	| lot |
-
-	lot _ self new.
-	lot
-		price: aPrice;
-		label: aTitle;
-		rents: anArray;
-		houseCost: aCost.
-	^ lot! !
-
-!Lot class methodsFor: 'instance creation' stamp: 'dhn 2/28/2020 13:37:34'!
+!Lot class methodsFor: 'instance creation' stamp: 'dhn 2/28/2020 15:40:50'!
 title: aTitle price: aPrice rents: anArray house: aCost set: aSet
 	"answer an instance of a lot"
 	| lot |
@@ -2225,7 +2244,8 @@ title: aTitle price: aPrice rents: anArray house: aCost set: aSet
 	lot _ self new.
 	lot
 		price: aPrice;
-		label: aTitle;
+		title: aTitle;
+		label: lot title, ' $', lot price asString;
 		rents: anArray;
 		houseCost: aCost;
 		set: aSet.
@@ -2253,14 +2273,28 @@ rent: aPlayer
             amt := 2 * amt ].
     ^amt! !
 
-!Railroad methodsFor: 'initialization' stamp: 'dhn 2/27/2020 19:54:27'!
+!Railroad methodsFor: 'initialization' stamp: 'dhn 2/28/2020 18:19:13'!
 initialize
 
 	super initialize.
+	title _ label.
 	price _ 200.
 	mortgaged _ false.
 	rents _ #(50 100 150 200).
 	routine _ #trainTrip! !
+
+!Railroad class methodsFor: 'instance creation' stamp: 'dhn 2/28/2020 19:12:45'!
+title: aTitle price: aPrice set: aSet
+	"answer an instance of a lot"
+	| rr |
+
+	rr _ self new.
+	rr
+		price: aPrice;
+		title: aTitle;
+		label: rr title;
+		set: aSet.
+	^ rr! !
 
 !Utility methodsFor: 'operating' stamp: 'dhn 5/14/2019 15:30:21'!
 rent: aPlayer
@@ -2276,13 +2310,25 @@ rent: aPlayer
             amt := 10 * (DieMorph new) ].
     ^amt! !
 
-!Utility methodsFor: 'initialization' stamp: 'dhn 2/23/2020 13:44:39'!
+!Utility methodsFor: 'initialization' stamp: 'dhn 2/28/2020 19:03:05'!
 initialize
 
 	super initialize.
-	price _ 150.
 	mortgaged _ false.
 	routine _ #utilityBill! !
+
+!Utility class methodsFor: 'instance creation' stamp: 'dhn 2/28/2020 19:13:20'!
+title: aTitle price: aPrice set: aSet
+	"answer an instance of a lot"
+	| ut |
+
+	ut _ self new.
+	ut
+		price: aPrice;
+		title: aTitle;
+		label: ut title;
+		set: aSet.
+	^ ut! !
 
 !Risk methodsFor: 'as yet unclassified'!
 board
