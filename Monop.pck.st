@@ -1,6 +1,6 @@
-'From Cuis 5.0 [latest update: #4042] on 28 February 2020 at 7:50:13 pm'!
+'From Cuis 5.0 [latest update: #4042] on 28 February 2020 at 10:38:53 pm'!
 'Description Simulation of the board game "Monopoly".'!
-!provides: 'Monop' 1 64!
+!provides: 'Monop' 1 65!
 !requires: 'Game' 1 44 nil!
 SystemOrganization addCategory: #'Monop-View'!
 SystemOrganization addCategory: #'Monop-Model'!
@@ -473,26 +473,42 @@ statsReport: aString
 			nextPut: $:; newLine;
 			nextPutAll: (p reportAsAssetFor: currentPlayer); newLine]! !
 
-!Estate methodsFor: 'operating' stamp: 'dhn 2/28/2020 18:24:22'!
+!Estate methodsFor: 'operating' stamp: 'dhn 2/28/2020 20:33:58'!
+auction: aProperty
+	"Sell aProperty at auction."! !
+
+!Estate methodsFor: 'operating' stamp: 'dhn 2/28/2020 21:19:20'!
 broker
 	"Represent the property"
 	"If unowned, the 'owner' is the bank and the property will be sold or auctioned."
 	"If owned, rent will be collected."
-	| lot nam |
+	| lot ans rent |
 	
 	lot _ spaces at: currentPlayer position.
-	nam _ lot title.
 	lot owner
 		ifNil: [
-			GamePopUp 
-				inform: (String streamContents: [:str |
-					str
-						nextPutAll: 'Does ', currentPlayer identity;
-						nextPutAll: ' want to buy ', nam; newLine;
-						nextPutAll: ' for $', lot price asString;
-						nextPut: $?])
-				title: 'For Sale'] 
-		ifNotNil: []! !
+			ans _ PopUpMenu 
+				confirm: 'For sale for $', lot price asString
+				trueChoice: 'Yes, I''ll buy it.'
+				falseChoice: 'No. Auction it.'.
+			ans 
+				ifTrue: [
+					currentPlayer tally: lot price negated.
+					currentPlayer assets addLast: lot title.
+					lot owner: currentPlayer.
+					self triggerEvent: #itemChange] 
+				ifFalse: [self auction: lot]]
+		ifNotNil: [
+			lot owner ~= currentPlayer 
+				ifTrue: [
+					rent _ lot rents first.
+					GamePopUp 
+						inform: currentPlayer identity, ' must pay ', 
+							lot owner identity, ' $', rent asString
+						title: 'Rent Due'.
+					currentPlayer tally: rent negated.
+					lot owner tally: rent.
+					self triggerEvent: #itemChange]]! !
 
 !Estate methodsFor: 'operating' stamp: 'dhn 2/25/2020 16:51:31'!
 doSpace
@@ -2317,7 +2333,7 @@ initialize
 	mortgaged _ false.
 	routine _ #utilityBill! !
 
-!Utility class methodsFor: 'instance creation' stamp: 'dhn 2/28/2020 19:13:20'!
+!Utility class methodsFor: 'instance creation' stamp: 'dhn 2/28/2020 21:30:35'!
 title: aTitle price: aPrice set: aSet
 	"answer an instance of a lot"
 	| ut |
@@ -2327,6 +2343,7 @@ title: aTitle price: aPrice set: aSet
 		price: aPrice;
 		title: aTitle;
 		label: ut title;
+		rents: #(10 20 30 40 50 60);
 		set: aSet.
 	^ ut! !
 
