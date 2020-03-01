@@ -1,6 +1,6 @@
-'From Cuis 5.0 [latest update: #4042] on 1 March 2020 at 2:53:48 pm'!
+'From Cuis 5.0 [latest update: #4042] on 1 March 2020 at 3:59:20 pm'!
 'Description Simulation of the board game "Monopoly".'!
-!provides: 'Monop' 1 72!
+!provides: 'Monop' 1 73!
 !requires: 'Game' 1 44 nil!
 SystemOrganization addCategory: #'Monop-View'!
 SystemOrganization addCategory: #'Monop-Model'!
@@ -1710,7 +1710,7 @@ startGame
 		nextPlayer.
 	model initialButtonState! !
 
-!Monopoly methodsFor: 'windows' stamp: 'dhn 2/23/2020 20:47:42'!
+!Monopoly methodsFor: 'windows' stamp: 'dhn 3/1/2020 15:33:12'!
 showStats
 	"Open a window on a player's statistics"
 	| pl win |
@@ -1722,7 +1722,7 @@ showStats
 		setLabel: pl identity, '''s Statistics';
 		setWindowColor: pl color;
 		morphPosition: self windowPosition;
-		morphExtent: 300 @ 260.
+		morphExtent: 500 @ 260.
 	model disableAll: {'Stats'}! !
 
 !Monopoly methodsFor: 'windows' stamp: 'dhn 2/23/2020 21:15:08'!
@@ -1905,7 +1905,7 @@ details
 	listPane updateList.
 	textPane model actualContents: model statsReport 	"note that the textPane model differs from the model for this view"! !
 
-!MonopStats methodsFor: 'initialization' stamp: 'dhn 3/1/2020 11:46:49'!
+!MonopStats methodsFor: 'initialization' stamp: 'dhn 3/1/2020 15:48:13'!
 buildMorphicWindow
 	"Lay out the window for statistics"
 	
@@ -1925,7 +1925,7 @@ buildMorphicWindow
 			name: 'stat description'. 	"give the TextModelMorph a name which will appear in the halos"
 
 	self layoutMorph
-		addMorph: listPane proportionalWidth: 0.6;
+		addMorph: listPane layoutSpec: (LayoutSpec fixedWidth: 250);
 		addAdjusterAndMorph: textPane layoutSpec: (LayoutSpec useAll)! !
 
 !ClearBox methodsFor: 'initialization' stamp: 'dhn 5/20/2019 12:39:52'!
@@ -2539,6 +2539,19 @@ initialize
 	super initialize.
 	routine _ #luxuryTax! !
 
+!Developer methodsFor: 'initialization' stamp: 'dhn 3/1/2020 14:39:31'!
+initialize
+
+	cash _ 1500.
+	debt _ 0.
+	assets _ SortedCollection sortBlock: [:a :c | a boardPosition > c boardPosition].
+	history _ OrderedCollection with: self netAssets.
+	cards := OrderedCollection new.
+	self
+		jail: false with: 0;
+		doubles: 0;
+		special: false! !
+
 !Developer methodsFor: 'as yet unclassified' stamp: 'dhn 5/17/2019 12:29:19'!
 assess: anInteger
         "Reduce the player's cash by anInteger. If he becomes
@@ -2594,43 +2607,9 @@ cards: aCard
     cards add: aCard.! !
 
 !Developer methodsFor: 'as yet unclassified' stamp: 'dhn 5/17/2019 12:29:19'!
-doubles
-        "Answer the Player's number of consecutive doubles."
-    ^doubles! !
-
-!Developer methodsFor: 'as yet unclassified' stamp: 'dhn 5/17/2019 12:29:19'!
-doubles: anInteger
-        "Set the Player's number of consecutive doubles."
-    doubles := anInteger.! !
-
-!Developer methodsFor: 'as yet unclassified' stamp: 'dhn 5/17/2019 12:29:19'!
-goAgain
-        "Answer the 'go again' indicator (whether or not the
-        player should go again after a roll)."
-    ^goAgain! !
-
-!Developer methodsFor: 'as yet unclassified' stamp: 'dhn 5/17/2019 12:29:19'!
-goAgain: aBoolean
-        "Set the 'go again' indicator to aBoolean."
-    goAgain := aBoolean.! !
-
-!Developer methodsFor: 'as yet unclassified' stamp: 'dhn 5/17/2019 12:29:19'!
 inJail
         "Answer whether the player is in jail or not."
     ^jail first! !
-
-!Developer methodsFor: 'as yet unclassified' stamp: 'dhn 3/1/2020 14:39:31'!
-initialize
-
-	cash _ 1500.
-	debt _ 0.
-	assets _ SortedCollection sortBlock: [:a :c | a boardPosition > c boardPosition].
-	history _ OrderedCollection with: self netAssets.
-	cards := OrderedCollection new.
-	self
-		jail: false with: 0;
-		doubles: 0;
-		special: false! !
 
 !Developer methodsFor: 'as yet unclassified' stamp: 'dhn 5/17/2019 12:29:19'!
 jail: aBoolean with: anInteger
@@ -2654,18 +2633,6 @@ normalWith: theDice
     self position: posn.
 "    self result: ( squares at: self position )."! !
 
-!Developer methodsFor: 'as yet unclassified' stamp: 'dhn 2/24/2020 20:49:55'!
-passedGo
-	"Answer whether the Player passed Go."
-
-	passedGo ifNil: [passedGo _ false].
-	^ passedGo! !
-
-!Developer methodsFor: 'as yet unclassified' stamp: 'dhn 5/17/2019 12:29:19'!
-passedGo: aBoolean
-        "Set the indicator as to whether the player passed Go."
-    passedGo := aBoolean.! !
-
 !Developer methodsFor: 'as yet unclassified' stamp: 'dhn 5/17/2019 12:29:19'!
 payOut: aRoll
 	"Pay to get out of jail, then move using aRoll."
@@ -2682,16 +2649,6 @@ payOut: aRoll
 				inform: self name,' has paid a $50 fine and has been released from jail.' 
 				title: 'Paid the Fine']
 ! !
-
-!Developer methodsFor: 'as yet unclassified' stamp: 'dhn 5/17/2019 12:29:19'!
-roll
-        "Answer the sum of the Player's roll of the dice."
-    ^roll! !
-
-!Developer methodsFor: 'as yet unclassified' stamp: 'dhn 5/17/2019 12:29:19'!
-roll: anInteger
-        "Set the sum of the Player's roll of the dice."
-    roll := anInteger.! !
 
 !Developer methodsFor: 'as yet unclassified' stamp: 'dhn 5/17/2019 12:29:19'!
 rollOut: aRoll
@@ -2724,16 +2681,6 @@ rollOut: aRoll
 	^ reply! !
 
 !Developer methodsFor: 'as yet unclassified' stamp: 'dhn 5/17/2019 12:29:19'!
-special
-        "Answer the special instance variable."
-    ^special! !
-
-!Developer methodsFor: 'as yet unclassified' stamp: 'dhn 5/17/2019 12:29:19'!
-special: aBoolean
-        "Set the special instance variable."
-    special := aBoolean.! !
-
-!Developer methodsFor: 'as yet unclassified' stamp: 'dhn 5/17/2019 12:29:19'!
 threeDoubles
 	"Notify player of the result of rolling too many doubles."
 
@@ -2756,6 +2703,59 @@ doubledString
 	"Answer the value of doubledString."
 	
 	doubledString _ ''! !
+
+!Developer methodsFor: 'accessing' stamp: 'dhn 5/17/2019 12:29:19'!
+doubles
+        "Answer the Player's number of consecutive doubles."
+    ^doubles! !
+
+!Developer methodsFor: 'accessing' stamp: 'dhn 5/17/2019 12:29:19'!
+doubles: anInteger
+        "Set the Player's number of consecutive doubles."
+    doubles := anInteger.! !
+
+!Developer methodsFor: 'accessing' stamp: 'dhn 5/17/2019 12:29:19'!
+goAgain
+        "Answer the 'go again' indicator (whether or not the
+        player should go again after a roll)."
+    ^goAgain! !
+
+!Developer methodsFor: 'accessing' stamp: 'dhn 5/17/2019 12:29:19'!
+goAgain: aBoolean
+        "Set the 'go again' indicator to aBoolean."
+    goAgain := aBoolean.! !
+
+!Developer methodsFor: 'accessing' stamp: 'dhn 2/24/2020 20:49:55'!
+passedGo
+	"Answer whether the Player passed Go."
+
+	passedGo ifNil: [passedGo _ false].
+	^ passedGo! !
+
+!Developer methodsFor: 'accessing' stamp: 'dhn 5/17/2019 12:29:19'!
+passedGo: aBoolean
+        "Set the indicator as to whether the player passed Go."
+    passedGo := aBoolean.! !
+
+!Developer methodsFor: 'accessing' stamp: 'dhn 5/17/2019 12:29:19'!
+roll
+        "Answer the sum of the Player's roll of the dice."
+    ^roll! !
+
+!Developer methodsFor: 'accessing' stamp: 'dhn 5/17/2019 12:29:19'!
+roll: anInteger
+        "Set the sum of the Player's roll of the dice."
+    roll := anInteger.! !
+
+!Developer methodsFor: 'accessing' stamp: 'dhn 5/17/2019 12:29:19'!
+special
+        "Answer the special instance variable."
+    ^special! !
+
+!Developer methodsFor: 'accessing' stamp: 'dhn 5/17/2019 12:29:19'!
+special: aBoolean
+        "Set the special instance variable."
+    special := aBoolean.! !
 
 !Card methodsFor: 'accessing' stamp: 'dhn 5/13/2019 22:07:12'!
 amount
