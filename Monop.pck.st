@@ -1,6 +1,6 @@
-'From Cuis 5.0 [latest update: #4042] on 29 February 2020 at 10:07:59 pm'!
+'From Cuis 5.0 [latest update: #4042] on 1 March 2020 at 12:04:34 pm'!
 'Description Simulation of the board game "Monopoly".'!
-!provides: 'Monop' 1 70!
+!provides: 'Monop' 1 71!
 !requires: 'Game' 1 44 nil!
 SystemOrganization addCategory: #'Monop-View'!
 SystemOrganization addCategory: #'Monop-Model'!
@@ -58,7 +58,7 @@ ForSale class
 
 !classDefinition: #MonopStats category: #'Monop-View'!
 GameView subclass: #MonopStats
-	instanceVariableNames: 'textPane'
+	instanceVariableNames: 'textPane listPane'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Monop-View'!
@@ -447,7 +447,7 @@ statsItem: anObject
 		self triggerEvent: #itemChange.
 		self changed: #statsItem]! !
 
-!Estate methodsFor: 'statistics' stamp: 'dhn 2/29/2020 11:23:55'!
+!Estate methodsFor: 'statistics' stamp: 'dhn 3/1/2020 11:49:33'!
 statsList
 	"Answer a list for the status window"
 	
@@ -1893,18 +1893,18 @@ endIt
 		enableAll: {'Stats'}.
 	self delete! !
 
-!MonopStats methodsFor: 'accessing' stamp: 'dhn 2/29/2020 19:00:17'!
+!MonopStats methodsFor: 'accessing' stamp: 'dhn 3/1/2020 11:59:48'!
 details
 
+	listPane updateList.
 	textPane model actualContents: model statsReport 	"note that the textPane model differs from the model for this view"! !
 
-!MonopStats methodsFor: 'initialization' stamp: 'dhn 2/23/2020 20:43:13'!
+!MonopStats methodsFor: 'initialization' stamp: 'dhn 3/1/2020 11:46:49'!
 buildMorphicWindow
 	"Lay out the window for statistics"
-	| list |
 	
 	self layoutMorph beRow.
-	list _ (PluggableListMorph
+	listPane _ (PluggableListMorph
 		model: model
 		listGetter: #statsList
 		indexGetter: #statsItem
@@ -1919,7 +1919,7 @@ buildMorphicWindow
 			name: 'stat description'. 	"give the TextModelMorph a name which will appear in the halos"
 
 	self layoutMorph
-		addMorph: list proportionalWidth: 0.6;
+		addMorph: listPane proportionalWidth: 0.6;
 		addAdjusterAndMorph: textPane layoutSpec: (LayoutSpec useAll)! !
 
 !ClearBox methodsFor: 'initialization' stamp: 'dhn 5/20/2019 12:39:52'!
