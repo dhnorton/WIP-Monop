@@ -1,6 +1,6 @@
-'From Cuis 5.0 [latest update: #4042] on 29 February 2020 at 7:03:33 pm'!
+'From Cuis 5.0 [latest update: #4042] on 29 February 2020 at 8:35:45 pm'!
 'Description Simulation of the board game "Monopoly".'!
-!provides: 'Monop' 1 68!
+!provides: 'Monop' 1 69!
 !requires: 'Game' 1 44 nil!
 SystemOrganization addCategory: #'Monop-View'!
 SystemOrganization addCategory: #'Monop-Model'!
@@ -381,13 +381,13 @@ initialButtonState
 	self enableAll: {'Move'. 'History'. 'Stats'}.
 	self disableAll: {'End Turn'. 'Purchase'. 'Auction'}! !
 
-!Estate methodsFor: 'initialization' stamp: 'dhn 2/29/2020 13:35:02'!
+!Estate methodsFor: 'initialization' stamp: 'dhn 2/29/2020 19:43:40'!
 initialize
 
 	players _ OrderedCollection new.
 	cells _ OrderedCollection new.
 	spaces _ self class spaceAttributes.
-	spaces do: [:ea | (ea class isKindOf: Property) ifTrue: [ea mgr: self]].
+	spaces do: [:ea | (ea isKindOf: Property) ifTrue: [ea mgr: self]].
 	spaceFreq _ GameHistogram ofSize: spaces size.
 	cellCount _ self class cellsForGame.
 	won _ false.
@@ -453,10 +453,10 @@ statsList
 	
 	^ currentPlayer assets collect: [:a | a title]! !
 
-!Estate methodsFor: 'statistics' stamp: 'dhn 2/29/2020 17:57:37'!
+!Estate methodsFor: 'statistics' stamp: 'dhn 2/29/2020 19:05:37'!
 statsReport
 	"Answer the status report for the asset listed at statsItem"
-self halt.
+
 	statsItem > 0
 		ifTrue: [^ self statsReport: (currentPlayer assets at: statsItem)]
 		ifFalse: [^ '']
@@ -2069,14 +2069,13 @@ initialize
 	super initialize.
 	routine _ #goToJail! !
 
-!Property methodsFor: 'as yet unclassified'!
+!Property methodsFor: 'as yet unclassified' stamp: 'dhn 2/29/2020 20:05:58'!
 complete
-        "Private - answer whether the complete set of property
-        is owned by self owner."
-    | owns |
-    owns := set select: [ :i |
-        i owner = ( self owner ) and: [ i owner notNil ] ].
-    ^owns size = (set size)! !
+	"Answer a factor based on whether the complete set of property is owned."
+	| owns |
+	
+	owns _ set select: [ :i | mgr spaces at: i owner = owner].
+	^ owns size = (set size) ifTrue: [2] ifFalse: [1]! !
 
 !Property methodsFor: 'as yet unclassified'!
 development
@@ -2149,6 +2148,18 @@ sellTo: aPlayer
                     propertyAdd: self.
                 self owner: aPlayer ].! !
 
+!Property methodsFor: 'accessing' stamp: 'dhn 2/29/2020 19:45:00'!
+mgr
+	"Answer the value of mgr"
+
+	^ mgr! !
+
+!Property methodsFor: 'accessing' stamp: 'dhn 2/29/2020 19:45:00'!
+mgr: anObject
+	"Set the value of mgr"
+
+	mgr _ anObject! !
+
 !Property methodsFor: 'accessing' stamp: 'dhn 2/28/2020 15:03:10'!
 owner
 	"Answer the value of owner"
@@ -2214,6 +2225,14 @@ houses: anInteger
         Value 5 means hotel."
     houses := anInteger.! !
 
+!Lot methodsFor: 'operating' stamp: 'dhn 2/29/2020 20:16:26'!
+complete
+	"Answer a factor based on whether the complete set of property is owned."
+	| owns |
+	
+	owns _ set select: [ :i | (mgr spaces at: i) owner = owner].
+	^ owns size = (set size) ifTrue: [2] ifFalse: [1]! !
+
 !Lot methodsFor: 'operating'!
 development
         "Answer the value of development on the lot."
@@ -2231,7 +2250,15 @@ rent: aPlayer
         ifTrue: [ ^2 * ( rents at: 1) ].
     ^rents at: ( self houses + 1 )! !
 
-!Lot methodsFor: 'operating' stamp: 'dhn 2/29/2020 17:47:34'!
+!Lot methodsFor: 'operating' stamp: 'dhn 2/29/2020 20:12:07'!
+rentAmount
+	"Answer the rent for this lot considering sets, houses, and mortgage state."
+	
+	^ mortgaged 
+		ifTrue: [^ 0]
+		ifFalse: [(rents at: houses + 1) * self complete]! !
+
+!Lot methodsFor: 'operating' stamp: 'dhn 2/29/2020 20:14:12'!
 report
 	"Answer the status of this lot."
 	
@@ -2241,7 +2268,7 @@ report
 			nextPutAll: 'Houses cost $';
 			nextPutAll: houseCost asString;
 			nextPutAll: ' (', houses asString, ')'; newLine;
-			nextPutAll: ('Rent is $', (rents at: houses + 1) asString); newLine]! !
+			nextPutAll: 'Rent is $', self rentAmount asString; newLine]! !
 
 !Lot methodsFor: 'initialization' stamp: 'dhn 2/23/2020 13:42:50'!
 initialize
