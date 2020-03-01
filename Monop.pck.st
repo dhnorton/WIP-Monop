@@ -1,6 +1,6 @@
-'From Cuis 5.0 [latest update: #4042] on 29 February 2020 at 8:35:45 pm'!
+'From Cuis 5.0 [latest update: #4042] on 29 February 2020 at 10:07:59 pm'!
 'Description Simulation of the board game "Monopoly".'!
-!provides: 'Monop' 1 69!
+!provides: 'Monop' 1 70!
 !requires: 'Game' 1 44 nil!
 SystemOrganization addCategory: #'Monop-View'!
 SystemOrganization addCategory: #'Monop-Model'!
@@ -481,7 +481,7 @@ statsReport: anAsset
 auction: aProperty
 	"Sell aProperty at auction."! !
 
-!Estate methodsFor: 'operating' stamp: 'dhn 2/29/2020 11:21:08'!
+!Estate methodsFor: 'operating' stamp: 'dhn 2/29/2020 21:24:01'!
 broker
 	"Represent the property"
 	"If unowned, the 'owner' is the bank and the property will be sold or auctioned."
@@ -505,7 +505,7 @@ broker
 		ifNotNil: [
 			lot owner ~= currentPlayer 
 				ifTrue: [
-					rent _ lot rents first.
+					rent _ lot rentAmount.
 					GamePopUp 
 						inform: currentPlayer identity, ' must pay ', 
 							lot owner identity, ' $', rent asString
@@ -2069,36 +2069,12 @@ initialize
 	super initialize.
 	routine _ #goToJail! !
 
-!Property methodsFor: 'as yet unclassified' stamp: 'dhn 2/29/2020 20:05:58'!
-complete
-	"Answer a factor based on whether the complete set of property is owned."
-	| owns |
-	
-	owns _ set select: [ :i | mgr spaces at: i owner = owner].
-	^ owns size = (set size) ifTrue: [2] ifFalse: [1]! !
-
 !Property methodsFor: 'as yet unclassified'!
 development
         "Answer the value of development on the property (used
         for income tax purposes). To be overridden by subclasses
         capable of development."
     ^0! !
-
-!Property methodsFor: 'as yet unclassified'!
-mortgaged
-        "Answer the value of the mortgaged variable."
-    ^mortgaged! !
-
-!Property methodsFor: 'as yet unclassified'!
-mortgaged: aBoolean
-        "Set the Boolean value of the mortgaged variable."
-    mortgaged := aBoolean.! !
-
-!Property methodsFor: 'as yet unclassified' stamp: 'dhn 2/20/2020 17:00:11'!
-price: anObject
-        "Set the value of the price variable."
-
-	    price _ anObject! !
 
 !Property methodsFor: 'as yet unclassified' stamp: 'dhn 5/14/2019 14:53:11'!
 rentedBy: aPlayer
@@ -2160,6 +2136,16 @@ mgr: anObject
 
 	mgr _ anObject! !
 
+!Property methodsFor: 'accessing'!
+mortgaged
+        "Answer the value of the mortgaged variable."
+    ^mortgaged! !
+
+!Property methodsFor: 'accessing'!
+mortgaged: aBoolean
+        "Set the Boolean value of the mortgaged variable."
+    mortgaged := aBoolean.! !
+
 !Property methodsFor: 'accessing' stamp: 'dhn 2/28/2020 15:03:10'!
 owner
 	"Answer the value of owner"
@@ -2201,6 +2187,18 @@ initialize
 	super initialize.
 	owner _ nil! !
 
+!Property methodsFor: 'initialization' stamp: 'dhn 2/20/2020 17:00:11'!
+price: anObject
+        "Set the value of the price variable."
+
+	    price _ anObject! !
+
+!Property methodsFor: 'operating' stamp: 'dhn 2/29/2020 21:52:40'!
+numberOwned
+	"Answer how many of the set are owned by this owner."
+	
+	^ (set select: [ :i | (mgr spaces at: i) owner = owner]) size! !
+
 !Lot methodsFor: 'accessing' stamp: 'dhn 2/20/2020 16:55:55'!
 houseCost
         "Answer the cost of a house."
@@ -2225,13 +2223,11 @@ houses: anInteger
         Value 5 means hotel."
     houses := anInteger.! !
 
-!Lot methodsFor: 'operating' stamp: 'dhn 2/29/2020 20:16:26'!
+!Lot methodsFor: 'operating' stamp: 'dhn 2/29/2020 21:58:12'!
 complete
 	"Answer a factor based on whether the complete set of property is owned."
-	| owns |
-	
-	owns _ set select: [ :i | (mgr spaces at: i) owner = owner].
-	^ owns size = (set size) ifTrue: [2] ifFalse: [1]! !
+
+	^ self numberOwned = (set size) ifTrue: [2] ifFalse: [1]! !
 
 !Lot methodsFor: 'operating'!
 development
@@ -2294,16 +2290,6 @@ title: aTitle price: aPrice rents: anArray house: aCost set: aSet
 	^ lot! !
 
 !Railroad methodsFor: 'operating'!
-numberOwned
-        "Private - answer how many of the set are owned
-        by self owner."
-    | owns |
-    owns := set select: [ :i |
-        i owner = ( self owner ) and: [ i owner notNil ] ].
-    owns notEmpty ifTrue: [ ^owns size ]
-                             ifFalse: [ ^nil ].! !
-
-!Railroad methodsFor: 'operating'!
 rent: aPlayer
         "Answer the rent for this property in its current state."
     | amt |
@@ -2314,6 +2300,22 @@ rent: aPlayer
         ifTrue: [ aPlayer special: false.
             amt := 2 * amt ].
     ^amt! !
+
+!Railroad methodsFor: 'operating' stamp: 'dhn 2/29/2020 21:48:46'!
+rentAmount
+	"Answer the rent based on the number of railroads owned."
+
+	^ rents at: self numberOwned! !
+
+!Railroad methodsFor: 'operating' stamp: 'dhn 2/29/2020 21:42:58'!
+report
+	"Answer the status of this railroad."
+	
+	mortgaged ifTrue: [^ 'Mortgaged for $', (price / 2) asString; newLine].
+	^ String streamContents: [:str |
+		str
+			nextPutAll: 'Rent is $', self rentAmount asString;
+			nextPutAll: ' (', self numberOwned asString, ')'; newLine]! !
 
 !Railroad methodsFor: 'initialization' stamp: 'dhn 2/28/2020 18:19:13'!
 initialize
@@ -2338,6 +2340,12 @@ title: aTitle price: aPrice set: aSet
 		set: aSet.
 	^ rr! !
 
+!Utility methodsFor: 'operating' stamp: 'dhn 2/29/2020 22:00:10'!
+complete
+	"Answer a factor based on whether the complete set of property is owned."
+
+	^ self numberOwned = (set size) ifTrue: [10] ifFalse: [4]! !
+
 !Utility methodsFor: 'operating' stamp: 'dhn 5/14/2019 15:30:21'!
 rent: aPlayer
         "Answer the rent for this property in its current state."
@@ -2351,6 +2359,30 @@ rent: aPlayer
         ifTrue: [ aPlayer special: false.
             amt := 10 * (DieMorph new) ].
     ^amt! !
+
+!Utility methodsFor: 'operating' stamp: 'dhn 2/29/2020 21:24:31'!
+rentAmount
+	"Answer the rent for this property in its current state."
+	| amt |
+	
+	self owner isNil ifTrue: [ ^nil ].
+	self mortgaged ifTrue: [ ^0 ].
+	amt _ self complete * mgr currentPlayer roll.
+	mgr currentPlayer special
+		ifTrue: [
+			mgr currentPlayer special: false.
+			amt _ 10 * (DieMorph new) ].
+	^ amt! !
+
+!Utility methodsFor: 'operating' stamp: 'dhn 2/29/2020 22:06:16'!
+report
+	"Answer the status of this railroad."
+	
+	mortgaged ifTrue: [^ 'Mortgaged for $', (price / 2) asString; newLine].
+	^ String streamContents: [:str |
+		str
+			nextPutAll: 'Rent is ', (#(4 10) at: self numberOwned) asString;
+			nextPutAll: ' times the amount rolled.'; newLine]! !
 
 !Utility methodsFor: 'initialization' stamp: 'dhn 2/28/2020 19:03:05'!
 initialize
