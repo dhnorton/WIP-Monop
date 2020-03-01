@@ -1,6 +1,6 @@
-'From Cuis 5.0 [latest update: #4042] on 28 February 2020 at 10:38:53 pm'!
+'From Cuis 5.0 [latest update: #4042] on 29 February 2020 at 7:03:33 pm'!
 'Description Simulation of the board game "Monopoly".'!
-!provides: 'Monop' 1 65!
+!provides: 'Monop' 1 68!
 !requires: 'Game' 1 44 nil!
 SystemOrganization addCategory: #'Monop-View'!
 SystemOrganization addCategory: #'Monop-Model'!
@@ -98,7 +98,7 @@ Hazard class
 
 !classDefinition: #Property category: #'Monop-Model'!
 Square subclass: #Property
-	instanceVariableNames: 'owner mortgaged rents set'
+	instanceVariableNames: 'owner mortgaged rents set mgr'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Monop-Model'!
@@ -381,12 +381,13 @@ initialButtonState
 	self enableAll: {'Move'. 'History'. 'Stats'}.
 	self disableAll: {'End Turn'. 'Purchase'. 'Auction'}! !
 
-!Estate methodsFor: 'initialization' stamp: 'dhn 2/24/2020 13:57:57'!
+!Estate methodsFor: 'initialization' stamp: 'dhn 2/29/2020 13:35:02'!
 initialize
 
 	players _ OrderedCollection new.
 	cells _ OrderedCollection new.
 	spaces _ self class spaceAttributes.
+	spaces do: [:ea | (ea class isKindOf: Property) ifTrue: [ea mgr: self]].
 	spaceFreq _ GameHistogram ofSize: spaces size.
 	cellCount _ self class cellsForGame.
 	won _ false.
@@ -446,38 +447,41 @@ statsItem: anObject
 		self triggerEvent: #itemChange.
 		self changed: #statsItem]! !
 
-!Estate methodsFor: 'statistics' stamp: 'dhn 2/23/2020 21:22:13'!
+!Estate methodsFor: 'statistics' stamp: 'dhn 2/29/2020 11:23:55'!
 statsList
 	"Answer a list for the status window"
 	
-	^ {'Yourself'. 'Players'. 'Hints'}! !
+	^ currentPlayer assets collect: [:a | a title]! !
 
-!Estate methodsFor: 'statistics' stamp: 'dhn 2/23/2020 21:00:23'!
+!Estate methodsFor: 'statistics' stamp: 'dhn 2/29/2020 17:57:37'!
 statsReport
 	"Answer the status report for the asset listed at statsItem"
-
+self halt.
 	statsItem > 0
-		ifTrue: [^ self statsReport: (self statsList at: statsItem)]
+		ifTrue: [^ self statsReport: (currentPlayer assets at: statsItem)]
 		ifFalse: [^ '']
 ! !
 
-!Estate methodsFor: 'statistics' stamp: 'dhn 2/23/2020 21:00:46'!
-statsReport: aString
-	"Answer the status of an asset named aString, possessed by the current player"
-	| p |
+!Estate methodsFor: 'statistics' stamp: 'dhn 2/29/2020 18:00:21'!
+statsReport: anAsset
+	"Answer the status of anAsset."
+
+	^ anAsset report
+	
+"	| p |
 	
 	p _ currentPlayer assets at: aString ifAbsent: [^ 'No such asset named ', aString].
 	^ String streamContents: [:str |
 		str
 			nextPutAll: p description;
 			nextPut: $:; newLine;
-			nextPutAll: (p reportAsAssetFor: currentPlayer); newLine]! !
+			nextPutAll: (p reportAsAssetFor: currentPlayer); newLine]"! !
 
 !Estate methodsFor: 'operating' stamp: 'dhn 2/28/2020 20:33:58'!
 auction: aProperty
 	"Sell aProperty at auction."! !
 
-!Estate methodsFor: 'operating' stamp: 'dhn 2/28/2020 21:19:20'!
+!Estate methodsFor: 'operating' stamp: 'dhn 2/29/2020 11:21:08'!
 broker
 	"Represent the property"
 	"If unowned, the 'owner' is the bank and the property will be sold or auctioned."
@@ -494,7 +498,7 @@ broker
 			ans 
 				ifTrue: [
 					currentPlayer tally: lot price negated.
-					currentPlayer assets addLast: lot title.
+					currentPlayer assets addLast: lot.
 					lot owner: currentPlayer.
 					self triggerEvent: #itemChange] 
 				ifFalse: [self auction: lot]]
@@ -1721,17 +1725,6 @@ windowPosition
 	
 	^ self morphPosition + (model windowPosition: self class viewPositionLeft)! !
 
-!Monopoly class methodsFor: 'as yet unclassified'!
-priceFor: anInteger
-        "Return a price for the property at board position anInteger."
-    ^Prices at: anInteger! !
-
-!Monopoly class methodsFor: 'as yet unclassified'!
-rentFor: anInteger
-        "Return an ordered collection of rents for
-            the property at board position anInteger."
-    ^Rents at: anInteger! !
-
 !Monopoly class methodsFor: 'as yet unclassified' stamp: 'dhn 5/14/2019 16:07:11'!
 setPrices
 	"Establish initial values for class variable Prices."
@@ -1769,12 +1762,6 @@ setPrices
         at: 39 put: 400.
 	Prices _ arr asOrderedCollection
 ! !
-
-!Monopoly class methodsFor: 'as yet unclassified'!
-setsFor: anInteger
-        "Return an ordered collection of sets for
-            the property at board position anInteger."
-    ^Sets at: anInteger! !
 
 !Monopoly class methodsFor: 'instance creation' stamp: 'dhn 5/15/2019 12:29:04'!
 buttonLayoutSpec
@@ -1906,7 +1893,7 @@ endIt
 		enableAll: {'Stats'}.
 	self delete! !
 
-!MonopStats methodsFor: 'accessing' stamp: 'dhn 2/23/2020 20:45:16'!
+!MonopStats methodsFor: 'accessing' stamp: 'dhn 2/29/2020 19:00:17'!
 details
 
 	textPane model actualContents: model statsReport 	"note that the textPane model differs from the model for this view"! !
@@ -2243,6 +2230,18 @@ rent: aPlayer
     ( self complete and: [ self houses = 0 ] )
         ifTrue: [ ^2 * ( rents at: 1) ].
     ^rents at: ( self houses + 1 )! !
+
+!Lot methodsFor: 'operating' stamp: 'dhn 2/29/2020 17:47:34'!
+report
+	"Answer the status of this lot."
+	
+	mortgaged ifTrue: [^ 'Mortgaged for $', (price / 2) asString; newLine].
+	^ String streamContents: [:str |
+		str
+			nextPutAll: 'Houses cost $';
+			nextPutAll: houseCost asString;
+			nextPutAll: ' (', houses asString, ')'; newLine;
+			nextPutAll: ('Rent is $', (rents at: houses + 1) asString); newLine]! !
 
 !Lot methodsFor: 'initialization' stamp: 'dhn 2/23/2020 13:42:50'!
 initialize
