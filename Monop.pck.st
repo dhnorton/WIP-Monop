@@ -1,6 +1,6 @@
-'From Cuis 5.0 [latest update: #4042] on 1 March 2020 at 12:04:34 pm'!
+'From Cuis 5.0 [latest update: #4042] on 1 March 2020 at 2:53:48 pm'!
 'Description Simulation of the board game "Monopoly".'!
-!provides: 'Monop' 1 71!
+!provides: 'Monop' 1 72!
 !requires: 'Game' 1 44 nil!
 SystemOrganization addCategory: #'Monop-View'!
 SystemOrganization addCategory: #'Monop-Model'!
@@ -78,7 +78,7 @@ ClearBox class
 
 !classDefinition: #Square category: #'Monop-Model'!
 BoardSpace subclass: #Square
-	instanceVariableNames: 'position title price'
+	instanceVariableNames: 'boardPosition title price'
 	classVariableNames: 'Prices Rents Sets'
 	poolDictionaries: ''
 	category: 'Monop-Model'!
@@ -381,13 +381,18 @@ initialButtonState
 	self enableAll: {'Move'. 'History'. 'Stats'}.
 	self disableAll: {'End Turn'. 'Purchase'. 'Auction'}! !
 
-!Estate methodsFor: 'initialization' stamp: 'dhn 2/29/2020 19:43:40'!
+!Estate methodsFor: 'initialization' stamp: 'dhn 3/1/2020 13:05:46'!
 initialize
+	"Set up self as the board model."
+	| pos |
 
 	players _ OrderedCollection new.
 	cells _ OrderedCollection new.
 	spaces _ self class spaceAttributes.
-	spaces do: [:ea | (ea isKindOf: Property) ifTrue: [ea mgr: self]].
+	pos _ 0.
+	spaces do: [:ea | 
+		ea boardPosition: (pos _ pos + 1).
+		(ea isKindOf: Property) ifTrue: [ea mgr: self]].
 	spaceFreq _ GameHistogram ofSize: spaces size.
 	cellCount _ self class cellsForGame.
 	won _ false.
@@ -481,7 +486,7 @@ statsReport: anAsset
 auction: aProperty
 	"Sell aProperty at auction."! !
 
-!Estate methodsFor: 'operating' stamp: 'dhn 2/29/2020 21:24:01'!
+!Estate methodsFor: 'operating' stamp: 'dhn 3/1/2020 13:37:25'!
 broker
 	"Represent the property"
 	"If unowned, the 'owner' is the bank and the property will be sold or auctioned."
@@ -498,7 +503,8 @@ broker
 			ans 
 				ifTrue: [
 					currentPlayer tally: lot price negated.
-					currentPlayer assets addLast: lot.
+					currentPlayer assets add: lot.
+					currentPlayer assets reSort.
 					lot owner: currentPlayer.
 					self triggerEvent: #itemChange] 
 				ifFalse: [self auction: lot]]
@@ -2003,15 +2009,17 @@ includeInNewMorphMenu
 	"Not to be instantiated from the menu"
 	^ false! !
 
-!Square methodsFor: 'accessing'!
-position
-        "Answer the value of the position variable."
-    ^position! !
+!Square methodsFor: 'accessing' stamp: 'dhn 3/1/2020 13:02:50'!
+boardPosition
+	"Answer the value of the boardPosition variable."
+	
+	^ boardPosition! !
 
-!Square methodsFor: 'accessing'!
-position: anInteger
-        "Set the value of the position variable."
-    position := anInteger.! !
+!Square methodsFor: 'accessing' stamp: 'dhn 3/1/2020 13:04:40'!
+boardPosition: anInteger
+	"Set the value of boardPosition."
+	
+	boardPosition _ anInteger! !
 
 !Square methodsFor: 'accessing' stamp: 'dhn 2/23/2020 14:42:31'!
 price
@@ -2611,12 +2619,12 @@ inJail
         "Answer whether the player is in jail or not."
     ^jail first! !
 
-!Developer methodsFor: 'as yet unclassified' stamp: 'dhn 5/17/2019 12:46:13'!
+!Developer methodsFor: 'as yet unclassified' stamp: 'dhn 3/1/2020 14:39:31'!
 initialize
 
 	cash _ 1500.
 	debt _ 0.
-	assets _ OrderedCollection new.
+	assets _ SortedCollection sortBlock: [:a :c | a boardPosition > c boardPosition].
 	history _ OrderedCollection with: self netAssets.
 	cards := OrderedCollection new.
 	self
