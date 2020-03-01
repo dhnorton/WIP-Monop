@@ -1,6 +1,6 @@
-'From Cuis 5.0 [latest update: #4042] on 1 March 2020 at 3:59:20 pm'!
+'From Cuis 5.0 [latest update: #4042] on 1 March 2020 at 4:54:18 pm'!
 'Description Simulation of the board game "Monopoly".'!
-!provides: 'Monop' 1 73!
+!provides: 'Monop' 1 74!
 !requires: 'Game' 1 44 nil!
 SystemOrganization addCategory: #'Monop-View'!
 SystemOrganization addCategory: #'Monop-Model'!
@@ -629,15 +629,6 @@ justVisit
 				title: 'Life Sentence'.
 			self disableAll: {'Move'}]."
 	self testRoutine.! !
-
-!Estate methodsFor: 'operating' stamp: 'dhn 2/28/2020 18:25:14'!
-landlord
-	"React as the owner."
-	"If unowned, the 'owner' is the bank and the property will be sold or auctioned."
-	"If owned, rent will be collected."
-
-	self broker.
-	self testReport! !
 
 !Estate methodsFor: 'operating' stamp: 'dhn 2/25/2020 16:48:10'!
 luxuryTax
@@ -2274,13 +2265,13 @@ report
 			nextPutAll: ' (', houses asString, ')'; newLine;
 			nextPutAll: 'Rent is $', self rentAmount asString; newLine]! !
 
-!Lot methodsFor: 'initialization' stamp: 'dhn 2/23/2020 13:42:50'!
+!Lot methodsFor: 'initialization' stamp: 'dhn 3/1/2020 16:14:09'!
 initialize
 
 	super initialize.
 	mortgaged _ false.
 	houses _ 0.
-	routine _ #landlord! !
+	routine _ #broker! !
 
 !Lot class methodsFor: 'instance creation' stamp: 'dhn 2/28/2020 15:40:50'!
 title: aTitle price: aPrice rents: anArray house: aCost set: aSet
@@ -2325,7 +2316,7 @@ report
 			nextPutAll: 'Rent is $', self rentAmount asString;
 			nextPutAll: ' (', self numberOwned asString, ')'; newLine]! !
 
-!Railroad methodsFor: 'initialization' stamp: 'dhn 2/28/2020 18:19:13'!
+!Railroad methodsFor: 'initialization' stamp: 'dhn 3/1/2020 16:13:50'!
 initialize
 
 	super initialize.
@@ -2333,7 +2324,7 @@ initialize
 	price _ 200.
 	mortgaged _ false.
 	rents _ #(50 100 150 200).
-	routine _ #trainTrip! !
+	routine _ #broker! !
 
 !Railroad class methodsFor: 'instance creation' stamp: 'dhn 2/28/2020 19:12:45'!
 title: aTitle price: aPrice set: aSet
@@ -2392,12 +2383,12 @@ report
 			nextPutAll: 'Rent is ', (#(4 10) at: self numberOwned) asString;
 			nextPutAll: ' times the amount rolled.'; newLine]! !
 
-!Utility methodsFor: 'initialization' stamp: 'dhn 2/28/2020 19:03:05'!
+!Utility methodsFor: 'initialization' stamp: 'dhn 3/1/2020 16:14:24'!
 initialize
 
 	super initialize.
 	mortgaged _ false.
-	routine _ #utilityBill! !
+	routine _ #broker! !
 
 !Utility class methodsFor: 'instance creation' stamp: 'dhn 2/28/2020 21:30:35'!
 title: aTitle price: aPrice set: aSet
