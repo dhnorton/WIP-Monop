@@ -1,6 +1,6 @@
-'From Cuis 5.0 [latest update: #4042] on 1 March 2020 at 4:54:18 pm'!
+'From Cuis 5.0 [latest update: #4042] on 1 March 2020 at 9:22:59 pm'!
 'Description Simulation of the board game "Monopoly".'!
-!provides: 'Monop' 1 74!
+!provides: 'Monop' 1 75!
 !requires: 'Game' 1 44 nil!
 SystemOrganization addCategory: #'Monop-View'!
 SystemOrganization addCategory: #'Monop-Model'!
@@ -2197,6 +2197,20 @@ numberOwned
 	"Answer how many of the set are owned by this owner."
 	
 	^ (set select: [ :i | (mgr spaces at: i) owner = owner]) size! !
+
+!Property methodsFor: 'operating' stamp: 'dhn 3/1/2020 21:18:28'!
+othersBeside: aPlayer
+	"Answer players beside aPlayer who own assets in the set."
+	| owned arr |
+	
+	owned _ OrderedCollection new.
+	set do: [:ea | (mgr spaces at: ea) owner notNil ifTrue: [owned add: ea]].
+	arr _ OrderedCollection new.
+	owned do: [:ea | | where |
+		where _ mgr spaces at: ea.
+		where owner = aPlayer
+			ifFalse: [arr add: {where owner identity. where title}]].
+	^ arr! !
 
 !Lot methodsFor: 'accessing' stamp: 'dhn 2/20/2020 16:55:55'!
 houseCost
