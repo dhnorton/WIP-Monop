@@ -1,6 +1,6 @@
-'From Cuis 5.0 [latest update: #4042] on 2 March 2020 at 11:57:47 am'!
+'From Cuis 5.0 [latest update: #4042] on 2 March 2020 at 4:46:29 pm'!
 'Description Simulation of the board game "Monopoly".'!
-!provides: 'Monop' 1 77!
+!provides: 'Monop' 1 78!
 !requires: 'Game' 1 44 nil!
 SystemOrganization addCategory: #'Monop-View'!
 SystemOrganization addCategory: #'Monop-Model'!
@@ -18,7 +18,7 @@ Estate class
 
 !classDefinition: #EstateToken category: #'Monop-View'!
 Token subclass: #EstateToken
-	instanceVariableNames: ''
+	instanceVariableNames: 'moving'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Monop-View'!
@@ -486,7 +486,7 @@ statsReport: anAsset
 auction: aProperty
 	"Sell aProperty at auction."! !
 
-!Estate methodsFor: 'operating' stamp: 'dhn 3/1/2020 13:37:25'!
+!Estate methodsFor: 'operating' stamp: 'dhn 3/2/2020 16:15:28'!
 broker
 	"Represent the property"
 	"If unowned, the 'owner' is the bank and the property will be sold or auctioned."
@@ -518,7 +518,9 @@ broker
 						title: 'Rent Due'.
 					currentPlayer tally: rent negated.
 					lot owner tally: rent.
-					self triggerEvent: #itemChange]]! !
+					self triggerEvent: #itemChange]].
+	self token moving: false.
+	self enableAll: {'End Turn'}! !
 
 !Estate methodsFor: 'operating' stamp: 'dhn 2/25/2020 16:51:31'!
 doSpace
@@ -599,13 +601,13 @@ exceptCurrent: anAmount
 !Estate methodsFor: 'operating' stamp: 'dhn 2/25/2020 14:58:42'!
 getOut: anObject! !
 
-!Estate methodsFor: 'operating' stamp: 'dhn 2/27/2020 20:12:16'!
+!Estate methodsFor: 'operating' stamp: 'dhn 3/2/2020 15:36:49'!
 goToJail
 	"Go directly back to jail."
 
 	token slideLeft: currentPlayer position to: 11.
 	"currentPlayer jail: true with: 0."
-	self testRoutine.! !
+! !
 
 !Estate methodsFor: 'operating' stamp: 'dhn 2/25/2020 16:49:25'!
 incomeTax
@@ -1093,11 +1095,12 @@ positionUtility
 	
 	^ #(13 29)! !
 
-!EstateToken methodsFor: 'initialization' stamp: 'dhn 5/16/2019 16:22:37'!
+!EstateToken methodsFor: 'initialization' stamp: 'dhn 3/2/2020 14:57:20'!
 initialize
 
 	super initialize.
 	
+	moving _ false.
 	labelArea _ LayoutMorph newColumn 
 		layoutSpec: LayoutSpec useAll;
 		color: Color transparent;
@@ -1136,12 +1139,12 @@ posAdjust
 	
 	^ (model world morphExtent x * 0.015) @ (model world morphExtent y * 8 / 10)! !
 
-!EstateToken methodsFor: 'operations' stamp: 'dhn 2/22/2020 16:45:44'!
+!EstateToken methodsFor: 'operations' stamp: 'dhn 3/2/2020 14:56:41'!
 moved
 	"Perform the results of the move"
 	
 	model doSpace.
-	model enableAll: {'End Turn'}! !
+	moving ifFalse: [model enableAll: {'End Turn'}]! !
 
 !EstateToken methodsFor: 'operations' stamp: 'dhn 5/16/2019 16:28:16'!
 position: aCell
@@ -1152,7 +1155,7 @@ position: aCell
 	horiz _ (model cells at: aCell) morphPosition x.
 	self morphPosition: (self morphPosition translatedBy: (horiz@0))! !
 
-!EstateToken methodsFor: 'operations' stamp: 'dhn 2/28/2020 10:44:50'!
+!EstateToken methodsFor: 'operations' stamp: 'dhn 3/2/2020 16:29:34'!
 slideLeft: from to: to
 	"Slide self when player must go BACK to 'to' from 'from' "
 	| oldPos newPos index n posns limit i final |
@@ -1169,6 +1172,7 @@ slideLeft: from to: to
 	posns _ posns asArray.
 	model positionBoardTo: posns first.
 	
+	moving _ true.
 	self arrowLeft.
 	limit _ posns size.
 	i _ 0.
@@ -1182,11 +1186,10 @@ slideLeft: from to: to
 				arrow delete.
 				model currentPlayer position: final.
 				"final = 11 ifTrue: [model currentPlayer jail: true with: 0]."
-				model doSpace.
-				model triggerEvent: #endOfMove]].
+				model doSpace]].
 	self startSteppingStepTime: 500! !
 
-!EstateToken methodsFor: 'operations' stamp: 'dhn 2/26/2020 15:19:56'!
+!EstateToken methodsFor: 'operations' stamp: 'dhn 3/2/2020 16:29:47'!
 slideRight: from to: to
 	"Slide self when player moves ahead from 'from' to 'to' other than by the Move button"
 	| oldPos newPos index n posns limit i final |
@@ -1203,6 +1206,7 @@ slideRight: from to: to
 	posns _ posns asArray.
 	model positionBoardTo: posns first.
 	
+	moving _ true.
 	self arrowRight.
 	limit _ posns size.
 	i _ 0.
@@ -1216,9 +1220,20 @@ slideRight: from to: to
 				arrow delete.
 				from > to ifTrue: [model currentPlayer passedGo: true].
 				model currentPlayer position: final.
-				model doSpace.
-				model triggerEvent: #endOfMove]].
+				model doSpace]].
 	self startSteppingStepTime: 500! !
+
+!EstateToken methodsFor: 'accessing' stamp: 'dhn 3/2/2020 14:52:27'!
+moving
+	"Answer the value of moving"
+
+	^ moving! !
+
+!EstateToken methodsFor: 'accessing' stamp: 'dhn 3/2/2020 14:52:27'!
+moving: anObject
+	"Set the value of moving"
+
+	moving _ anObject! !
 
 !LotView methodsFor: 'accessing' stamp: 'dhn 5/17/2019 14:44:43'!
 lowerPane
@@ -1418,7 +1433,7 @@ tourAt: anInterval
 	self startSteppingStepTime: anInterval. 	"time of each increment of the hop"
 ! !
 
-!Monopoly methodsFor: 'initialization' stamp: 'dhn 5/15/2019 12:46:09'!
+!Monopoly methodsFor: 'initialization' stamp: 'dhn 3/2/2020 16:30:04'!
 buildMorphicWindow
 
 	pasteup _ GamePasteUp new
