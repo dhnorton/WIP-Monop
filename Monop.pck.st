@@ -1,6 +1,6 @@
-'From Cuis 5.0 [latest update: #4042] on 1 March 2020 at 9:22:59 pm'!
+'From Cuis 5.0 [latest update: #4042] on 1 March 2020 at 9:44:55 pm'!
 'Description Simulation of the board game "Monopoly".'!
-!provides: 'Monop' 1 75!
+!provides: 'Monop' 1 76!
 !requires: 'Game' 1 44 nil!
 SystemOrganization addCategory: #'Monop-View'!
 SystemOrganization addCategory: #'Monop-Model'!
@@ -2267,17 +2267,17 @@ rentAmount
 		ifTrue: [^ 0]
 		ifFalse: [(rents at: houses + 1) * self complete]! !
 
-!Lot methodsFor: 'operating' stamp: 'dhn 2/29/2020 20:14:12'!
+!Lot methodsFor: 'operating' stamp: 'dhn 3/1/2020 21:38:57'!
 report
 	"Answer the status of this lot."
 	
-	mortgaged ifTrue: [^ 'Mortgaged for $', (price / 2) asString; newLine].
 	^ String streamContents: [:str |
 		str
 			nextPutAll: 'Houses cost $';
 			nextPutAll: houseCost asString;
 			nextPutAll: ' (', houses asString, ')'; newLine;
-			nextPutAll: 'Rent is $', self rentAmount asString; newLine]! !
+			nextPutAll: 'Rent is $', self rentAmount asString; newLine.
+		mortgaged ifTrue: [str nextPutAll: 'Mortgaged for $', (price / 2) asString; newLine]]! !
 
 !Lot methodsFor: 'initialization' stamp: 'dhn 3/1/2020 16:14:09'!
 initialize
