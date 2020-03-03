@@ -1,6 +1,6 @@
-'From Cuis 5.0 [latest update: #4042] on 2 March 2020 at 10:16:14 pm'!
+'From Cuis 5.0 [latest update: #4042] on 3 March 2020 at 5:13:38 pm'!
 'Description Simulation of the board game "Monopoly".'!
-!provides: 'Monop' 1 82!
+!provides: 'Monop' 1 83!
 !requires: 'Game' 1 44 nil!
 SystemOrganization addCategory: #'Monop-View'!
 SystemOrganization addCategory: #'Monop-Model'!
@@ -536,7 +536,7 @@ doSpace
 			currentPlayer passedGo: false ].
 	^ self perform: (spaces atWrap: self currentPlayer position) routine! !
 
-!Estate methodsFor: 'operating' stamp: 'dhn 3/2/2020 21:49:02'!
+!Estate methodsFor: 'operating' stamp: 'dhn 3/3/2020 16:34:15'!
 drawChance
 	"Draw a Chance card"
 	| chan |
@@ -545,13 +545,12 @@ drawChance
 	chan first = #getOut: 
 		ifTrue: [
 			chests second removeFirst.
-			currentPlayer cards add: {#chances. chan}.
-			{'we have a chance get out card'}print] 
+			currentPlayer cards: {#chances. chan}] 
 		ifFalse: [
 			self perform: chan first with: (chan copyFrom: 2 to: 4).
 			self triggerEvent: #itemChange]! !
 
-!Estate methodsFor: 'operating' stamp: 'dhn 3/2/2020 21:48:34'!
+!Estate methodsFor: 'operating' stamp: 'dhn 3/3/2020 16:34:32'!
 drawChest
 	"Draw a Community Chest card"
 	| ches |
@@ -560,8 +559,7 @@ drawChest
 	ches first = #getOut: 
 		ifTrue: [
 			chests second removeFirst.
-			currentPlayer cards: {#chests. ches}.
-			{'we have a chest get out card'}print] 
+			currentPlayer cards: {#chests. ches}] 
 		ifFalse: [
 			self perform: ches first with: (ches copyFrom: 2 to: 4).
 			self triggerEvent: #itemChange]! !
@@ -2647,29 +2645,6 @@ cardOut: aRoll
 			self payOut: aRoll]! !
 
 !Developer methodsFor: 'as yet unclassified' stamp: 'dhn 5/17/2019 12:29:19'!
-cards
-        "Answer a 'Get Out of Jail Free' card, or nil if none."
-    cards notEmpty
-        ifTrue: [ ^cards removeLast ]
-        ifFalse: [ ^nil ].! !
-
-!Developer methodsFor: 'as yet unclassified' stamp: 'dhn 5/17/2019 12:29:19'!
-cards: aCard
-        "Add a 'Get Out of Jail Free' card to a Player's collection."
-    cards add: aCard.! !
-
-!Developer methodsFor: 'as yet unclassified' stamp: 'dhn 5/17/2019 12:29:19'!
-inJail
-        "Answer whether the player is in jail or not."
-    ^jail first! !
-
-!Developer methodsFor: 'as yet unclassified' stamp: 'dhn 5/17/2019 12:29:19'!
-jail: aBoolean with: anInteger
-        "Set the jail state array as (aBoolean anInteger),
-        where anInteger is the number of attempts to roll out."
-    jail := Array with: aBoolean with: anInteger! !
-
-!Developer methodsFor: 'as yet unclassified' stamp: 'dhn 5/17/2019 12:29:19'!
 normalWith: theDice
         "Move while in the normal state (not in jail) by using theDice."
     | posn move ivories |
@@ -2749,6 +2724,29 @@ toJail
         passedGo: false;
         position: 11;
         doubles: 0.! !
+
+!Developer methodsFor: 'operating' stamp: 'dhn 5/17/2019 12:29:19'!
+cards
+        "Answer a 'Get Out of Jail Free' card, or nil if none."
+    cards notEmpty
+        ifTrue: [ ^cards removeLast ]
+        ifFalse: [ ^nil ].! !
+
+!Developer methodsFor: 'operating' stamp: 'dhn 5/17/2019 12:29:19'!
+cards: aCard
+        "Add a 'Get Out of Jail Free' card to a Player's collection."
+    cards add: aCard.! !
+
+!Developer methodsFor: 'operating' stamp: 'dhn 5/17/2019 12:29:19'!
+inJail
+        "Answer whether the player is in jail or not."
+    ^jail first! !
+
+!Developer methodsFor: 'operating' stamp: 'dhn 5/17/2019 12:29:19'!
+jail: aBoolean with: anInteger
+        "Set the jail state array as (aBoolean anInteger),
+        where anInteger is the number of attempts to roll out."
+    jail := Array with: aBoolean with: anInteger! !
 
 !Developer methodsFor: 'accessing' stamp: 'dhn 2/25/2020 20:08:21'!
 doubledString
