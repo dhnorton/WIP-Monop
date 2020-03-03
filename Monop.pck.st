@@ -1,6 +1,6 @@
-'From Cuis 5.0 [latest update: #4042] on 2 March 2020 at 4:46:29 pm'!
+'From Cuis 5.0 [latest update: #4042] on 2 March 2020 at 7:01:29 pm'!
 'Description Simulation of the board game "Monopoly".'!
-!provides: 'Monop' 1 78!
+!provides: 'Monop' 1 79!
 !requires: 'Game' 1 44 nil!
 SystemOrganization addCategory: #'Monop-View'!
 SystemOrganization addCategory: #'Monop-Model'!
@@ -118,7 +118,7 @@ Lot class
 
 !classDefinition: #Railroad category: #'Monop-Model'!
 Property subclass: #Railroad
-	instanceVariableNames: ''
+	instanceVariableNames: 'factor'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Monop-Model'!
@@ -685,7 +685,7 @@ moveMoney: anArray
 		ifTrue: [self exceptCurrent: anArray second]
 ! !
 
-!Estate methodsFor: 'operating' stamp: 'dhn 2/26/2020 16:17:24'!
+!Estate methodsFor: 'operating' stamp: 'dhn 3/2/2020 18:01:35'!
 movePlayer: anArray
 	"Move the player according to the card."
 	| pos |
@@ -698,7 +698,9 @@ movePlayer: anArray
 	anArray first = #ahead
 		ifTrue: [
 			anArray second = #railroad
-				ifTrue: [token slideRight: pos to: self nearestRailroad]
+				ifTrue: [
+					(spaces at: self nearestRailroad) factor: 2.
+					token slideRight: pos to: self nearestRailroad]
 				ifFalse: [
 					anArray second = #utility
 						ifTrue: [token slideRight: pos to: self nearestUtility]
@@ -2336,11 +2338,14 @@ rent: aPlayer
             amt := 2 * amt ].
     ^amt! !
 
-!Railroad methodsFor: 'operating' stamp: 'dhn 2/29/2020 21:48:46'!
+!Railroad methodsFor: 'operating' stamp: 'dhn 3/2/2020 17:48:48'!
 rentAmount
-	"Answer the rent based on the number of railroads owned."
+	"Answer the rent based on the number of railroads owned and whether it is doubled."
+	| amt |
 
-	^ rents at: self numberOwned! !
+	amt _ (rents at: self numberOwned) * factor.
+	factor _ 1.
+	^ amt! !
 
 !Railroad methodsFor: 'operating' stamp: 'dhn 3/2/2020 11:47:04'!
 report
@@ -2359,7 +2364,7 @@ report
 			nextPutAll: 'Rent is $', self rentAmount asString; nextPut: $.; newLine.
 		mortgaged ifTrue: [str nextPutAll: 'Mortgaged for $', (price / 2) asString; nextPut: $.; newLine]]! !
 
-!Railroad methodsFor: 'initialization' stamp: 'dhn 3/1/2020 16:13:50'!
+!Railroad methodsFor: 'initialization' stamp: 'dhn 3/2/2020 16:49:41'!
 initialize
 
 	super initialize.
@@ -2367,7 +2372,20 @@ initialize
 	price _ 200.
 	mortgaged _ false.
 	rents _ #(50 100 150 200).
+	factor _ 1.
 	routine _ #broker! !
+
+!Railroad methodsFor: 'accessing' stamp: 'dhn 3/2/2020 16:49:04'!
+factor
+	"Answer the value of factor"
+
+	^ factor! !
+
+!Railroad methodsFor: 'accessing' stamp: 'dhn 3/2/2020 16:49:04'!
+factor: anObject
+	"Set the value of factor"
+
+	factor _ anObject! !
 
 !Railroad class methodsFor: 'instance creation' stamp: 'dhn 2/28/2020 19:12:45'!
 title: aTitle price: aPrice set: aSet
