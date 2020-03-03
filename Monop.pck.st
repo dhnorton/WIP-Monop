@@ -1,6 +1,6 @@
-'From Cuis 5.0 [latest update: #4042] on 2 March 2020 at 7:01:29 pm'!
+'From Cuis 5.0 [latest update: #4042] on 2 March 2020 at 7:26:01 pm'!
 'Description Simulation of the board game "Monopoly".'!
-!provides: 'Monop' 1 79!
+!provides: 'Monop' 1 80!
 !requires: 'Game' 1 44 nil!
 SystemOrganization addCategory: #'Monop-View'!
 SystemOrganization addCategory: #'Monop-Model'!
@@ -609,7 +609,7 @@ goToJail
 	"currentPlayer jail: true with: 0."
 ! !
 
-!Estate methodsFor: 'operating' stamp: 'dhn 2/25/2020 16:49:25'!
+!Estate methodsFor: 'operating' stamp: 'dhn 3/2/2020 19:07:57'!
 incomeTax
 	"Charge an amount based on the larger of 10% of assets or $200."
 
@@ -617,8 +617,7 @@ incomeTax
 		inform: currentPlayer identity, ' has been assessed $200.' 
 		title: 'Income Tax'.
 	currentPlayer tally: -200.
-	self triggerEvent: #itemChange.
-	self testRoutine.! !
+	self triggerEvent: #itemChange! !
 
 !Estate methodsFor: 'operating' stamp: 'dhn 2/27/2020 19:55:57'!
 justVisit
@@ -632,7 +631,7 @@ justVisit
 			self disableAll: {'Move'}]."
 	self testRoutine.! !
 
-!Estate methodsFor: 'operating' stamp: 'dhn 2/25/2020 16:48:10'!
+!Estate methodsFor: 'operating' stamp: 'dhn 3/2/2020 19:08:17'!
 luxuryTax
 	"Charge a flat $75."
 
@@ -640,8 +639,7 @@ luxuryTax
 		inform: currentPlayer identity, ' has been assessed $75.' 
 		title: 'Luxury Tax'.
 	currentPlayer tally: -75.
-	self triggerEvent: #itemChange.
-	self testRoutine.! !
+	self triggerEvent: #itemChange! !
 
 !Estate methodsFor: 'operating' stamp: 'dhn 2/26/2020 20:20:44'!
 move
@@ -763,11 +761,11 @@ numbersReport
 			nextPutAll: 'Cash: $';
 			nextPutAll: currentPlayer cash truncated printStringWithCommas]! !
 
-!Estate methodsFor: 'operating' stamp: 'dhn 2/21/2020 13:04:21'!
+!Estate methodsFor: 'operating' stamp: 'dhn 3/2/2020 19:08:33'!
 parkFree
 	"Cool it."
 
-	self testRoutine.! !
+! !
 
 !Estate methodsFor: 'operating' stamp: 'dhn 5/16/2019 15:21:32'!
 positionBoardTo: anIndex 
@@ -779,11 +777,10 @@ positionBoardTo: anIndex
 !Estate methodsFor: 'operating' stamp: 'dhn 2/25/2020 14:58:26'!
 repair: anObject! !
 
-!Estate methodsFor: 'operating' stamp: 'dhn 2/21/2020 13:02:23'!
+!Estate methodsFor: 'operating' stamp: 'dhn 3/2/2020 19:09:43'!
 salary
 	"Pay player $200."
-
-	self testRoutine.! !
+! !
 
 !Estate methodsFor: 'operating' stamp: 'dhn 5/16/2019 11:59:40'!
 seasonAt: aPosition
