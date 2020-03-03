@@ -1,6 +1,6 @@
-'From Cuis 5.0 [latest update: #4042] on 2 March 2020 at 8:03:32 pm'!
+'From Cuis 5.0 [latest update: #4042] on 2 March 2020 at 10:16:14 pm'!
 'Description Simulation of the board game "Monopoly".'!
-!provides: 'Monop' 1 81!
+!provides: 'Monop' 1 82!
 !requires: 'Game' 1 44 nil!
 SystemOrganization addCategory: #'Monop-View'!
 SystemOrganization addCategory: #'Monop-Model'!
@@ -536,31 +536,35 @@ doSpace
 			currentPlayer passedGo: false ].
 	^ self perform: (spaces atWrap: self currentPlayer position) routine! !
 
-!Estate methodsFor: 'operating' stamp: 'dhn 2/25/2020 15:28:31'!
+!Estate methodsFor: 'operating' stamp: 'dhn 3/2/2020 21:49:02'!
 drawChance
 	"Draw a Chance card"
 	| chan |
 	
 	chan _ self drawCard: chances first discard: chances second.
-	{'chance: '. chan} print.
-"	self testRoutine."
-	self flag: #dhn. "If 'Get out of Jail free' is saved, it must be removed from #drawnChances"
-"	self triggerEvent: #chanceDrawn with: chan last. "
-	self perform: chan first with: (chan copyFrom: 2 to: 4).
-	self triggerEvent: #itemChange! !
+	chan first = #getOut: 
+		ifTrue: [
+			chests second removeFirst.
+			currentPlayer cards add: {#chances. chan}.
+			{'we have a chance get out card'}print] 
+		ifFalse: [
+			self perform: chan first with: (chan copyFrom: 2 to: 4).
+			self triggerEvent: #itemChange]! !
 
-!Estate methodsFor: 'operating' stamp: 'dhn 2/25/2020 15:28:14'!
+!Estate methodsFor: 'operating' stamp: 'dhn 3/2/2020 21:48:34'!
 drawChest
 	"Draw a Community Chest card"
-	| chan |
+	| ches |
 	
-	chan _ self drawCard: chests first discard: chests second.
-	{'chest: '. chan} print.
-"	self testRoutine."
-	self flag: #dhn. "If 'Get out of Jail free' is saved, it must be removed from #drawnChests"
-"	self triggerEvent: #chestDrawn with: chan last."
-	self perform: chan first with: (chan copyFrom: 2 to: 4).
-	self triggerEvent: #itemChange! !
+	ches _ self drawCard: chests first discard: chests second.
+	ches first = #getOut: 
+		ifTrue: [
+			chests second removeFirst.
+			currentPlayer cards: {#chests. ches}.
+			{'we have a chest get out card'}print] 
+		ifFalse: [
+			self perform: ches first with: (ches copyFrom: 2 to: 4).
+			self triggerEvent: #itemChange]! !
 
 !Estate methodsFor: 'operating' stamp: 'dhn 5/16/2019 18:38:59'!
 endTurn
@@ -669,7 +673,7 @@ move
 			die1 show: die1 class faces shuffled.
 			"die2 show: die2 class faces shuffled."].! !
 
-!Estate methodsFor: 'operating' stamp: 'dhn 3/2/2020 20:02:37'!
+!Estate methodsFor: 'operating' stamp: 'dhn 3/2/2020 20:29:38'!
 moveMoney: anArray
 	"Move cash per specs in anArray."
 	
@@ -678,8 +682,8 @@ moveMoney: anArray
 	anArray first = #fromEach
 		ifTrue: [self exceptCurrent: anArray second].
 	anArray first = #toEach
-		ifTrue: [self exceptCurrent: anArray second]
-! !
+		ifTrue: [self exceptCurrent: anArray second].
+	self enableAll: {'End Turn'}! !
 
 !Estate methodsFor: 'operating' stamp: 'dhn 3/2/2020 20:01:04'!
 movePlayer: anArray
@@ -770,8 +774,10 @@ positionBoardTo: anIndex
 	self cellsAt: anIndex.
 	self triggerEvent: #showSeasons: with: anIndex! !
 
-!Estate methodsFor: 'operating' stamp: 'dhn 2/25/2020 14:58:26'!
-repair: anObject! !
+!Estate methodsFor: 'operating' stamp: 'dhn 3/2/2020 20:31:46'!
+repair: anObject
+
+	self enableAll: {'End Turn'}! !
 
 !Estate methodsFor: 'operating' stamp: 'dhn 3/2/2020 19:29:51'!
 salary
@@ -2572,22 +2578,6 @@ luxury: aPlayer
 	GamePopUp 
 		inform: aPlayer name, ' has been assessed $75.' 
 		title: self title! !
-
-!Tax methodsFor: 'as yet unclassified'!
-result: aPlayer
-        "Effect the result of aPlayer landing on the square."
-    super result: aPlayer.
-    self perform: (Tax type: position) with: aPlayer.
-    aPlayer special: false.! !
-
-!Tax class methodsFor: 'as yet unclassified'!
-type: aPosition
-        "Answer the method for computing tax for aPosition."
-    | methods |
-    methods := Dictionary new.
-    methods at: 4 put: #income:;
-        at: 38 put: #luxury: .
-    ^methods at: aPosition! !
 
 !Income methodsFor: 'initialization' stamp: 'dhn 2/23/2020 13:45:18'!
 initialize
