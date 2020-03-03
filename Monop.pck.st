@@ -1,6 +1,6 @@
-'From Cuis 5.0 [latest update: #4042] on 2 March 2020 at 7:26:01 pm'!
+'From Cuis 5.0 [latest update: #4042] on 2 March 2020 at 8:03:32 pm'!
 'Description Simulation of the board game "Monopoly".'!
-!provides: 'Monop' 1 80!
+!provides: 'Monop' 1 81!
 !requires: 'Game' 1 44 nil!
 SystemOrganization addCategory: #'Monop-View'!
 SystemOrganization addCategory: #'Monop-Model'!
@@ -669,13 +669,11 @@ move
 			die1 show: die1 class faces shuffled.
 			"die2 show: die2 class faces shuffled."].! !
 
-!Estate methodsFor: 'operating' stamp: 'dhn 2/25/2020 17:29:39'!
+!Estate methodsFor: 'operating' stamp: 'dhn 3/2/2020 20:02:37'!
 moveMoney: anArray
-	"Shuffle cash per specs in anArray"
+	"Move cash per specs in anArray."
 	
-	GamePopUp 
-		inform: anArray last 
-		title: 'Chance or Community Chest'.
+	self sayChanceChest: anArray last.
 	anArray first ifNil: [currentPlayer tally: anArray second negated].
 	anArray first = #fromEach
 		ifTrue: [self exceptCurrent: anArray second].
@@ -683,16 +681,14 @@ moveMoney: anArray
 		ifTrue: [self exceptCurrent: anArray second]
 ! !
 
-!Estate methodsFor: 'operating' stamp: 'dhn 3/2/2020 18:01:35'!
+!Estate methodsFor: 'operating' stamp: 'dhn 3/2/2020 20:01:04'!
 movePlayer: anArray
 	"Move the player according to the card."
 	| pos |
 
 	{anArray} print.
 	pos _ currentPlayer position.
-	GamePopUp 
-		inform: anArray last 
-		title: 'Chance or Community Chest'.
+	self sayChanceChest: anArray last.
 	anArray first = #ahead
 		ifTrue: [
 			anArray second = #railroad
@@ -777,10 +773,19 @@ positionBoardTo: anIndex
 !Estate methodsFor: 'operating' stamp: 'dhn 2/25/2020 14:58:26'!
 repair: anObject! !
 
-!Estate methodsFor: 'operating' stamp: 'dhn 3/2/2020 19:09:43'!
+!Estate methodsFor: 'operating' stamp: 'dhn 3/2/2020 19:29:51'!
 salary
 	"Pay player $200."
-! !
+
+	self enableAll: {'End Turn'}! !
+
+!Estate methodsFor: 'operating' stamp: 'dhn 3/2/2020 19:57:09'!
+sayChanceChest: aString
+	"Read aloud"
+	
+	GamePopUp 
+		inform: aString 
+		title: 'Chance and Community Chest'! !
 
 !Estate methodsFor: 'operating' stamp: 'dhn 5/16/2019 11:59:40'!
 seasonAt: aPosition
