@@ -1,6 +1,6 @@
-'From Cuis 5.0 [latest update: #4042] on 3 March 2020 at 10:04:56 pm'!
+'From Cuis 5.0 [latest update: #4042] on 4 March 2020 at 12:45:46 pm'!
 'Description Simulation of the board game "Monopoly".'!
-!provides: 'Monop' 1 86!
+!provides: 'Monop' 1 87!
 !requires: 'Game' 1 44 nil!
 SystemOrganization addCategory: #'Monop-View'!
 SystemOrganization addCategory: #'Monop-Model'!
@@ -1759,20 +1759,18 @@ startGame
 		nextPlayer.
 	model initialButtonState! !
 
-!Monopoly methodsFor: 'windows' stamp: 'dhn 3/3/2020 21:16:09'!
+!Monopoly methodsFor: 'windows' stamp: 'dhn 3/4/2020 12:35:03'!
 showPropertyAuction
 	"Open a window on a property at auction"
-	| pl win |
+	| win |
 		
-	pl _ model currentPlayer.
 	win _ AuctionProperty openOn: model.
 	win openInWorld: pasteup.
 	win
-		setLabel: 'property data';
-		setWindowColor: pl color;
+		setLabel: 'Property Auction';
+		setWindowColor: (model class season at: model currentPlayer position) color;
 		morphPosition: self windowPosition;
-		morphExtent: 500 @ 260.
-	model disableAll: {'Stats'}! !
+		morphExtent: 580 @ 260! !
 
 !Monopoly methodsFor: 'windows' stamp: 'dhn 3/1/2020 15:33:12'!
 showStats
@@ -1897,12 +1895,12 @@ start
 	^ win
 ! !
 
-!AuctionProperty methodsFor: 'initialization' stamp: 'dhn 3/3/2020 20:57:17'!
+!AuctionProperty methodsFor: 'initialization' stamp: 'dhn 3/4/2020 11:28:57'!
 buildMorphicWindow
 	"Lay out the window for auctioning a job"
 	
 	buttonsArea _ (LayoutMorph newRow)
-		name: #buttons;
+		name: #title;  "this is re-purposed"
 		layoutSpec: (LayoutSpec 
 			proportionalWidth: 1.0
 			proportionalHeight: 0.15
@@ -1987,6 +1985,30 @@ buyerButtons
 			color: ea color;
 			setBalloonText: 'bidder')].
 	buyers addAllMorphs: col reversed! !
+
+!AuctionProperty methodsFor: 'buttons' stamp: 'dhn 3/4/2020 11:49:22'!
+startButtons
+	"Re-purpose by setting this to the title of the property"
+	
+	buttonsArea addMorph: 
+		(StringMorph contents: 
+			(model spaces at: model currentPlayer position) title)! !
+
+!AuctionProperty methodsFor: 'operation' stamp: 'dhn 3/4/2020 12:12:56'!
+beginAuction
+	"Show the bid increments and let the bidding begin"
+	
+	begun _ true.
+	self chant addFirst: 'The auction has started, what am I bid?'.
+	self 
+		beat: #assetSold;
+		startButtons;
+		buyerButtons.
+	model 
+		propertyAuctionBid: 1;
+		changed: #bidIncrementList.
+	heading contents: 'Bid Increment'
+! !
 
 !AuctionProperty methodsFor: 'operation' stamp: 'dhn 3/3/2020 20:57:17'!
 details
