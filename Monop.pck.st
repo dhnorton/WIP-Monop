@@ -1,6 +1,6 @@
-'From Cuis 5.0 [latest update: #4042] on 3 March 2020 at 7:33:44 pm'!
+'From Cuis 5.0 [latest update: #4042] on 3 March 2020 at 8:42:07 pm'!
 'Description Simulation of the board game "Monopoly".'!
-!provides: 'Monop' 1 84!
+!provides: 'Monop' 1 85!
 !requires: 'Game' 1 44 nil!
 SystemOrganization addCategory: #'Monop-View'!
 SystemOrganization addCategory: #'Monop-Model'!
@@ -536,7 +536,7 @@ doSpace
 			currentPlayer passedGo: false ].
 	^ self perform: (spaces atWrap: self currentPlayer position) routine! !
 
-!Estate methodsFor: 'operating' stamp: 'dhn 3/3/2020 17:52:32'!
+!Estate methodsFor: 'operating' stamp: 'dhn 3/3/2020 19:37:05'!
 drawChance
 	"Draw a Chance card"
 	| chan |
@@ -545,12 +545,13 @@ drawChance
 	chan first = #getOut: 
 		ifTrue: [
 			chances second removeFirst.
-			currentPlayer cards: {#chances. chan}] 
+			currentPlayer cards: {#chances. chan}.
+			PopUpMenu inform: 'Get out of jail free!!'] 
 		ifFalse: [
 			self perform: chan first with: (chan copyFrom: 2 to: 4).
 			self triggerEvent: #itemChange]! !
 
-!Estate methodsFor: 'operating' stamp: 'dhn 3/3/2020 16:34:32'!
+!Estate methodsFor: 'operating' stamp: 'dhn 3/3/2020 20:32:49'!
 drawChest
 	"Draw a Community Chest card"
 	| ches |
@@ -559,7 +560,8 @@ drawChest
 	ches first = #getOut: 
 		ifTrue: [
 			chests second removeFirst.
-			currentPlayer cards: {#chests. ches}] 
+			currentPlayer cards: {#chests. ches}.
+			PopUpMenu inform: 'Get out of jail free!!'] 
 		ifFalse: [
 			self perform: ches first with: (ches copyFrom: 2 to: 4).
 			self triggerEvent: #itemChange]! !
