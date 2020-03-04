@@ -1,6 +1,6 @@
-'From Cuis 5.0 [latest update: #4042] on 3 March 2020 at 8:42:07 pm'!
+'From Cuis 5.0 [latest update: #4042] on 3 March 2020 at 10:04:56 pm'!
 'Description Simulation of the board game "Monopoly".'!
-!provides: 'Monop' 1 85!
+!provides: 'Monop' 1 86!
 !requires: 'Game' 1 44 nil!
 SystemOrganization addCategory: #'Monop-View'!
 SystemOrganization addCategory: #'Monop-Model'!
@@ -8,7 +8,7 @@ SystemOrganization addCategory: #'Monop-Model'!
 
 !classDefinition: #Estate category: #'Monop-Model'!
 Game subclass: #Estate
-	instanceVariableNames: 'demo windowCount chances chests moveButton statsItem'
+	instanceVariableNames: 'demo windowCount chances chests moveButton statsItem propertyAuctionBid'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Monop-Model'!
@@ -44,6 +44,16 @@ GameBoard subclass: #Monopoly
 	category: 'Monop-View'!
 !classDefinition: 'Monopoly class' category: #'Monop-View'!
 Monopoly class
+	instanceVariableNames: ''!
+
+!classDefinition: #AuctionProperty category: #'Monop-View'!
+AuctionView subclass: #AuctionProperty
+	instanceVariableNames: ''
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'Monop-View'!
+!classDefinition: 'AuctionProperty class' category: #'Monop-View'!
+AuctionProperty class
 	instanceVariableNames: ''!
 
 !classDefinition: #ForSale category: #'Monop-View'!
@@ -311,11 +321,14 @@ Simulation of the Monopoly board game.
 
 Monopoly start.!
 
+!AuctionProperty commentStamp: '<historical>' prior: 0!
+A Monnopoly window which makes it possible for players to bid on property.!
+
 !ForSale commentStamp: '<historical>' prior: 0!
 A window for buying or auctioning an unowned property.!
 
 !MonopStats commentStamp: '<historical>' prior: 0!
-A Monopoly window which shows statistics about the player's assets, the player, and others.!
+A Monopoly window which shows statistics about the player's assets.!
 
 !ClearBox commentStamp: '<historical>' prior: 0!
 The boxed area of a cell.!
@@ -485,6 +498,12 @@ statsReport: anAsset
 !Estate methodsFor: 'operating' stamp: 'dhn 2/28/2020 20:33:58'!
 auction: aProperty
 	"Sell aProperty at auction."! !
+
+!Estate methodsFor: 'operating' stamp: 'dhn 3/3/2020 21:52:18'!
+bidIncrementList
+	"Answer the list of bid increments"
+	
+	^ (Interval from: 10 to: 100 by: 10) asOrderedCollection! !
 
 !Estate methodsFor: 'operating' stamp: 'dhn 3/2/2020 16:15:28'!
 broker
@@ -772,6 +791,21 @@ positionBoardTo: anIndex
 	
 	self cellsAt: anIndex.
 	self triggerEvent: #showSeasons: with: anIndex! !
+
+!Estate methodsFor: 'operating' stamp: 'dhn 3/3/2020 21:56:17'!
+propertyAuctionBid
+	"Answer the value of jobAuctionItem"
+
+	propertyAuctionBid ifNil: [propertyAuctionBid _ 1]. 	"nil is unacceptable during model initialization"
+	^ propertyAuctionBid! !
+
+!Estate methodsFor: 'operating' stamp: 'dhn 3/3/2020 21:56:58'!
+propertyAuctionBid: anObject
+	"Set the value of propertyAuctionBid"
+	
+	(propertyAuctionBid _ anObject) ifNotNil: [
+		self triggerEvent: #itemChange.
+		self changed: #propertyAuctionBid]! !
 
 !Estate methodsFor: 'operating' stamp: 'dhn 3/2/2020 20:31:46'!
 repair: anObject
@@ -1725,6 +1759,21 @@ startGame
 		nextPlayer.
 	model initialButtonState! !
 
+!Monopoly methodsFor: 'windows' stamp: 'dhn 3/3/2020 21:16:09'!
+showPropertyAuction
+	"Open a window on a property at auction"
+	| pl win |
+		
+	pl _ model currentPlayer.
+	win _ AuctionProperty openOn: model.
+	win openInWorld: pasteup.
+	win
+		setLabel: 'property data';
+		setWindowColor: pl color;
+		morphPosition: self windowPosition;
+		morphExtent: 500 @ 260.
+	model disableAll: {'Stats'}! !
+
 !Monopoly methodsFor: 'windows' stamp: 'dhn 3/1/2020 15:33:12'!
 showStats
 	"Open a window on a player's statistics"
@@ -1844,6 +1893,162 @@ start
 	win someSubmorphPositionOrExtentChanged.
 
 	win model token: win model setUpToken.
+	
+	^ win
+! !
+
+!AuctionProperty methodsFor: 'initialization' stamp: 'dhn 3/3/2020 20:57:17'!
+buildMorphicWindow
+	"Lay out the window for auctioning a job"
+	
+	buttonsArea _ (LayoutMorph newRow)
+		name: #buttons;
+		layoutSpec: (LayoutSpec 
+			proportionalWidth: 1.0
+			proportionalHeight: 0.15
+			minorDirectionPadding: #center).
+			
+	self layoutMorph
+		addMorph: buttonsArea;
+		addMorph: self setUpMidRow;
+		addMorph: (buyers _ self setUpBuyers)! !
+
+!AuctionProperty methodsFor: 'initialization' stamp: 'dhn 3/3/2020 22:03:41'!
+setUpMidRow
+	"Answer the layout for the middle row of the property auction window"
+	| listMorph row leftPane headingArea |
+	
+	listMorph _ (PluggableListMorph
+		model: model
+		listGetter: #bidIncrementList
+		indexGetter: #propertyAuctionBid
+		indexSetter: #propertyAuctionBid:
+		mainView: self
+		menuGetter: nil
+		keystrokeAction: nil)
+			name: 'increment list';
+			layoutSpec: (LayoutSpec 
+				proportionalWidth: 1.0
+				proportionalHeight: 0.9
+				minorDirectionPadding: #center).
+
+	heading _ ((StringMorph contents: 'Bid Increment') 
+		emphasis: AbstractFont boldCode;
+		font: (AbstractFont familyName: 'DejaVu' pointSize: 10)).
+	headingArea _ (LayoutMorph newRow)
+		layoutSpec: (LayoutSpec 
+			proportionalWidth: 1.0
+			proportionalHeight: 0.1
+			minorDirectionPadding: #center);
+		name: 'heading area';
+		padding: #left.
+	headingArea addMorph: heading.
+
+	
+	leftPane _ (LayoutMorph newColumn)
+		name: 'left pane';
+		addMorph: headingArea;
+		addMorph: listMorph.
+
+	textPane _ (TextModelMorph
+		withModel: (TextModel withText: '')) 	"note the different model specification"
+			askBeforeDiscardingEdits: false;	"discard changes to the text"
+			name: 'chant'. 	"give the TextModelMorph a name which will appear in the halos"
+	textPane 
+		layoutSpec: (LayoutSpec 
+			proportionalWidth: 0.6
+			proportionalHeight: 1.0
+			minorDirectionPadding: #center).
+
+	row _ (LayoutMorph newRow)
+		layoutSpec: (LayoutSpec 
+			proportionalWidth: 1.0
+			proportionalHeight: 0.7
+			minorDirectionPadding: #center).
+	row
+		name: 'mid row';
+		addMorph: leftPane proportionalWidth: 0.4;
+		addAdjusterAndMorph: textPane layoutSpec: (LayoutSpec useAll).
+		
+	^ row
+	
+
+! !
+
+!AuctionProperty methodsFor: 'buttons' stamp: 'dhn 3/3/2020 21:04:45'!
+buyerButtons
+	"Set bidding buttons for players."
+	| col |
+	
+	col _ OrderedCollection new.
+	model players do: [:ea |
+		col add: ((BidderButton label: ea identity action: #offer: state: true model: self)
+			morphExtent: 70@30;
+			color: ea color;
+			setBalloonText: 'bidder')].
+	buyers addAllMorphs: col reversed! !
+
+!AuctionProperty methodsFor: 'operation' stamp: 'dhn 3/3/2020 20:57:17'!
+details
+	"Not required for job auctions"
+! !
+
+!AuctionProperty methodsFor: 'operation' stamp: 'dhn 3/3/2020 21:00:05'!
+offer: aName
+	"Record a bid by aName"
+	
+	model jobAuctionItem > 0 
+		ifTrue: [self offer: model jobAuctionItem by: aName]
+		ifFalse: [
+			buyers submorphsDo: [:ea | ea enableButton].
+			(buyers findDeepSubmorphThat: [:mm | mm label = currentBidder] ifAbsent: [^ self]) disableButton].
+	begun ifFalse: [
+		self beat: #propertySold.
+		begun _ true]! !
+
+!AuctionProperty methodsFor: 'operation' stamp: 'dhn 3/3/2020 21:21:13'!
+propertySold
+	"SOLD!! the property."
+	
+	endButton enableButton.
+	buyers removeAllMorphs.
+	chant addFirst: (String streamContents: [:str |
+		str
+			nextPutAll: 'SOLD!! to ';
+			nextPutAll: currentBidder;
+			nextPutAll: ' for $';
+			nextPutAll: currentBid printStringWithCommas; newLine]).
+	self showChant
+! !
+
+!AuctionProperty methodsFor: 'termination' stamp: 'dhn 3/3/2020 21:57:33'!
+closeBoxHit
+
+	model 
+		propertyAuctionBid: nil;
+		enableAll: {'End Turn'}.
+	super closeBoxHit! !
+
+!AuctionProperty methodsFor: 'termination' stamp: 'dhn 3/3/2020 21:57:53'!
+endIt
+	
+	model 
+		propertyAuctionBid: nil;
+		"jobWinner: currentBidder bid: currentBid;"
+		enableAll: {'End Turn'}.
+	self delete
+! !
+
+!AuctionProperty class methodsFor: 'class initialization' stamp: 'dhn 3/3/2020 20:57:17'!
+openOn: aModel
+	"Answer an instance of this class on aModel"
+	| win |
+
+	win _ self open: aModel.
+	win removeWindowMenu.
+			
+	aModel when: #itemChange send: #details to: win.
+	aModel when: #deleteOpenWindows send: #endIt to: win.
 	
 	^ win
 ! !
