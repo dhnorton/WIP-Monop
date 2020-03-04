@@ -1,6 +1,6 @@
-'From Cuis 5.0 [latest update: #4042] on 4 March 2020 at 12:45:46 pm'!
+'From Cuis 5.0 [latest update: #4042] on 4 March 2020 at 3:30:59 pm'!
 'Description Simulation of the board game "Monopoly".'!
-!provides: 'Monop' 1 87!
+!provides: 'Monop' 1 89!
 !requires: 'Game' 1 44 nil!
 SystemOrganization addCategory: #'Monop-View'!
 SystemOrganization addCategory: #'Monop-Model'!
@@ -499,11 +499,11 @@ statsReport: anAsset
 auction: aProperty
 	"Sell aProperty at auction."! !
 
-!Estate methodsFor: 'operating' stamp: 'dhn 3/3/2020 21:52:18'!
+!Estate methodsFor: 'operating' stamp: 'dhn 3/4/2020 14:54:43'!
 bidIncrementList
 	"Answer the list of bid increments"
 	
-	^ (Interval from: 10 to: 100 by: 10) asOrderedCollection! !
+	^ self class bidIncrement! !
 
 !Estate methodsFor: 'operating' stamp: 'dhn 3/2/2020 16:15:28'!
 broker
@@ -953,6 +953,12 @@ windowCount: anObject
 	"Set the value of windowCount"
 
 	windowCount _ anObject! !
+
+!Estate class methodsFor: 'instance creation' stamp: 'dhn 3/4/2020 14:51:20'!
+bidBump
+	"Answer the bid increments"
+	
+	^ (Interval from: 10 to: 100 by: 10) asOrderedCollection! !
 
 !Estate class methodsFor: 'instance creation' stamp: 'dhn 5/14/2019 17:07:12'!
 cellsForGame
@@ -1759,7 +1765,7 @@ startGame
 		nextPlayer.
 	model initialButtonState! !
 
-!Monopoly methodsFor: 'windows' stamp: 'dhn 3/4/2020 12:35:03'!
+!Monopoly methodsFor: 'windows' stamp: 'dhn 3/4/2020 13:54:27'!
 showPropertyAuction
 	"Open a window on a property at auction"
 	| win |
@@ -1768,7 +1774,7 @@ showPropertyAuction
 	win openInWorld: pasteup.
 	win
 		setLabel: 'Property Auction';
-		setWindowColor: (model class season at: model currentPlayer position) color;
+		setWindowColor: (model seasonAt: model currentPlayer position) color;
 		morphPosition: self windowPosition;
 		morphExtent: 580 @ 260! !
 
@@ -1895,7 +1901,7 @@ start
 	^ win
 ! !
 
-!AuctionProperty methodsFor: 'initialization' stamp: 'dhn 3/4/2020 11:28:57'!
+!AuctionProperty methodsFor: 'initialization' stamp: 'dhn 3/4/2020 13:47:00'!
 buildMorphicWindow
 	"Lay out the window for auctioning a job"
 	
@@ -1905,6 +1911,7 @@ buildMorphicWindow
 			proportionalWidth: 1.0
 			proportionalHeight: 0.15
 			minorDirectionPadding: #center).
+	buttonsArea padding: #center.
 			
 	self layoutMorph
 		addMorph: buttonsArea;
@@ -1994,14 +2001,14 @@ startButtons
 		(StringMorph contents: 
 			(model spaces at: model currentPlayer position) title)! !
 
-!AuctionProperty methodsFor: 'operation' stamp: 'dhn 3/4/2020 12:12:56'!
+!AuctionProperty methodsFor: 'operation' stamp: 'dhn 3/4/2020 15:09:06'!
 beginAuction
 	"Show the bid increments and let the bidding begin"
 	
 	begun _ true.
 	self chant addFirst: 'The auction has started, what am I bid?'.
 	self 
-		beat: #assetSold;
+		beat: #propertySold;
 		startButtons;
 		buyerButtons.
 	model 
@@ -2015,12 +2022,12 @@ details
 	"Not required for job auctions"
 ! !
 
-!AuctionProperty methodsFor: 'operation' stamp: 'dhn 3/3/2020 21:00:05'!
+!AuctionProperty methodsFor: 'operation' stamp: 'dhn 3/4/2020 15:05:04'!
 offer: aName
 	"Record a bid by aName"
 	
-	model jobAuctionItem > 0 
-		ifTrue: [self offer: model jobAuctionItem by: aName]
+	model propertyAuctionBid > 0 
+		ifTrue: [self offer: model propertyAuctionBid by: aName]
 		ifFalse: [
 			buyers submorphsDo: [:ea | ea enableButton].
 			(buyers findDeepSubmorphThat: [:mm | mm label = currentBidder] ifAbsent: [^ self]) disableButton].
@@ -2028,12 +2035,14 @@ offer: aName
 		self beat: #propertySold.
 		begun _ true]! !
 
-!AuctionProperty methodsFor: 'operation' stamp: 'dhn 3/3/2020 21:21:13'!
+!AuctionProperty methodsFor: 'operation' stamp: 'dhn 3/4/2020 15:23:10'!
 propertySold
 	"SOLD!! the property."
 	
+	buyers 
+		removeAllMorphs;
+		addMorph: self makeEndButton.
 	endButton enableButton.
-	buyers removeAllMorphs.
 	chant addFirst: (String streamContents: [:str |
 		str
 			nextPutAll: 'SOLD!! to ';
