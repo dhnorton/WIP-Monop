@@ -1,6 +1,6 @@
-'From Cuis 5.0 [latest update: #4042] on 3 March 2020 at 5:13:38 pm'!
+'From Cuis 5.0 [latest update: #4042] on 3 March 2020 at 7:33:44 pm'!
 'Description Simulation of the board game "Monopoly".'!
-!provides: 'Monop' 1 83!
+!provides: 'Monop' 1 84!
 !requires: 'Game' 1 44 nil!
 SystemOrganization addCategory: #'Monop-View'!
 SystemOrganization addCategory: #'Monop-Model'!
@@ -536,7 +536,7 @@ doSpace
 			currentPlayer passedGo: false ].
 	^ self perform: (spaces atWrap: self currentPlayer position) routine! !
 
-!Estate methodsFor: 'operating' stamp: 'dhn 3/3/2020 16:34:15'!
+!Estate methodsFor: 'operating' stamp: 'dhn 3/3/2020 17:52:32'!
 drawChance
 	"Draw a Chance card"
 	| chan |
@@ -544,7 +544,7 @@ drawChance
 	chan _ self drawCard: chances first discard: chances second.
 	chan first = #getOut: 
 		ifTrue: [
-			chests second removeFirst.
+			chances second removeFirst.
 			currentPlayer cards: {#chances. chan}] 
 		ifFalse: [
 			self perform: chan first with: (chan copyFrom: 2 to: 4).
@@ -683,12 +683,11 @@ moveMoney: anArray
 		ifTrue: [self exceptCurrent: anArray second].
 	self enableAll: {'End Turn'}! !
 
-!Estate methodsFor: 'operating' stamp: 'dhn 3/2/2020 20:01:04'!
+!Estate methodsFor: 'operating' stamp: 'dhn 3/3/2020 17:19:03'!
 movePlayer: anArray
 	"Move the player according to the card."
 	| pos |
 
-	{anArray} print.
 	pos _ currentPlayer position.
 	self sayChanceChest: anArray last.
 	anArray first = #ahead
@@ -2259,11 +2258,17 @@ houses: anInteger
         Value 5 means hotel."
     houses := anInteger.! !
 
-!Lot methodsFor: 'operating' stamp: 'dhn 2/29/2020 21:58:12'!
+!Lot methodsFor: 'operating' stamp: 'dhn 3/3/2020 17:23:21'!
+allInSet
+	"Answer whether the complete set of property is owned."
+
+	^ self numberOwned = (set size)! !
+
+!Lot methodsFor: 'operating' stamp: 'dhn 3/3/2020 17:24:05'!
 complete
 	"Answer a factor based on whether the complete set of property is owned."
 
-	^ self numberOwned = (set size) ifTrue: [2] ifFalse: [1]! !
+	^ self allInSet ifTrue: [2] ifFalse: [1]! !
 
 !Lot methodsFor: 'operating'!
 development
@@ -2290,13 +2295,16 @@ rentAmount
 		ifTrue: [^ 0]
 		ifFalse: [(rents at: houses + 1) * self complete]! !
 
-!Lot methodsFor: 'operating' stamp: 'dhn 3/2/2020 11:48:48'!
+!Lot methodsFor: 'operating' stamp: 'dhn 3/3/2020 17:31:21'!
 report
 	"Answer the status of this lot."
 	| oth |
 	
 	^ String streamContents: [:str |
-		(oth _ self othersBeside: mgr currentPlayer) isEmpty 
+		(oth _ self othersBeside: mgr currentPlayer) isEmpty
+			ifTrue: [
+				self allInSet 
+					ifTrue: [str nextPutAll: 'You own the complete set.'; newLine]]
 			ifFalse: [
 				oth do: [:ea | 
 					str 
