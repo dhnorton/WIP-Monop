@@ -1,6 +1,6 @@
-'From Cuis 5.0 [latest update: #4042] on 5 March 2020 at 3:08:31 pm'!
+'From Cuis 5.0 [latest update: #4042] on 5 March 2020 at 5:22:19 pm'!
 'Description Simulation of the board game "Monopoly".'!
-!provides: 'Monop' 1 94!
+!provides: 'Monop' 1 95!
 !requires: 'Game' 1 44 nil!
 SystemOrganization addCategory: #'Monop-View'!
 SystemOrganization addCategory: #'Monop-Model'!
@@ -518,7 +518,7 @@ bidIncrementList
 	
 	^ self class bidIncrement! !
 
-!Estate methodsFor: 'operating' stamp: 'dhn 3/5/2020 13:12:04'!
+!Estate methodsFor: 'operating' stamp: 'dhn 3/5/2020 15:50:12'!
 broker
 	"Represent the property"
 	"If unowned, the 'owner' is the bank and the property will be sold or auctioned."
@@ -531,7 +531,7 @@ broker
 		ifNotNil: [
 			lot owner ~= currentPlayer 
 				ifTrue: [
-					rent _ lot rentAmount.
+					rent _ lot rentDue.
 					GamePopUp 
 						inform: currentPlayer identity, ' must pay ', 
 							lot owner identity, ' $', rent asString
@@ -2603,10 +2603,10 @@ price: anObject
 
 	    price _ anObject! !
 
-!Property methodsFor: 'operating' stamp: 'dhn 3/5/2020 11:32:50'!
+!Property methodsFor: 'operating' stamp: 'dhn 3/5/2020 15:15:04'!
 numberOwned
 	"Answer how many of the set are owned by the current player."
-	
+	self halt.
 	^ (set select: [ :i | (mgr spaces at: i) owner = mgr currentPlayer]) size! !
 
 !Property methodsFor: 'operating' stamp: 'dhn 3/1/2020 21:18:28'!
@@ -2622,6 +2622,18 @@ othersBeside: aPlayer
 		where owner = aPlayer
 			ifFalse: [arr add: {where owner identity. where title}]].
 	^ arr! !
+
+!Property methodsFor: 'operating' stamp: 'dhn 3/5/2020 15:59:53'!
+ownedByMe
+	"Answer how many of the set are owned by the current player."
+
+	^ (set select: [ :i | (mgr spaces at: i) owner = mgr currentPlayer]) size! !
+
+!Property methodsFor: 'operating' stamp: 'dhn 3/5/2020 15:44:42'!
+ownedByOwner
+	"Answer how many of the set are owned by the owner of this property."
+
+	^ (set select: [ :i | (mgr spaces at: i) owner = owner]) size! !
 
 !Lot methodsFor: 'accessing' stamp: 'dhn 2/20/2020 16:55:55'!
 houseCost
@@ -2768,6 +2780,20 @@ rentAmount
 	self numberOwned > 0
 		ifTrue: [
 			amt _ (rents at: self numberOwned) * factor.
+			factor _ 1]
+		ifFalse: [amt _ 0].
+	^ amt! !
+
+!Railroad methodsFor: 'operating' stamp: 'dhn 3/5/2020 15:55:02'!
+rentDue
+	"Answer the rent based on the number of railroads owned and whether it is doubled."
+	| amt |
+
+	self owner isNil ifTrue: [ ^nil ].
+	self mortgaged ifTrue: [ ^0 ].
+	self ownedByOwner > 0
+		ifTrue: [
+			amt _ (rents at: self ownedByOwner) * factor.
 			factor _ 1]
 		ifFalse: [amt _ 0].
 	^ amt! !
