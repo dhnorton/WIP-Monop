@@ -1,6 +1,6 @@
-'From Cuis 5.0 [latest update: #4042] on 5 March 2020 at 2:49:08 pm'!
+'From Cuis 5.0 [latest update: #4042] on 5 March 2020 at 3:08:31 pm'!
 'Description Simulation of the board game "Monopoly".'!
-!provides: 'Monop' 1 93!
+!provides: 'Monop' 1 94!
 !requires: 'Game' 1 44 nil!
 SystemOrganization addCategory: #'Monop-View'!
 SystemOrganization addCategory: #'Monop-Model'!
@@ -2684,13 +2684,12 @@ rentAmount
 		ifTrue: [^ 0]
 		ifFalse: [(rents at: houses + 1) * self complete]! !
 
-!Lot methodsFor: 'operating' stamp: 'dhn 3/5/2020 11:40:21'!
+!Lot methodsFor: 'operating' stamp: 'dhn 3/5/2020 14:54:46'!
 report
 	"Answer the status of this lot."
 	| oth |
 	
 	^ String streamContents: [:str |
-		owner ifNil: [str nextPutAll: 'Price $', price asString; newLine].
 		(oth _ self othersBeside: mgr currentPlayer) isEmpty
 			ifTrue: [
 				self allInSet 
@@ -2773,13 +2772,12 @@ rentAmount
 		ifFalse: [amt _ 0].
 	^ amt! !
 
-!Railroad methodsFor: 'operating' stamp: 'dhn 3/5/2020 12:06:39'!
+!Railroad methodsFor: 'operating' stamp: 'dhn 3/5/2020 14:53:44'!
 report
 	"Answer the status of this railroad."
 	| oth |
 	
 	^ String streamContents: [:str |
-		owner ifNil: [str nextPutAll: 'Price $', price asString; newLine].
 		(oth _ self othersBeside: mgr currentPlayer) isEmpty 
 			ifFalse: [
 				oth do: [:ea | 
@@ -2878,13 +2876,12 @@ rentAmount
 			amt _ 10 * (DieMorph new) ].
 	^ amt! !
 
-!Utility methodsFor: 'operating' stamp: 'dhn 3/5/2020 11:48:56'!
+!Utility methodsFor: 'operating' stamp: 'dhn 3/5/2020 14:54:15'!
 report
 	"Answer the status of this utility."
 	| oth |
 	
 	^ String streamContents: [:str |
-		owner ifNil: [str nextPutAll: 'Price $', price asString; newLine].
 		(oth _ self othersBeside: mgr currentPlayer) isEmpty 
 			ifFalse: [
 				oth do: [:ea | 
