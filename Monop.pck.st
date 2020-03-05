@@ -1,6 +1,6 @@
-'From Cuis 5.0 [latest update: #4042] on 4 March 2020 at 10:27:21 pm'!
+'From Cuis 5.0 [latest update: #4042] on 5 March 2020 at 2:49:08 pm'!
 'Description Simulation of the board game "Monopoly".'!
-!provides: 'Monop' 1 92!
+!provides: 'Monop' 1 93!
 !requires: 'Game' 1 44 nil!
 SystemOrganization addCategory: #'Monop-View'!
 SystemOrganization addCategory: #'Monop-Model'!
@@ -518,7 +518,7 @@ bidIncrementList
 	
 	^ self class bidIncrement! !
 
-!Estate methodsFor: 'operating' stamp: 'dhn 3/4/2020 22:21:00'!
+!Estate methodsFor: 'operating' stamp: 'dhn 3/5/2020 13:12:04'!
 broker
 	"Represent the property"
 	"If unowned, the 'owner' is the bank and the property will be sold or auctioned."
@@ -538,9 +538,10 @@ broker
 						title: 'Rent Due'.
 					currentPlayer tally: rent negated.
 					lot owner tally: rent.
+					self enableAll: {'End Turn'}.
 					self triggerEvent: #itemChange]].
-	self token moving: false.
-	self enableAll: {'End Turn'}! !
+	self token moving: false
+! !
 
 !Estate methodsFor: 'operating' stamp: 'dhn 2/25/2020 16:51:31'!
 doSpace
@@ -1210,12 +1211,15 @@ posAdjust
 	
 	^ (model world morphExtent x * 0.015) @ (model world morphExtent y * 8 / 10)! !
 
-!EstateToken methodsFor: 'operations' stamp: 'dhn 3/2/2020 14:56:41'!
+!EstateToken methodsFor: 'operations' stamp: 'dhn 3/5/2020 14:47:36'!
 moved
 	"Perform the results of the move"
 	
 	model doSpace.
-	moving ifFalse: [model enableAll: {'End Turn'}]! !
+	moving ifFalse: [
+		self flag: #dhn.  "The following must be either done conditionally or done elsewhere"
+			"what about after the inform OK button is pressed?"
+		model enableAll: {'End Turn'}]! !
 
 !EstateToken methodsFor: 'operations' stamp: 'dhn 5/16/2019 16:28:16'!
 position: aCell
@@ -2200,10 +2204,10 @@ buyButton: aBool
 		ifTrue: [buyButton enableButton]
 		ifFalse: [buyButton disableButton]! !
 
-!BuyView methodsFor: 'accessing' stamp: 'dhn 3/4/2020 20:50:20'!
+!BuyView methodsFor: 'accessing' stamp: 'dhn 3/5/2020 12:49:02'!
 details
 
-	textPane model actualContents: (model spaces at: model currentPlayer position) report! !
+	textPane model actualContents: (model spaces at: model currentPlayer position) saleReport! !
 
 !BuyView methodsFor: 'termination' stamp: 'dhn 3/4/2020 21:12:59'!
 closeBoxHit
@@ -2599,11 +2603,11 @@ price: anObject
 
 	    price _ anObject! !
 
-!Property methodsFor: 'operating' stamp: 'dhn 2/29/2020 21:52:40'!
+!Property methodsFor: 'operating' stamp: 'dhn 3/5/2020 11:32:50'!
 numberOwned
-	"Answer how many of the set are owned by this owner."
+	"Answer how many of the set are owned by the current player."
 	
-	^ (set select: [ :i | (mgr spaces at: i) owner = owner]) size! !
+	^ (set select: [ :i | (mgr spaces at: i) owner = mgr currentPlayer]) size! !
 
 !Property methodsFor: 'operating' stamp: 'dhn 3/1/2020 21:18:28'!
 othersBeside: aPlayer
@@ -2680,12 +2684,13 @@ rentAmount
 		ifTrue: [^ 0]
 		ifFalse: [(rents at: houses + 1) * self complete]! !
 
-!Lot methodsFor: 'operating' stamp: 'dhn 3/3/2020 17:31:21'!
+!Lot methodsFor: 'operating' stamp: 'dhn 3/5/2020 11:40:21'!
 report
 	"Answer the status of this lot."
 	| oth |
 	
 	^ String streamContents: [:str |
+		owner ifNil: [str nextPutAll: 'Price $', price asString; newLine].
 		(oth _ self othersBeside: mgr currentPlayer) isEmpty
 			ifTrue: [
 				self allInSet 
@@ -2701,6 +2706,23 @@ report
 			nextPutAll: ' (', houses asString, ')'; nextPut: $.; newLine;
 			nextPutAll: 'Rent is $', self rentAmount asString; nextPut: $.; newLine.
 		mortgaged ifTrue: [str nextPutAll: 'Mortgaged for $', (price / 2) asString; nextPut: $.; newLine]]! !
+
+!Lot methodsFor: 'operating' stamp: 'dhn 3/5/2020 12:53:44'!
+saleReport
+	"Answer the sale data  for this lot."
+	| oth |
+	
+	^ String streamContents: [:str |
+		str nextPutAll: 'Price $', price asString; newLine.
+		(oth _ self othersBeside: mgr currentPlayer) isEmpty
+			ifFalse: [
+				oth do: [:ea | 
+					str 
+						nextPutAll: ea first, ' owns ', ea second;
+						nextPut: $.; newLine]].
+		str
+			nextPutAll: 'Houses cost $', houseCost asString; newLine;
+			nextPutAll: 'Rent is $', self rentAmount asString; nextPut: $.; newLine]! !
 
 !Lot methodsFor: 'initialization' stamp: 'dhn 3/1/2020 16:14:09'!
 initialize
@@ -2737,31 +2759,54 @@ rent: aPlayer
             amt := 2 * amt ].
     ^amt! !
 
-!Railroad methodsFor: 'operating' stamp: 'dhn 3/2/2020 17:48:48'!
+!Railroad methodsFor: 'operating' stamp: 'dhn 3/5/2020 12:13:18'!
 rentAmount
 	"Answer the rent based on the number of railroads owned and whether it is doubled."
 	| amt |
 
-	amt _ (rents at: self numberOwned) * factor.
-	factor _ 1.
+	self owner isNil ifTrue: [ ^nil ].
+	self mortgaged ifTrue: [ ^0 ].
+	self numberOwned > 0
+		ifTrue: [
+			amt _ (rents at: self numberOwned) * factor.
+			factor _ 1]
+		ifFalse: [amt _ 0].
 	^ amt! !
 
-!Railroad methodsFor: 'operating' stamp: 'dhn 3/2/2020 11:47:04'!
+!Railroad methodsFor: 'operating' stamp: 'dhn 3/5/2020 12:06:39'!
 report
 	"Answer the status of this railroad."
 	| oth |
 	
 	^ String streamContents: [:str |
+		owner ifNil: [str nextPutAll: 'Price $', price asString; newLine].
 		(oth _ self othersBeside: mgr currentPlayer) isEmpty 
 			ifFalse: [
 				oth do: [:ea | 
 					str 
 						nextPutAll: ea first, ' owns ', ea second;
 						nextPut: $.; newLine]].
-		str
-			nextPutAll: 'You own ', self numberOwned asString; nextPut: $.; newLine;
-			nextPutAll: 'Rent is $', self rentAmount asString; nextPut: $.; newLine.
+		str nextPutAll: 'You own ', self numberOwned asString; nextPut: $.; newLine.
+		self rentAmount
+			ifNotNil: [str nextPutAll: 'Rent is $', self rentAmount asString; nextPut: $.; newLine].
 		mortgaged ifTrue: [str nextPutAll: 'Mortgaged for $', (price / 2) asString; nextPut: $.; newLine]]! !
+
+!Railroad methodsFor: 'operating' stamp: 'dhn 3/5/2020 13:01:11'!
+saleReport
+	"Answer the sale data  for this railroad."
+	| oth |
+	
+	^ String streamContents: [:str |
+		str nextPutAll: 'Price $', price asString; newLine.
+		(oth _ self othersBeside: mgr currentPlayer) isEmpty 
+			ifFalse: [
+				oth do: [:ea | 
+					str 
+						nextPutAll: ea first, ' owns ', ea second;
+						nextPut: $.; newLine]].
+		self numberOwned > 0
+			ifTrue: [str nextPutAll: 'You own ', self numberOwned asString; nextPut: $.; newLine].
+		str nextPutAll: 'Rent is $50 x number owned.'; newLine]! !
 
 !Railroad methodsFor: 'initialization' stamp: 'dhn 3/2/2020 16:49:41'!
 initialize
@@ -2833,23 +2878,42 @@ rentAmount
 			amt _ 10 * (DieMorph new) ].
 	^ amt! !
 
-!Utility methodsFor: 'operating' stamp: 'dhn 3/2/2020 11:50:57'!
+!Utility methodsFor: 'operating' stamp: 'dhn 3/5/2020 11:48:56'!
 report
 	"Answer the status of this utility."
 	| oth |
 	
 	^ String streamContents: [:str |
+		owner ifNil: [str nextPutAll: 'Price $', price asString; newLine].
 		(oth _ self othersBeside: mgr currentPlayer) isEmpty 
 			ifFalse: [
 				oth do: [:ea | 
 					str 
 						nextPutAll: ea first, ' owns ', ea second;
 						nextPut: $.; newLine]].
-		str
-			nextPutAll: 'You own ', self numberOwned asString; nextPut: $.; newLine;
-			nextPutAll: 'Rent is ', (#(4 10) at: self numberOwned) asString;
-			nextPutAll: ' times the amount rolled.'; newLine.
+		self numberOwned > 0
+			ifTrue: [
+				str
+					nextPutAll: 'You own ', self numberOwned asString; nextPut: $.; newLine;
+					nextPutAll: 'Rent is ', (#(4 10) at: self numberOwned) asString;
+					nextPutAll: ' times the amount rolled.'; newLine].
 		mortgaged ifTrue: [str nextPutAll: 'Mortgaged for $', (price / 2) asString; nextPut: $.; newLine]]! !
+
+!Utility methodsFor: 'operating' stamp: 'dhn 3/5/2020 12:41:46'!
+saleReport
+	"Answer the sale data  for this utility."
+
+	| oth |
+	
+	^ String streamContents: [:str |
+		str nextPutAll: 'Price $', price asString; newLine.
+		(oth _ self othersBeside: mgr currentPlayer) isEmpty 
+			ifFalse: [
+				oth do: [:ea | 
+					str 
+						nextPutAll: ea first, ' owns ', ea second;
+						nextPut: $.; newLine]].
+		str nextPutAll: 'Rent is roll amount x number owned.'; newLine]! !
 
 !Utility methodsFor: 'initialization' stamp: 'dhn 3/1/2020 16:14:24'!
 initialize
