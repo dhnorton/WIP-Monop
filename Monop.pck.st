@@ -1,6 +1,6 @@
-'From Cuis 5.0 [latest update: #4042] on 4 March 2020 at 3:30:59 pm'!
+'From Cuis 5.0 [latest update: #4042] on 4 March 2020 at 10:27:21 pm'!
 'Description Simulation of the board game "Monopoly".'!
-!provides: 'Monop' 1 89!
+!provides: 'Monop' 1 92!
 !requires: 'Game' 1 44 nil!
 SystemOrganization addCategory: #'Monop-View'!
 SystemOrganization addCategory: #'Monop-Model'!
@@ -54,6 +54,16 @@ AuctionView subclass: #AuctionProperty
 	category: 'Monop-View'!
 !classDefinition: 'AuctionProperty class' category: #'Monop-View'!
 AuctionProperty class
+	instanceVariableNames: ''!
+
+!classDefinition: #BuyView category: #'Monop-View'!
+GameView subclass: #BuyView
+	instanceVariableNames: 'textPane buttonArea buyButton auctionButton'
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'Monop-View'!
+!classDefinition: 'BuyView class' category: #'Monop-View'!
+BuyView class
 	instanceVariableNames: ''!
 
 !classDefinition: #ForSale category: #'Monop-View'!
@@ -324,6 +334,9 @@ Monopoly start.!
 !AuctionProperty commentStamp: '<historical>' prior: 0!
 A Monnopoly window which makes it possible for players to bid on property.!
 
+!BuyView commentStamp: '<historical>' prior: 0!
+A window where players must either buy or auction a property.!
+
 !ForSale commentStamp: '<historical>' prior: 0!
 A window for buying or auctioning an unowned property.!
 
@@ -505,28 +518,16 @@ bidIncrementList
 	
 	^ self class bidIncrement! !
 
-!Estate methodsFor: 'operating' stamp: 'dhn 3/2/2020 16:15:28'!
+!Estate methodsFor: 'operating' stamp: 'dhn 3/4/2020 22:21:00'!
 broker
 	"Represent the property"
 	"If unowned, the 'owner' is the bank and the property will be sold or auctioned."
 	"If owned, rent will be collected."
-	| lot ans rent |
+	| lot rent |
 	
 	lot _ spaces at: currentPlayer position.
 	lot owner
-		ifNil: [
-			ans _ PopUpMenu 
-				confirm: 'For sale for $', lot price asString
-				trueChoice: 'Yes, I''ll buy it.'
-				falseChoice: 'No. Auction it.'.
-			ans 
-				ifTrue: [
-					currentPlayer tally: lot price negated.
-					currentPlayer assets add: lot.
-					currentPlayer assets reSort.
-					lot owner: currentPlayer.
-					self triggerEvent: #itemChange] 
-				ifFalse: [self auction: lot]]
+		ifNil: [self triggerEvent: #showBuyView]
 		ifNotNil: [
 			lot owner ~= currentPlayer 
 				ifTrue: [
@@ -792,6 +793,14 @@ positionBoardTo: anIndex
 	self cellsAt: anIndex.
 	self triggerEvent: #showSeasons: with: anIndex! !
 
+!Estate methodsFor: 'operating' stamp: 'dhn 3/4/2020 21:44:07'!
+propertyAuction
+	"Auction the property"
+
+	self triggerEvent: #showPropertyAuction.
+	self triggerEvent: #itemChange
+! !
+
 !Estate methodsFor: 'operating' stamp: 'dhn 3/3/2020 21:56:17'!
 propertyAuctionBid
 	"Answer the value of jobAuctionItem"
@@ -806,6 +815,19 @@ propertyAuctionBid: anObject
 	(propertyAuctionBid _ anObject) ifNotNil: [
 		self triggerEvent: #itemChange.
 		self changed: #propertyAuctionBid]! !
+
+!Estate methodsFor: 'operating' stamp: 'dhn 3/4/2020 21:26:26'!
+propertyBuy
+	"Finalize the sale"
+	| lot |
+	
+	lot _ spaces at: currentPlayer position.
+	currentPlayer tally: lot price negated.
+	currentPlayer assets add: lot.
+	currentPlayer assets reSort.
+	lot owner: currentPlayer.
+	self triggerEvent: #itemChange
+! !
 
 !Estate methodsFor: 'operating' stamp: 'dhn 3/2/2020 20:31:46'!
 repair: anObject
@@ -1482,7 +1504,7 @@ tourAt: anInterval
 	self startSteppingStepTime: anInterval. 	"time of each increment of the hop"
 ! !
 
-!Monopoly methodsFor: 'initialization' stamp: 'dhn 3/2/2020 16:30:04'!
+!Monopoly methodsFor: 'initialization' stamp: 'dhn 3/4/2020 22:24:19'!
 buildMorphicWindow
 
 	pasteup _ GamePasteUp new
@@ -1500,6 +1522,7 @@ buildMorphicWindow
 	model when: #titleChange send: #titleChange: to: self with: #player.
 	model when: #showToken send: #showToken to: self.
 	model when: #showSeasons: send: #showSeasons: to: self with: #index.
+	model when: #showBuyView send: #showBuyView to: self.
 ! !
 
 !Monopoly methodsFor: 'initialization' stamp: 'dhn 5/16/2019 21:50:15'!
@@ -1764,6 +1787,21 @@ startGame
 	model 
 		nextPlayer.
 	model initialButtonState! !
+
+!Monopoly methodsFor: 'windows' stamp: 'dhn 3/4/2020 21:04:13'!
+showBuyView
+	"Open a window on a property held by the bank"
+	| win |
+		
+	win _ BuyView openOn: model.
+	win openInWorld: pasteup.
+	win
+		setLabel: (model spaces at: model currentPlayer position) title;
+		setWindowColor: (model seasonAt: model currentPlayer position) color;
+		morphPosition: self windowPosition;
+		morphExtent: 390 @ 260;
+		startButtons;
+		details! !
 
 !Monopoly methodsFor: 'windows' stamp: 'dhn 3/4/2020 13:54:27'!
 showPropertyAuction
@@ -2071,6 +2109,115 @@ endIt
 ! !
 
 !AuctionProperty class methodsFor: 'class initialization' stamp: 'dhn 3/3/2020 20:57:17'!
+openOn: aModel
+	"Answer an instance of this class on aModel"
+	| win |
+
+	win _ self open: aModel.
+	win removeWindowMenu.
+			
+	aModel when: #itemChange send: #details to: win.
+	aModel when: #deleteOpenWindows send: #endIt to: win.
+	
+	^ win
+! !
+
+!BuyView methodsFor: 'operating' stamp: 'dhn 3/4/2020 21:40:52'!
+auction
+
+	auctionButton disableButton.
+	buyButton disableButton.
+	model propertyAuction! !
+
+!BuyView methodsFor: 'operating' stamp: 'dhn 3/4/2020 21:39:24'!
+buy
+
+	buyButton disableButton.
+	auctionButton disableButton.
+	model propertyBuy! !
+
+!BuyView methodsFor: 'operating' stamp: 'dhn 3/4/2020 21:53:43'!
+startButtons
+	"Set the buttons for buying assets"
+	
+	buyButton _ GameButtonMorph label: 'Buy' action: #buy state: true model: self.
+	buyButton 
+		morphExtent: 100@40;
+		setBalloonText: 'Make the purchase.'.
+		
+	auctionButton _ GameButtonMorph label: 'Auction' action: #auction state: true model: self.
+	auctionButton 
+		morphExtent: 100@40;
+		setBalloonText: 'Let everyone bid on it'.
+
+	buttonArea
+		removeAllMorphs;
+		addMorph: buyButton;
+		addMorph: auctionButton;
+		separation: 40@0;
+		padding: #center.
+! !
+
+!BuyView methodsFor: 'initialization' stamp: 'dhn 3/4/2020 22:04:01'!
+buildMorphicWindow
+	"Lay out the window for purchases"
+	
+	self layoutMorph beColumn.
+
+	textPane _ (TextModelMorph
+		withModel: (TextModel withText: '')) 	"note the different model specification"
+			askBeforeDiscardingEdits: false;	"discard changes to the text"
+			name: 'property data'. 	"give the TextModelMorph a name which will appear in the halos"
+	textPane 
+		layoutSpec: (LayoutSpec 
+			proportionalWidth: 1.0
+			proportionalHeight: 0.7
+			minorDirectionPadding: #center).
+			
+	buttonArea _ (LayoutMorph newRow)
+		layoutSpec: (LayoutSpec new
+			proportionalWidth: 1.0;
+			proportionalHeight: 0.3;
+			minorDirectionPadding: #center).
+	buttonArea
+		name: #buttons;
+		padding: #center.
+	
+	self layoutMorph
+		addMorph: textPane;
+		addMorph: buttonArea.	
+
+	model when: #buyButton: send: #buyButton: to: self with: #state.
+! !
+
+!BuyView methodsFor: 'accessing' stamp: 'dhn 3/4/2020 20:00:03'!
+buyButton: aBool
+	"Change buy button state according to aBool"
+	| chg |
+	
+	aBool ifNil: [chg _ false] ifNotNil: [chg _ aBool].
+	chg
+		ifTrue: [buyButton enableButton]
+		ifFalse: [buyButton disableButton]! !
+
+!BuyView methodsFor: 'accessing' stamp: 'dhn 3/4/2020 20:50:20'!
+details
+
+	textPane model actualContents: (model spaces at: model currentPlayer position) report! !
+
+!BuyView methodsFor: 'termination' stamp: 'dhn 3/4/2020 21:12:59'!
+closeBoxHit
+	"Do not respond. Window can not be closed this way."
+	
+	self delete! !
+
+!BuyView methodsFor: 'termination' stamp: 'dhn 3/4/2020 20:46:16'!
+endIt
+	"Close the receiver"
+	
+	self delete! !
+
+!BuyView class methodsFor: 'class initialization' stamp: 'dhn 3/4/2020 20:00:03'!
 openOn: aModel
 	"Answer an instance of this class on aModel"
 	| win |
