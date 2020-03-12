@@ -1,6 +1,6 @@
-'From Cuis 5.0 [latest update: #4042] on 5 March 2020 at 5:22:19 pm'!
+'From Cuis 5.0 [latest update: #4042] on 12 March 2020 at 3:21:24 pm'!
 'Description Simulation of the board game "Monopoly".'!
-!provides: 'Monop' 1 95!
+!provides: 'Monop' 1 97!
 !requires: 'Game' 1 44 nil!
 SystemOrganization addCategory: #'Monop-View'!
 SystemOrganization addCategory: #'Monop-Model'!
@@ -802,9 +802,9 @@ propertyAuction
 	self triggerEvent: #itemChange
 ! !
 
-!Estate methodsFor: 'operating' stamp: 'dhn 3/3/2020 21:56:17'!
+!Estate methodsFor: 'operating' stamp: 'dhn 3/12/2020 15:04:00'!
 propertyAuctionBid
-	"Answer the value of jobAuctionItem"
+	"Answer the value of propertyAuctionBid"
 
 	propertyAuctionBid ifNil: [propertyAuctionBid _ 1]. 	"nil is unacceptable during model initialization"
 	^ propertyAuctionBid! !
@@ -1508,7 +1508,7 @@ tourAt: anInterval
 	self startSteppingStepTime: anInterval. 	"time of each increment of the hop"
 ! !
 
-!Monopoly methodsFor: 'initialization' stamp: 'dhn 3/4/2020 22:24:19'!
+!Monopoly methodsFor: 'initialization' stamp: 'dhn 3/12/2020 14:44:44'!
 buildMorphicWindow
 
 	pasteup _ GamePasteUp new
@@ -1527,6 +1527,7 @@ buildMorphicWindow
 	model when: #showToken send: #showToken to: self.
 	model when: #showSeasons: send: #showSeasons: to: self with: #index.
 	model when: #showBuyView send: #showBuyView to: self.
+	model when: #showPropertyAuction send: #showPropertyAuction to: self.
 ! !
 
 !Monopoly methodsFor: 'initialization' stamp: 'dhn 5/16/2019 21:50:15'!
@@ -1807,18 +1808,30 @@ showBuyView
 		startButtons;
 		details! !
 
-!Monopoly methodsFor: 'windows' stamp: 'dhn 3/4/2020 13:54:27'!
+!Monopoly methodsFor: 'windows' stamp: 'dhn 3/12/2020 15:17:24'!
 showPropertyAuction
 	"Open a window on a property at auction"
-	| win |
+	| win where |
 		
 	win _ AuctionProperty openOn: model.
-	win openInWorld: pasteup.
+	where _ model currentPlayer position.
 	win
-		setLabel: 'Property Auction';
-		setWindowColor: (model seasonAt: model currentPlayer position) color;
+		setLabel: (model spaces at: where) title, ' auction';
+		setWindowColor: (model seasonAt: where) color;
 		morphPosition: self windowPosition;
-		morphExtent: 580 @ 260! !
+		makeEndButton;
+		buyerButtons;
+		morphExtent: 580 @ 260;
+		openInWorld: pasteup.
+	win chant addFirst: 'The auction has started, what am I bid?'.
+	win showChant.
+	win beat: #propertySold.
+
+	model 
+		propertyAuctionBid: 1;
+		changed: #bidIncrementList.
+	win heading contents: 'Bid Increment'
+! !
 
 !Monopoly methodsFor: 'windows' stamp: 'dhn 3/1/2020 15:33:12'!
 showStats
@@ -1943,17 +1956,16 @@ start
 	^ win
 ! !
 
-!AuctionProperty methodsFor: 'initialization' stamp: 'dhn 3/4/2020 13:47:00'!
+!AuctionProperty methodsFor: 'initialization' stamp: 'dhn 3/12/2020 12:47:44'!
 buildMorphicWindow
-	"Lay out the window for auctioning a job"
+	"Lay out the window for auctioning a property"
 	
 	buttonsArea _ (LayoutMorph newRow)
-		name: #title;  "this is re-purposed"
+		name: #buttons;
 		layoutSpec: (LayoutSpec 
 			proportionalWidth: 1.0
 			proportionalHeight: 0.15
 			minorDirectionPadding: #center).
-	buttonsArea padding: #center.
 			
 	self layoutMorph
 		addMorph: buttonsArea;
@@ -2035,13 +2047,47 @@ buyerButtons
 			setBalloonText: 'bidder')].
 	buyers addAllMorphs: col reversed! !
 
-!AuctionProperty methodsFor: 'buttons' stamp: 'dhn 3/4/2020 11:49:22'!
-startButtons
-	"Re-purpose by setting this to the title of the property"
+!AuctionProperty methodsFor: 'buttons' stamp: 'dhn 3/12/2020 12:12:35'!
+makeEndButton
+	"Answer the 'End' button"
 	
+	endButton _ GameButtonMorph label: 'End' action: #endIt state: false model: self.
+	endButton 
+		morphExtent: 70@30;
+		setBalloonText: 'Close the auction window.'.
+	^ endButton! !
+
+!AuctionProperty methodsFor: 'buttons' stamp: 'dhn 3/12/2020 13:10:16'!
+startButtons
+	"can be deleted?"
+	self halt.
 	buttonsArea addMorph: 
 		(StringMorph contents: 
 			(model spaces at: model currentPlayer position) title)! !
+
+!AuctionProperty methodsFor: 'operation' stamp: 'dhn 3/12/2020 12:45:24'!
+beat: aSymbol
+	"Produce the auctioneer's chant; perform aSymbol when limit is exceeded"
+	| limit |
+	
+	limit _ 4.
+	self when: #morphicStep evaluate: [ :delta |
+		begun 
+			ifTrue: [
+				self going: self going + 1.
+				self going <= limit 
+					ifTrue: [
+						self going > 1 ifTrue: [
+							chant addFirst: (String streamContents: [:str |
+							str
+								nextPutAll: '...going ';
+								nextPutAll: (self class degree: self going); newLine]).
+						self showChant]]
+					ifFalse: [
+						self stopStepping.
+						self perform: aSymbol.
+						self removeActionsForEvent: #morphicStep]]].
+	self startSteppingStepTime: model chantBeat. 	"time between chants"! !
 
 !AuctionProperty methodsFor: 'operation' stamp: 'dhn 3/4/2020 15:09:06'!
 beginAuction
@@ -2059,23 +2105,21 @@ beginAuction
 	heading contents: 'Bid Increment'
 ! !
 
-!AuctionProperty methodsFor: 'operation' stamp: 'dhn 3/3/2020 20:57:17'!
+!AuctionProperty methodsFor: 'operation' stamp: 'dhn 3/12/2020 12:49:13'!
 details
-	"Not required for job auctions"
+	"Not required for property auctions"
 ! !
 
-!AuctionProperty methodsFor: 'operation' stamp: 'dhn 3/4/2020 15:05:04'!
+!AuctionProperty methodsFor: 'operation' stamp: 'dhn 3/12/2020 12:55:27'!
 offer: aName
-	"Record a bid by aName"
+	"Record a bid by aName and start the auction"
 	
 	model propertyAuctionBid > 0 
 		ifTrue: [self offer: model propertyAuctionBid by: aName]
 		ifFalse: [
 			buyers submorphsDo: [:ea | ea enableButton].
 			(buyers findDeepSubmorphThat: [:mm | mm label = currentBidder] ifAbsent: [^ self]) disableButton].
-	begun ifFalse: [
-		self beat: #propertySold.
-		begun _ true]! !
+	begun  _ true! !
 
 !AuctionProperty methodsFor: 'operation' stamp: 'dhn 3/4/2020 15:23:10'!
 propertySold
@@ -2111,6 +2155,12 @@ endIt
 		enableAll: {'End Turn'}.
 	self delete
 ! !
+
+!AuctionProperty methodsFor: 'access' stamp: 'dhn 3/12/2020 12:39:55'!
+heading
+	"Answer the value of heading"
+	
+	^ heading! !
 
 !AuctionProperty class methodsFor: 'class initialization' stamp: 'dhn 3/3/2020 20:57:17'!
 openOn: aModel
@@ -2603,10 +2653,10 @@ price: anObject
 
 	    price _ anObject! !
 
-!Property methodsFor: 'operating' stamp: 'dhn 3/5/2020 15:15:04'!
+!Property methodsFor: 'operating' stamp: 'dhn 3/12/2020 13:43:51'!
 numberOwned
 	"Answer how many of the set are owned by the current player."
-	self halt.
+
 	^ (set select: [ :i | (mgr spaces at: i) owner = mgr currentPlayer]) size! !
 
 !Property methodsFor: 'operating' stamp: 'dhn 3/1/2020 21:18:28'!
