@@ -1,6 +1,6 @@
-'From Cuis 5.0 [latest update: #4042] on 12 March 2020 at 8:44:39 pm'!
+'From Cuis 5.0 [latest update: #4042] on 12 March 2020 at 9:23:09 pm'!
 'Description Simulation of the board game "Monopoly".'!
-!provides: 'Monop' 1 99!
+!provides: 'Monop' 1 100!
 !requires: 'Game' 1 44 nil!
 SystemOrganization addCategory: #'Monop-View'!
 SystemOrganization addCategory: #'Monop-Model'!
@@ -632,6 +632,19 @@ goToJail
 
 	token slideLeft: currentPlayer position to: 11.
 	"currentPlayer jail: true with: 0."
+! !
+
+!Estate methodsFor: 'operating' stamp: 'dhn 3/12/2020 21:18:41'!
+hammerDown: aBid for: aProperty by: aBidder
+	"Record the sale at auction"
+	| winner |
+	
+	winner _ players detect: [:a | a identity = aBidder] ifNone: [].
+	winner tally: aBid negated.
+	winner assets add: aProperty.
+	winner assets reSort.
+	aProperty owner: winner.
+	self triggerEvent: #itemChange
 ! !
 
 !Estate methodsFor: 'operating' stamp: 'dhn 3/2/2020 19:07:57'!
@@ -2122,9 +2135,10 @@ offer: aName
 			(buyers findDeepSubmorphThat: [:mm | mm label = currentBidder] ifAbsent: [^ self]) disableButton].
 	begun  _ true! !
 
-!AuctionProperty methodsFor: 'operation' stamp: 'dhn 3/12/2020 20:34:55'!
+!AuctionProperty methodsFor: 'operation' stamp: 'dhn 3/12/2020 20:58:11'!
 propertySold
 	"SOLD!! the property."
+	| prop |
 	
 	buyers removeAllMorphs.
 	buttonsArea addMorph: self makeEndButton.
@@ -2135,7 +2149,9 @@ propertySold
 			nextPutAll: currentBidder;
 			nextPutAll: ' for $';
 			nextPutAll: currentBid printStringWithCommas; newLine]).
-	self showChant
+	self showChant.
+	prop _ model spaces at: model currentPlayer position.
+	model hammerDown: currentBid for: prop by: currentBidder
 ! !
 
 !AuctionProperty methodsFor: 'termination' stamp: 'dhn 3/3/2020 21:57:33'!
