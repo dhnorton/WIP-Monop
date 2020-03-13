@@ -1,6 +1,6 @@
-'From Cuis 5.0 [latest update: #4042] on 13 March 2020 at 12:34:25 pm'!
+'From Cuis 5.0 [latest update: #4042] on 13 March 2020 at 12:46:34 pm'!
 'Description Simulation of the board game "Monopoly".'!
-!provides: 'Monop' 1 101!
+!provides: 'Monop' 1 102!
 !requires: 'Game' 1 44 nil!
 SystemOrganization addCategory: #'Monop-View'!
 SystemOrganization addCategory: #'Monop-Model'!
@@ -1749,20 +1749,20 @@ showBuyView
 		startButtons;
 		details! !
 
-!Monopoly methodsFor: 'windows' stamp: 'dhn 3/12/2020 20:24:26'!
+!Monopoly methodsFor: 'windows' stamp: 'dhn 3/13/2020 12:43:30'!
 showPropertyAuction
 	"Open a window on a property at auction"
 	| win where |
 		
 	win _ AuctionProperty openOn: model.
 	where _ model currentPlayer position.
+	win openInWorld: pasteup.
 	win
 		setLabel: (model spaces at: where) title, ' auction';
 		setWindowColor: (model seasonAt: where) color;
 		morphPosition: self windowPosition;
 		makeEndButton;
-		buyerButtons;
-		openInWorld: pasteup.
+		buyerButtons.
 	win morphExtent: 570 @ 400.
 	win chant addFirst: 'The auction has started, what am I bid?'.
 	win showChant.
