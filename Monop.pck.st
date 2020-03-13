@@ -1,6 +1,6 @@
-'From Cuis 5.0 [latest update: #4042] on 12 March 2020 at 9:23:09 pm'!
+'From Cuis 5.0 [latest update: #4042] on 13 March 2020 at 12:34:25 pm'!
 'Description Simulation of the board game "Monopoly".'!
-!provides: 'Monop' 1 100!
+!provides: 'Monop' 1 101!
 !requires: 'Game' 1 44 nil!
 SystemOrganization addCategory: #'Monop-View'!
 SystemOrganization addCategory: #'Monop-Model'!
@@ -24,16 +24,6 @@ Token subclass: #EstateToken
 	category: 'Monop-View'!
 !classDefinition: 'EstateToken class' category: #'Monop-View'!
 EstateToken class
-	instanceVariableNames: ''!
-
-!classDefinition: #LotView category: #'Monop-View'!
-GameCell subclass: #LotView
-	instanceVariableNames: 'lowerPane'
-	classVariableNames: ''
-	poolDictionaries: ''
-	category: 'Monop-View'!
-!classDefinition: 'LotView class' category: #'Monop-View'!
-LotView class
 	instanceVariableNames: ''!
 
 !classDefinition: #Monopoly category: #'Monop-View'!
@@ -66,16 +56,6 @@ GameView subclass: #BuyView
 BuyView class
 	instanceVariableNames: ''!
 
-!classDefinition: #ForSale category: #'Monop-View'!
-GameView subclass: #ForSale
-	instanceVariableNames: 'buttonsArea textPane auctionButton buyButton'
-	classVariableNames: ''
-	poolDictionaries: ''
-	category: 'Monop-View'!
-!classDefinition: 'ForSale class' category: #'Monop-View'!
-ForSale class
-	instanceVariableNames: ''!
-
 !classDefinition: #MonopStats category: #'Monop-View'!
 GameView subclass: #MonopStats
 	instanceVariableNames: 'textPane listPane'
@@ -84,16 +64,6 @@ GameView subclass: #MonopStats
 	category: 'Monop-View'!
 !classDefinition: 'MonopStats class' category: #'Monop-View'!
 MonopStats class
-	instanceVariableNames: ''!
-
-!classDefinition: #ClearBox category: #'Monop-View'!
-BorderedRectMorph subclass: #ClearBox
-	instanceVariableNames: 'layoutMorph textPane lowerPane'
-	classVariableNames: ''
-	poolDictionaries: ''
-	category: 'Monop-View'!
-!classDefinition: 'ClearBox class' category: #'Monop-View'!
-ClearBox class
 	instanceVariableNames: ''!
 
 !classDefinition: #Square category: #'Monop-Model'!
@@ -323,9 +293,6 @@ The model for the Monopoly board.!
 !EstateToken commentStamp: '<historical>' prior: 0!
 A token for a player in Monopoly.!
 
-!LotView commentStamp: '<historical>' prior: 0!
-A cell with a text pane, lower pane, and marks pane.!
-
 !Monopoly commentStamp: '<historical>' prior: 0!
 Simulation of the Monopoly board game.
 
@@ -337,14 +304,8 @@ A Monnopoly window which makes it possible for players to bid on property.!
 !BuyView commentStamp: '<historical>' prior: 0!
 A window where players must either buy or auction a property.!
 
-!ForSale commentStamp: '<historical>' prior: 0!
-A window for buying or auctioning an unowned property.!
-
 !MonopStats commentStamp: '<historical>' prior: 0!
 A Monopoly window which shows statistics about the player's assets.!
-
-!ClearBox commentStamp: '<historical>' prior: 0!
-The boxed area of a cell.!
 
 !Square commentStamp: '<historical>' prior: 0!
 A square on the board.!
@@ -1323,39 +1284,6 @@ moving: anObject
 
 	moving _ anObject! !
 
-!LotView methodsFor: 'accessing' stamp: 'dhn 5/17/2019 14:44:43'!
-lowerPane
-	"Answer the value of lowerPane"
-
-	^ lowerPane! !
-
-!LotView methodsFor: 'accessing' stamp: 'dhn 5/17/2019 14:44:43'!
-lowerPane: anObject
-	"Set the value of lowerPane"
-
-	lowerPane _ anObject! !
-
-!LotView methodsFor: 'initialization' stamp: 'dhn 5/17/2019 16:55:41'!
-makeLowerPane
-	"Lay out the lower pane"
-	
-	lowerPane _ (LayoutMorph newRow separation: 0)
-		layoutSpec: (LayoutSpec proportionalWidth: 1.0
-			proportionalHeight: 1.0
-			minorDirectionPadding: #center).
-	lowerPane
-			color: Color transparent;
-			name: #'lower pane';
-			padding: #center.
-			
-	^ lowerPane addMorph: ((StringMorph contents: '') 
-		emphasis: AbstractFont boldCode)! !
-
-!LotView class methodsFor: 'instance creation' stamp: 'dhn 5/17/2019 14:46:07'!
-includeInNewMorphMenu
-	"Not to be instantiated from the menu"
-	^ false! !
-
 !Monopoly methodsFor: 'accessing' stamp: 'dhn 5/15/2019 12:43:43'!
 describe
 
@@ -1923,11 +1851,10 @@ cellsForGame
 	
 	^ 13! !
 
-!Monopoly class methodsFor: 'instance creation' stamp: 'dhn 5/15/2019 12:31:35'!
+!Monopoly class methodsFor: 'instance creation' stamp: 'dhn 3/13/2020 12:16:34'!
 includeInNewMorphMenu
-	"Instantiate from the menu"
-	
-	^ true! !
+	"Not to be instantiated from the menu"
+	^ false! !
 
 !Monopoly class methodsFor: 'instance creation' stamp: 'dhn 2/22/2020 16:05:55'!
 start
@@ -2301,56 +2228,6 @@ openOn: aModel
 	^ win
 ! !
 
-!ForSale methodsFor: 'initialization' stamp: 'dhn 5/17/2019 11:56:46'!
-buildMorphicWindow
-	"Lay out the window for buying or auctioning a property"
-	
-	buttonsArea _ (LayoutMorph newRow)
-		name: #buttons;
-		layoutSpec: (LayoutSpec 
-			proportionalWidth: 1.0
-			proportionalHeight: 0.15
-			minorDirectionPadding: #center).
-	buttonsArea
-		addMorph: self makeAuctionButton;
-		addMorph: self makeBuyButton;
-		padding: #center.
-					
-	textPane _ (TextModelMorph
-		withModel: (TextModel withText: '')) 	"note the different model specification"
-			askBeforeDiscardingEdits: false;	"discard changes to the text"
-			name: 'deed'. 	"give the TextModelMorph a name which will appear in the halos"
-
-	self layoutMorph
-		addMorph: textPane;
-		addMorph: buttonsArea! !
-
-!ForSale methodsFor: 'initialization' stamp: 'dhn 5/17/2019 11:50:10'!
-makeAuctionButton
-	"Answer the 'Auction' button"
-	
-	auctionButton _ GameButtonMorph label: 'Auction' action: #upForAuction state: true model: self.
-	auctionButton 
-		morphExtent: 70@20;
-		setBalloonText: 'Assemble the bidders and begin the auction'.
-	^ auctionButton! !
-
-!ForSale methodsFor: 'initialization' stamp: 'dhn 5/17/2019 12:01:11'!
-makeBuyButton
-	"Answer the 'Buy' button"
-	
-	buyButton _ GameButtonMorph label: 'Buy' action: #buyIt state: true model: self.
-	buyButton 
-		morphExtent: 70@20;
-		setBalloonText: 'Buy the property'.
-	^ buyButton! !
-
-!ForSale class methodsFor: 'class initialization' stamp: 'dhn 5/17/2019 11:30:31'!
-viewPosition
-	"Answer the basic position for instances of this class"
-	
-	^ Display center! !
-
 !MonopStats methodsFor: 'termination' stamp: 'dhn 2/23/2020 20:44:15'!
 closeBoxHit
 
@@ -2395,87 +2272,6 @@ buildMorphicWindow
 	self layoutMorph
 		addMorph: listPane layoutSpec: (LayoutSpec fixedWidth: 250);
 		addAdjusterAndMorph: textPane layoutSpec: (LayoutSpec useAll)! !
-
-!ClearBox methodsFor: 'initialization' stamp: 'dhn 5/20/2019 12:39:52'!
-initialize
-
-	super initialize.
-	layoutMorph _ LayoutMorph newColumn.
-	self 
-		addMorphFront: layoutMorph;
-		borderWidth: 1;
-		color: Color transparent.
-	textPane _ (GameCell 
-		textProvider: self
-		textGetter: #describe)
-			layoutSpec: (LayoutSpec proportionalWidth: 1.0);
-			color: self class cellColor;
-			name: 'cell text'.
-	lowerPane _ (GameCell 
-		textProvider: self
-		textGetter: #describe2)
-			layoutSpec: (LayoutSpec proportionalWidth: 1.0);
-			color: self class cellColor;
-			name: 'lower pane'.
-	layoutMorph 
-		color: Color transparent;
-		addMorph: textPane;
-		addMorph: lowerPane! !
-
-!ClearBox methodsFor: 'initialization' stamp: 'dhn 5/20/2019 23:05:28'!
-layoutSubmorphs
-	"Position and size submorphs so as to reveal the border"
-	
-	layoutMorph submorphs do: [ :ea |
-		ea
-			morphPosition: self morphPosition + 1;
-			morphExtent: self morphExtent - 2]! !
-
-!ClearBox methodsFor: 'accessing' stamp: 'dhn 5/17/2019 21:40:30'!
-describe
-
-	^ ''! !
-
-!ClearBox methodsFor: 'accessing' stamp: 'dhn 5/20/2019 12:20:58'!
-describe2
-	"Text getter for the lower pane"
-
-	^ ''! !
-
-!ClearBox methodsFor: 'accessing' stamp: 'dhn 5/17/2019 21:20:35'!
-lowerPane
-	"Answer the value of lowerPane"
-
-	^ lowerPane! !
-
-!ClearBox methodsFor: 'accessing' stamp: 'dhn 5/17/2019 21:20:35'!
-lowerPane: anObject
-	"Set the value of lowerPane"
-
-	lowerPane _ anObject! !
-
-!ClearBox methodsFor: 'accessing' stamp: 'dhn 5/17/2019 21:20:35'!
-textPane
-	"Answer the value of textPane"
-
-	^ textPane! !
-
-!ClearBox methodsFor: 'accessing' stamp: 'dhn 5/17/2019 21:20:35'!
-textPane: anObject
-	"Set the value of textPane"
-
-	textPane _ anObject! !
-
-!ClearBox class methodsFor: 'class initialization' stamp: 'dhn 5/17/2019 21:42:54'!
-cellColor
-	"Answer the color for a cell"
-	
-	^ Color r: 1.0 g: 0.93 b: 0.83! !
-
-!ClearBox class methodsFor: 'class initialization' stamp: 'dhn 5/17/2019 21:00:17'!
-includeInNewMorphMenu
-	"Not to be instantiated from the menu"
-	^ false! !
 
 !Square methodsFor: 'accessing' stamp: 'dhn 3/1/2020 13:02:50'!
 boardPosition
