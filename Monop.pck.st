@@ -1,6 +1,6 @@
-'From Cuis 5.0 [latest update: #4042] on 12 March 2020 at 3:21:24 pm'!
+'From Cuis 5.0 [latest update: #4042] on 12 March 2020 at 8:27:53 pm'!
 'Description Simulation of the board game "Monopoly".'!
-!provides: 'Monop' 1 97!
+!provides: 'Monop' 1 98!
 !requires: 'Game' 1 44 nil!
 SystemOrganization addCategory: #'Monop-View'!
 SystemOrganization addCategory: #'Monop-Model'!
@@ -518,7 +518,7 @@ bidIncrementList
 	
 	^ self class bidIncrement! !
 
-!Estate methodsFor: 'operating' stamp: 'dhn 3/5/2020 15:50:12'!
+!Estate methodsFor: 'operating' stamp: 'dhn 3/12/2020 17:23:08'!
 broker
 	"Represent the property"
 	"If unowned, the 'owner' is the bank and the property will be sold or auctioned."
@@ -531,7 +531,7 @@ broker
 		ifNotNil: [
 			lot owner ~= currentPlayer 
 				ifTrue: [
-					rent _ lot rentDue.
+					rent _ lot rentAmount.
 					GamePopUp 
 						inform: currentPlayer identity, ' must pay ', 
 							lot owner identity, ' $', rent asString
@@ -1037,27 +1037,27 @@ chestCards
 		add: #(#movePlayer: #ahead 1 'Advance to Go.');
 		yourself! !
 
-!Estate class methodsFor: 'instance creation' stamp: 'dhn 5/16/2019 15:17:44'!
+!Estate class methodsFor: 'instance creation' stamp: 'dhn 3/12/2020 17:46:34'!
 season
 	"Answer the color at the top of each space in Monopoly."
 	
 	^ OrderedCollection new
 		add: (Season new range: 01; color: (Color transparent));
-		add: (Season new range: 02; color: (Color indexedColors at: 107));
+		add: (Season new range: 02; color: (Color indexedColors at: 107); textColor: true);
 		add: (Season new range: 03; color: (Color transparent));
-		add: (Season new range: 04; color: (Color indexedColors at: 107));
+		add: (Season new range: 04; color: (Color indexedColors at: 107); textColor: true);
 		add: (Season new range: 05; color: (Color transparent));
-		add: (Season new range: 06; color: (Color transparent));
+		add: (Season new range: 06; color: (Color white));
 		add: (Season new range: 07; color: (Color lightBlue));
 		add: (Season new range: 08; color: (Color transparent));
 		add: (Season new range: 09; color: (Color lightBlue));
 		add: (Season new range: 10; color: (Color lightBlue));
 		add: (Season new range: 11; color: (Color transparent));
-		add: (Season new range: 12; color: (Color indexedColors at: 180));
-		add: (Season new range: 13; color: (Color transparent));
-		add: (Season new range: 14; color: (Color indexedColors at: 180));
-		add: (Season new range: 15; color: (Color indexedColors at: 180));
-		add: (Season new range: 16; color: (Color transparent));
+		add: (Season new range: 12; color: (Color indexedColors at: 180); textColor: true);
+		add: (Season new range: 13; color: (Color white));
+		add: (Season new range: 14; color: (Color indexedColors at: 180); textColor: true);
+		add: (Season new range: 15; color: (Color indexedColors at: 180); textColor: true);
+		add: (Season new range: 16; color: (Color white));
 		add: (Season new range: 17; color: (Color indexedColors at: 193));
 		add: (Season new range: 18; color: (Color transparent));
 		add: (Season new range: 19; color: (Color indexedColors at: 193));
@@ -1067,21 +1067,21 @@ season
 		add: (Season new range: 23; color: (Color transparent));
 		add: (Season new range: 24; color: (Color indexedColors at: 5));
 		add: (Season new range: 25; color: (Color indexedColors at: 5));
-		add: (Season new range: 26; color: (Color transparent));
+		add: (Season new range: 26; color: (Color white));
 		add: (Season new range: 27; color: (Color indexedColors at: 226));
 		add: (Season new range: 28; color: (Color indexedColors at: 226));
-		add: (Season new range: 29; color: (Color transparent));
+		add: (Season new range: 29; color: (Color white));
 		add: (Season new range: 30; color: (Color indexedColors at: 226));
 		add: (Season new range: 31; color: (Color transparent));
 		add: (Season new range: 32; color: (Color indexedColors at: 45));
 		add: (Season new range: 33; color: (Color indexedColors at: 45));
 		add: (Season new range: 34; color: (Color transparent));
 		add: (Season new range: 35; color: (Color indexedColors at: 45));
-		add: (Season new range: 36; color: (Color transparent));
+		add: (Season new range: 36; color: (Color white));
 		add: (Season new range: 37; color: (Color transparent));
-		add: (Season new range: 38; color: (Color indexedColors at: 7));
+		add: (Season new range: 38; color: (Color indexedColors at: 7); textColor: true);
 		add: (Season new range: 39; color: (Color transparent));
-		add: (Season new range: 40; color: (Color indexedColors at: 7));
+		add: (Season new range: 40; color: (Color indexedColors at: 7); textColor: true);
 		yourself
 		! !
 
@@ -1808,7 +1808,7 @@ showBuyView
 		startButtons;
 		details! !
 
-!Monopoly methodsFor: 'windows' stamp: 'dhn 3/12/2020 15:17:24'!
+!Monopoly methodsFor: 'windows' stamp: 'dhn 3/12/2020 20:24:26'!
 showPropertyAuction
 	"Open a window on a property at auction"
 	| win where |
@@ -1821,8 +1821,8 @@ showPropertyAuction
 		morphPosition: self windowPosition;
 		makeEndButton;
 		buyerButtons;
-		morphExtent: 580 @ 260;
 		openInWorld: pasteup.
+	win morphExtent: 570 @ 400.
 	win chant addFirst: 'The auction has started, what am I bid?'.
 	win showChant.
 	win beat: #propertySold.
