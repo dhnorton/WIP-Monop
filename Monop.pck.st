@@ -1,6 +1,6 @@
-'From Cuis 5.0 [latest update: #4042] on 12 March 2020 at 8:27:53 pm'!
+'From Cuis 5.0 [latest update: #4042] on 12 March 2020 at 8:44:39 pm'!
 'Description Simulation of the board game "Monopoly".'!
-!provides: 'Monop' 1 98!
+!provides: 'Monop' 1 99!
 !requires: 'Game' 1 44 nil!
 SystemOrganization addCategory: #'Monop-View'!
 SystemOrganization addCategory: #'Monop-Model'!
@@ -1956,7 +1956,7 @@ start
 	^ win
 ! !
 
-!AuctionProperty methodsFor: 'initialization' stamp: 'dhn 3/12/2020 12:47:44'!
+!AuctionProperty methodsFor: 'initialization' stamp: 'dhn 3/12/2020 20:42:26'!
 buildMorphicWindow
 	"Lay out the window for auctioning a property"
 	
@@ -1966,6 +1966,7 @@ buildMorphicWindow
 			proportionalWidth: 1.0
 			proportionalHeight: 0.15
 			minorDirectionPadding: #center).
+	buttonsArea padding: #center.
 			
 	self layoutMorph
 		addMorph: buttonsArea;
@@ -2121,13 +2122,12 @@ offer: aName
 			(buyers findDeepSubmorphThat: [:mm | mm label = currentBidder] ifAbsent: [^ self]) disableButton].
 	begun  _ true! !
 
-!AuctionProperty methodsFor: 'operation' stamp: 'dhn 3/4/2020 15:23:10'!
+!AuctionProperty methodsFor: 'operation' stamp: 'dhn 3/12/2020 20:34:55'!
 propertySold
 	"SOLD!! the property."
 	
-	buyers 
-		removeAllMorphs;
-		addMorph: self makeEndButton.
+	buyers removeAllMorphs.
+	buttonsArea addMorph: self makeEndButton.
 	endButton enableButton.
 	chant addFirst: (String streamContents: [:str |
 		str
