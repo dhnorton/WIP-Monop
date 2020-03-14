@@ -1,6 +1,6 @@
-'From Cuis 5.0 [latest update: #4042] on 13 March 2020 at 12:46:34 pm'!
+'From Cuis 5.0 [latest update: #4042] on 13 March 2020 at 9:55:05 pm'!
 'Description Simulation of the board game "Monopoly".'!
-!provides: 'Monop' 1 102!
+!provides: 'Monop' 1 103!
 !requires: 'Game' 1 44 nil!
 SystemOrganization addCategory: #'Monop-View'!
 SystemOrganization addCategory: #'Monop-Model'!
@@ -8,7 +8,7 @@ SystemOrganization addCategory: #'Monop-Model'!
 
 !classDefinition: #Estate category: #'Monop-Model'!
 Game subclass: #Estate
-	instanceVariableNames: 'demo windowCount chances chests moveButton statsItem propertyAuctionBid'
+	instanceVariableNames: 'demo windowCount chances chests moveButton statsItem propertyAuctionBid note'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Monop-Model'!
@@ -64,6 +64,16 @@ GameView subclass: #MonopStats
 	category: 'Monop-View'!
 !classDefinition: 'MonopStats class' category: #'Monop-View'!
 MonopStats class
+	instanceVariableNames: ''!
+
+!classDefinition: #Notifier category: #'Monop-View'!
+GameView subclass: #Notifier
+	instanceVariableNames: 'textPane buttonArea OkButton'
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'Monop-View'!
+!classDefinition: 'Notifier class' category: #'Monop-View'!
+Notifier class
 	instanceVariableNames: ''!
 
 !classDefinition: #Square category: #'Monop-Model'!
@@ -307,6 +317,9 @@ A window where players must either buy or auction a property.!
 !MonopStats commentStamp: '<historical>' prior: 0!
 A Monopoly window which shows statistics about the player's assets.!
 
+!Notifier commentStamp: '<historical>' prior: 0!
+A window for notifying players.!
+
 !Square commentStamp: '<historical>' prior: 0!
 A square on the board.!
 
@@ -504,16 +517,15 @@ broker
 	self token moving: false
 ! !
 
-!Estate methodsFor: 'operating' stamp: 'dhn 2/25/2020 16:51:31'!
+!Estate methodsFor: 'operating' stamp: 'dhn 3/13/2020 21:42:17'!
 doSpace
 	"Perform the method associated with the space where the player is"
 
 	currentPlayer passedGo 
 		ifTrue: [
-			GamePopUp 
-				inform: currentPlayer identity, ' will receive a salary of $200.' 
-				title: 'Passing GO'.
+			note _ currentPlayer identity, ' has received a salary of $200 for passing GO.'.
 			currentPlayer tally: 200.
+			self triggerEvent: #showGo.
 			self triggerEvent: #itemChange.
 			currentPlayer passedGo: false ].
 	^ self perform: (spaces atWrap: self currentPlayer position) routine! !
@@ -932,6 +944,18 @@ moveButton
 	"Answer the value of moveButton"
 
 	^ moveButton! !
+
+!Estate methodsFor: 'accessing' stamp: 'dhn 3/13/2020 20:35:14'!
+note
+	"Answer the value of note"
+
+	^ note! !
+
+!Estate methodsFor: 'accessing' stamp: 'dhn 3/13/2020 20:35:14'!
+note: anObject
+	"Set the value of note"
+
+	note _ anObject! !
 
 !Estate methodsFor: 'accessing' stamp: 'dhn 2/21/2020 20:55:59'!
 spaces
@@ -1449,7 +1473,7 @@ tourAt: anInterval
 	self startSteppingStepTime: anInterval. 	"time of each increment of the hop"
 ! !
 
-!Monopoly methodsFor: 'initialization' stamp: 'dhn 3/12/2020 14:44:44'!
+!Monopoly methodsFor: 'initialization' stamp: 'dhn 3/13/2020 20:40:15'!
 buildMorphicWindow
 
 	pasteup _ GamePasteUp new
@@ -1469,6 +1493,7 @@ buildMorphicWindow
 	model when: #showSeasons: send: #showSeasons: to: self with: #index.
 	model when: #showBuyView send: #showBuyView to: self.
 	model when: #showPropertyAuction send: #showPropertyAuction to: self.
+	model when: #showGo send: #showGo to: self.
 ! !
 
 !Monopoly methodsFor: 'initialization' stamp: 'dhn 5/16/2019 21:50:15'!
@@ -1748,6 +1773,20 @@ showBuyView
 		morphExtent: 390 @ 260;
 		startButtons;
 		details! !
+
+!Monopoly methodsFor: 'windows' stamp: 'dhn 3/13/2020 21:50:48'!
+showGo
+	"Tell the player about his salary"
+	| win |
+		
+	win _ Notifier open: model label: 'Passed GO'.
+	win openInWorld: pasteup.
+	win textPane model actualContents: model note.
+	win
+		setWindowColor: Color green;
+		morphPosition: self windowPosition;
+		setButton;
+		morphExtent: 315 @ 215! !
 
 !Monopoly methodsFor: 'windows' stamp: 'dhn 3/13/2020 12:43:30'!
 showPropertyAuction
@@ -2272,6 +2311,115 @@ buildMorphicWindow
 	self layoutMorph
 		addMorph: listPane layoutSpec: (LayoutSpec fixedWidth: 250);
 		addAdjusterAndMorph: textPane layoutSpec: (LayoutSpec useAll)! !
+
+!Notifier methodsFor: 'initialization' stamp: 'dhn 3/13/2020 21:35:47'!
+buildMorphicWindow
+	"Lay out the window for purchases"
+	
+	self layoutMorph beColumn.
+
+	textPane _ (TextModelMorph
+		withModel: (TextModel withText: '')) 	"note the different model specification"
+			askBeforeDiscardingEdits: false;	"discard changes to the text"
+			name: 'property data'. 	"give the TextModelMorph a name which will appear in the halos"
+	textPane 
+		layoutSpec: (LayoutSpec 
+			proportionalWidth: 1.0
+			proportionalHeight: 0.7
+			minorDirectionPadding: #center).
+			
+	buttonArea _ (LayoutMorph newRow)
+		layoutSpec: (LayoutSpec new
+			proportionalWidth: 1.0;
+			proportionalHeight: 0.3;
+			minorDirectionPadding: #center).
+	buttonArea
+		name: #buttons;
+		padding: #center.
+	
+	self layoutMorph
+		addMorph: textPane;
+		addMorph: buttonArea! !
+
+!Notifier methodsFor: 'initialization' stamp: 'dhn 3/13/2020 21:52:09'!
+setButton
+	"Set the button for acknowledging note"
+	
+	OkButton _ GameButtonMorph label: 'OK' action: #endIt state: true model: self.
+	OkButton 
+		morphExtent: 50@30;
+		setBalloonText: 'Acknowledge the note.'.
+
+	buttonArea
+		addMorph: OkButton;
+		padding: #center
+! !
+
+!Notifier methodsFor: 'accessing' stamp: 'dhn 3/13/2020 21:11:02'!
+buttonArea
+	"Answer the value of buttonArea"
+
+	^ buttonArea! !
+
+!Notifier methodsFor: 'accessing' stamp: 'dhn 3/13/2020 21:11:02'!
+buttonArea: anObject
+	"Set the value of buttonArea"
+
+	buttonArea _ anObject! !
+
+!Notifier methodsFor: 'accessing' stamp: 'dhn 3/13/2020 21:11:02'!
+buyButton
+	"Answer the value of buyButton"
+
+	^ buyButton! !
+
+!Notifier methodsFor: 'accessing' stamp: 'dhn 3/13/2020 20:28:52'!
+buyButton: aBool
+	"Change buy button state according to aBool"
+	| chg |
+	
+	aBool ifNil: [chg _ false] ifNotNil: [chg _ aBool].
+	chg
+		ifTrue: [buyButton enableButton]
+		ifFalse: [buyButton disableButton]! !
+
+!Notifier methodsFor: 'accessing' stamp: 'dhn 3/13/2020 21:11:02'!
+textPane
+	"Answer the value of textPane"
+
+	^ textPane! !
+
+!Notifier methodsFor: 'accessing' stamp: 'dhn 3/13/2020 21:11:02'!
+textPane: anObject
+	"Set the value of textPane"
+
+	textPane _ anObject! !
+
+!Notifier methodsFor: 'termination' stamp: 'dhn 3/13/2020 20:28:52'!
+closeBoxHit
+	"Do not respond. Window can not be closed this way."
+	
+	self delete! !
+
+!Notifier methodsFor: 'termination' stamp: 'dhn 3/13/2020 20:28:52'!
+endIt
+	"Close the receiver"
+	
+	self delete! !
+
+!Notifier class methodsFor: 'class initialization' stamp: 'dhn 3/13/2020 20:28:52'!
+openOn: aModel
+	"Answer an instance of this class on aModel"
+	| win |
+
+	win _ self open: aModel.
+	win removeWindowMenu.
+			
+	aModel when: #itemChange send: #details to: win.
+	aModel when: #deleteOpenWindows send: #endIt to: win.
+	
+	^ win
+! !
 
 !Square methodsFor: 'accessing' stamp: 'dhn 3/1/2020 13:02:50'!
 boardPosition
