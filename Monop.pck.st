@@ -1,6 +1,6 @@
-'From Cuis 5.0 [latest update: #4042] on 13 March 2020 at 9:55:05 pm'!
+'From Cuis 5.0 [latest update: #4042] on 14 March 2020 at 9:32:47 pm'!
 'Description Simulation of the board game "Monopoly".'!
-!provides: 'Monop' 1 103!
+!provides: 'Monop' 1 104!
 !requires: 'Game' 1 44 nil!
 SystemOrganization addCategory: #'Monop-View'!
 SystemOrganization addCategory: #'Monop-Model'!
@@ -68,7 +68,7 @@ MonopStats class
 
 !classDefinition: #Notifier category: #'Monop-View'!
 GameView subclass: #Notifier
-	instanceVariableNames: 'textPane buttonArea OkButton'
+	instanceVariableNames: 'textPane buttonArea OkButton nextDo'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Monop-View'!
@@ -530,7 +530,7 @@ doSpace
 			currentPlayer passedGo: false ].
 	^ self perform: (spaces atWrap: self currentPlayer position) routine! !
 
-!Estate methodsFor: 'operating' stamp: 'dhn 3/3/2020 19:37:05'!
+!Estate methodsFor: 'operating' stamp: 'dhn 3/14/2020 20:18:39'!
 drawChance
 	"Draw a Chance card"
 	| chan |
@@ -540,12 +540,12 @@ drawChance
 		ifTrue: [
 			chances second removeFirst.
 			currentPlayer cards: {#chances. chan}.
-			PopUpMenu inform: 'Get out of jail free!!'] 
+			self triggerEvent: #showChance: with: chan] 
 		ifFalse: [
 			self perform: chan first with: (chan copyFrom: 2 to: 4).
 			self triggerEvent: #itemChange]! !
 
-!Estate methodsFor: 'operating' stamp: 'dhn 3/3/2020 20:32:49'!
+!Estate methodsFor: 'operating' stamp: 'dhn 3/14/2020 20:19:34'!
 drawChest
 	"Draw a Community Chest card"
 	| ches |
@@ -555,7 +555,7 @@ drawChest
 		ifTrue: [
 			chests second removeFirst.
 			currentPlayer cards: {#chests. ches}.
-			PopUpMenu inform: 'Get out of jail free!!'] 
+			self triggerEvent: #showChest: with: ches] 
 		ifFalse: [
 			self perform: ches first with: (ches copyFrom: 2 to: 4).
 			self triggerEvent: #itemChange]! !
@@ -1473,7 +1473,7 @@ tourAt: anInterval
 	self startSteppingStepTime: anInterval. 	"time of each increment of the hop"
 ! !
 
-!Monopoly methodsFor: 'initialization' stamp: 'dhn 3/13/2020 20:40:15'!
+!Monopoly methodsFor: 'initialization' stamp: 'dhn 3/14/2020 20:44:08'!
 buildMorphicWindow
 
 	pasteup _ GamePasteUp new
@@ -1494,6 +1494,11 @@ buildMorphicWindow
 	model when: #showBuyView send: #showBuyView to: self.
 	model when: #showPropertyAuction send: #showPropertyAuction to: self.
 	model when: #showGo send: #showGo to: self.
+	model when: #showChance: send: #showChance: to: self with: #array.
+	model when: #showChest: send: #showChest: to: self with: #array.
+	"when:send:to:"
+	"when:send:to:with:"
+	"when:send:to:withArguments:"
 ! !
 
 !Monopoly methodsFor: 'initialization' stamp: 'dhn 5/16/2019 21:50:15'!
@@ -1774,7 +1779,37 @@ showBuyView
 		startButtons;
 		details! !
 
-!Monopoly methodsFor: 'windows' stamp: 'dhn 3/13/2020 21:50:48'!
+!Monopoly methodsFor: 'windows' stamp: 'dhn 3/14/2020 17:57:50'!
+showChance: anArray
+	"Tell the player about the Chance card"
+	| win |
+		
+	win _ Notifier open: model label: 'Chance'.
+	win openInWorld: pasteup.
+	win textPane model actualContents: anArray last.
+	win textPane color: Color lightOrange.
+	win
+		setWindowColor: Color lightOrange;
+		morphPosition: self windowPosition;
+		setButton;
+		morphExtent: 315 @ 215! !
+
+!Monopoly methodsFor: 'windows' stamp: 'dhn 3/14/2020 18:00:10'!
+showChest: anArray
+	"Tell the player about the Community Chest card"
+	| win |
+		
+	win _ Notifier open: model label: 'Community Chest'.
+	win openInWorld: pasteup.
+	win textPane model actualContents: anArray last.
+	win textPane color: Color lightYellow.
+	win
+		setWindowColor: Color lightYellow;
+		morphPosition: self windowPosition;
+		setButton;
+		morphExtent: 315 @ 215! !
+
+!Monopoly methodsFor: 'windows' stamp: 'dhn 3/14/2020 12:25:38'!
 showGo
 	"Tell the player about his salary"
 	| win |
@@ -1783,7 +1818,7 @@ showGo
 	win openInWorld: pasteup.
 	win textPane model actualContents: model note.
 	win
-		setWindowColor: Color green;
+		setWindowColor: Color lightYellow;
 		morphPosition: self windowPosition;
 		setButton;
 		morphExtent: 315 @ 215! !
@@ -2312,7 +2347,7 @@ buildMorphicWindow
 		addMorph: listPane layoutSpec: (LayoutSpec fixedWidth: 250);
 		addAdjusterAndMorph: textPane layoutSpec: (LayoutSpec useAll)! !
 
-!Notifier methodsFor: 'initialization' stamp: 'dhn 3/13/2020 21:35:47'!
+!Notifier methodsFor: 'initialization' stamp: 'dhn 3/14/2020 21:22:51'!
 buildMorphicWindow
 	"Lay out the window for purchases"
 	
@@ -2339,13 +2374,16 @@ buildMorphicWindow
 	
 	self layoutMorph
 		addMorph: textPane;
-		addMorph: buttonArea! !
+		addMorph: buttonArea.
+		
+	model when: #deleteOpenWindows send: #endIt to: self.
+! !
 
-!Notifier methodsFor: 'initialization' stamp: 'dhn 3/13/2020 21:52:09'!
+!Notifier methodsFor: 'initialization' stamp: 'dhn 3/14/2020 14:23:51'!
 setButton
 	"Set the button for acknowledging note"
 	
-	OkButton _ GameButtonMorph label: 'OK' action: #endIt state: true model: self.
+	OkButton _ GameButtonMorph label: 'OK' action: self nextDo state: true model: self.
 	OkButton 
 		morphExtent: 50@30;
 		setBalloonText: 'Acknowledge the note.'.
@@ -2354,6 +2392,18 @@ setButton
 		addMorph: OkButton;
 		padding: #center
 ! !
+
+!Notifier methodsFor: 'accessing' stamp: 'dhn 3/14/2020 12:17:33'!
+OkButton
+	"Answer the value of OkButton"
+
+	^ OkButton! !
+
+!Notifier methodsFor: 'accessing' stamp: 'dhn 3/14/2020 12:17:33'!
+OkButton: anObject
+	"Set the value of OkButton"
+
+	OkButton _ anObject! !
 
 !Notifier methodsFor: 'accessing' stamp: 'dhn 3/13/2020 21:11:02'!
 buttonArea
@@ -2367,21 +2417,17 @@ buttonArea: anObject
 
 	buttonArea _ anObject! !
 
-!Notifier methodsFor: 'accessing' stamp: 'dhn 3/13/2020 21:11:02'!
-buyButton
-	"Answer the value of buyButton"
+!Notifier methodsFor: 'accessing' stamp: 'dhn 3/14/2020 14:22:56'!
+nextDo
+	"Answer the value of nextDo"
 
-	^ buyButton! !
+	^ nextDo ifNil: [#endIt] ifNotNil: [nextDo asSymbol]! !
 
-!Notifier methodsFor: 'accessing' stamp: 'dhn 3/13/2020 20:28:52'!
-buyButton: aBool
-	"Change buy button state according to aBool"
-	| chg |
-	
-	aBool ifNil: [chg _ false] ifNotNil: [chg _ aBool].
-	chg
-		ifTrue: [buyButton enableButton]
-		ifFalse: [buyButton disableButton]! !
+!Notifier methodsFor: 'accessing' stamp: 'dhn 3/14/2020 14:20:28'!
+nextDo: anObject
+	"Set the value of nextDo"
+
+	nextDo _ anObject! !
 
 !Notifier methodsFor: 'accessing' stamp: 'dhn 3/13/2020 21:11:02'!
 textPane
@@ -2395,9 +2441,9 @@ textPane: anObject
 
 	textPane _ anObject! !
 
-!Notifier methodsFor: 'termination' stamp: 'dhn 3/13/2020 20:28:52'!
+!Notifier methodsFor: 'termination' stamp: 'dhn 3/14/2020 12:19:29'!
 closeBoxHit
-	"Do not respond. Window can not be closed this way."
+	"The user clicked on the close-box control in the window title"
 	
 	self delete! !
 
@@ -2407,7 +2453,14 @@ endIt
 	
 	self delete! !
 
-!Notifier class methodsFor: 'class initialization' stamp: 'dhn 3/13/2020 20:28:52'!
+!Notifier methodsFor: 'termination' stamp: 'dhn 3/14/2020 12:23:28'!
+endTurn
+	"Enable the End Turn button and close this window"
+	
+	model enableAll: {'End Turn'}.
+	self endIt ! !
+
+!Notifier class methodsFor: 'class initialization' stamp: 'dhn 3/14/2020 12:14:17'!
 openOn: aModel
 	"Answer an instance of this class on aModel"
 	| win |
@@ -2415,7 +2468,6 @@ openOn: aModel
 	win _ self open: aModel.
 	win removeWindowMenu.
 			
-	aModel when: #itemChange send: #details to: win.
 	aModel when: #deleteOpenWindows send: #endIt to: win.
 	
 	^ win
