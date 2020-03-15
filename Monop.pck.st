@@ -1,6 +1,6 @@
-'From Cuis 5.0 [latest update: #4042] on 14 March 2020 at 9:32:47 pm'!
+'From Cuis 5.0 [latest update: #4042] on 15 March 2020 at 3:51:21 pm'!
 'Description Simulation of the board game "Monopoly".'!
-!provides: 'Monop' 1 104!
+!provides: 'Monop' 1 105!
 !requires: 'Game' 1 44 nil!
 SystemOrganization addCategory: #'Monop-View'!
 SystemOrganization addCategory: #'Monop-Model'!
@@ -1779,7 +1779,7 @@ showBuyView
 		startButtons;
 		details! !
 
-!Monopoly methodsFor: 'windows' stamp: 'dhn 3/14/2020 17:57:50'!
+!Monopoly methodsFor: 'windows' stamp: 'dhn 3/15/2020 15:45:24'!
 showChance: anArray
 	"Tell the player about the Chance card"
 	| win |
@@ -1789,12 +1789,14 @@ showChance: anArray
 	win textPane model actualContents: anArray last.
 	win textPane color: Color lightOrange.
 	win
-		setWindowColor: Color lightOrange;
+		setWindowColor: win textPane color;
 		morphPosition: self windowPosition;
 		setButton;
-		morphExtent: 315 @ 215! !
+		morphExtent: 360 @ 170.
+	win buttonArea color: win textPane color
+! !
 
-!Monopoly methodsFor: 'windows' stamp: 'dhn 3/14/2020 18:00:10'!
+!Monopoly methodsFor: 'windows' stamp: 'dhn 3/15/2020 15:46:06'!
 showChest: anArray
 	"Tell the player about the Community Chest card"
 	| win |
@@ -1804,10 +1806,12 @@ showChest: anArray
 	win textPane model actualContents: anArray last.
 	win textPane color: Color lightYellow.
 	win
-		setWindowColor: Color lightYellow;
+		setWindowColor: win textPane color;
 		morphPosition: self windowPosition;
 		setButton;
-		morphExtent: 315 @ 215! !
+		morphExtent: 360 @ 170.
+	win buttonArea color: win textPane color
+! !
 
 !Monopoly methodsFor: 'windows' stamp: 'dhn 3/14/2020 12:25:38'!
 showGo
