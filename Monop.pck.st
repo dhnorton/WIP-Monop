@@ -1,6 +1,6 @@
-'From Cuis 5.0 [latest update: #4042] on 15 March 2020 at 3:51:21 pm'!
+'From Cuis 5.0 [latest update: #4042] on 16 March 2020 at 10:58:49 pm'!
 'Description Simulation of the board game "Monopoly".'!
-!provides: 'Monop' 1 105!
+!provides: 'Monop' 1 108!
 !requires: 'Game' 1 44 nil!
 SystemOrganization addCategory: #'Monop-View'!
 SystemOrganization addCategory: #'Monop-Model'!
@@ -24,6 +24,16 @@ Token subclass: #EstateToken
 	category: 'Monop-View'!
 !classDefinition: 'EstateToken class' category: #'Monop-View'!
 EstateToken class
+	instanceVariableNames: ''!
+
+!classDefinition: #AuctionButton category: #'Monop-View'!
+BidderButton subclass: #AuctionButton
+	instanceVariableNames: ''
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'Monop-View'!
+!classDefinition: 'AuctionButton class' category: #'Monop-View'!
+AuctionButton class
 	instanceVariableNames: ''!
 
 !classDefinition: #Monopoly category: #'Monop-View'!
@@ -68,7 +78,7 @@ MonopStats class
 
 !classDefinition: #Notifier category: #'Monop-View'!
 GameView subclass: #Notifier
-	instanceVariableNames: 'textPane buttonArea OkButton nextDo'
+	instanceVariableNames: 'textPanel buttonArea OkButton nextDo'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Monop-View'!
@@ -303,13 +313,16 @@ The model for the Monopoly board.!
 !EstateToken commentStamp: '<historical>' prior: 0!
 A token for a player in Monopoly.!
 
+!AuctionButton commentStamp: '<historical>' prior: 0!
+A button to enable players to offer bids, selecting bid increments from a pop-up menu.!
+
 !Monopoly commentStamp: '<historical>' prior: 0!
 Simulation of the Monopoly board game.
 
 Monopoly start.!
 
 !AuctionProperty commentStamp: '<historical>' prior: 0!
-A Monnopoly window which makes it possible for players to bid on property.!
+A Monopoly window which makes it possible for players to bid on property.!
 
 !BuyView commentStamp: '<historical>' prior: 0!
 A window where players must either buy or auction a property.!
@@ -560,6 +573,12 @@ drawChest
 			self perform: ches first with: (ches copyFrom: 2 to: 4).
 			self triggerEvent: #itemChange]! !
 
+!Estate methodsFor: 'operating' stamp: 'dhn 3/16/2020 13:43:58'!
+enable: aButton
+	"Enable the button named aButton"
+	
+	self enableAll: {aButton}! !
+
 !Estate methodsFor: 'operating' stamp: 'dhn 5/16/2019 18:38:59'!
 endTurn
 	"End a player's turn"
@@ -620,15 +639,11 @@ hammerDown: aBid for: aProperty by: aBidder
 	self triggerEvent: #itemChange
 ! !
 
-!Estate methodsFor: 'operating' stamp: 'dhn 3/2/2020 19:07:57'!
+!Estate methodsFor: 'operating' stamp: 'dhn 3/16/2020 12:50:37'!
 incomeTax
-	"Charge an amount based on the larger of 10% of assets or $200."
+	"Notify player of income tax"
 
-	GamePopUp 
-		inform: currentPlayer identity, ' has been assessed $200.' 
-		title: 'Income Tax'.
-	currentPlayer tally: -200.
-	self triggerEvent: #itemChange! !
+	self triggerEvent: #showIncomeTax! !
 
 !Estate methodsFor: 'operating' stamp: 'dhn 2/27/2020 19:55:57'!
 justVisit
@@ -642,15 +657,11 @@ justVisit
 			self disableAll: {'Move'}]."
 	self testRoutine.! !
 
-!Estate methodsFor: 'operating' stamp: 'dhn 3/2/2020 19:08:17'!
+!Estate methodsFor: 'operating' stamp: 'dhn 3/16/2020 12:51:00'!
 luxuryTax
 	"Charge a flat $75."
 
-	GamePopUp 
-		inform: currentPlayer identity, ' has been assessed $75.' 
-		title: 'Luxury Tax'.
-	currentPlayer tally: -75.
-	self triggerEvent: #itemChange! !
+	self triggerEvent: #showLuxuryTax! !
 
 !Estate methodsFor: 'operating' stamp: 'dhn 2/26/2020 20:20:44'!
 move
@@ -852,6 +863,13 @@ seasonsFrom: anIndex
 	(k copyFrom: 1 to: self class cellsForGame) do: [ :n |
 		col addLast: (self class season at: n)].	
 	^ col! !
+
+!Estate methodsFor: 'operating' stamp: 'dhn 3/16/2020 13:33:19'!
+tax: anAmount
+	"Take money for tax"
+	
+	currentPlayer tally: anAmount.
+	self triggerEvent: #itemChange! !
 
 !Estate methodsFor: 'operating' stamp: 'dhn 5/15/2019 13:48:21'!
 testMode
@@ -1209,7 +1227,7 @@ posAdjust
 	
 	^ (model world morphExtent x * 0.015) @ (model world morphExtent y * 8 / 10)! !
 
-!EstateToken methodsFor: 'operations' stamp: 'dhn 3/5/2020 14:47:36'!
+!EstateToken methodsFor: 'operations' stamp: 'dhn 3/16/2020 22:51:39'!
 moved
 	"Perform the results of the move"
 	
@@ -1217,7 +1235,7 @@ moved
 	moving ifFalse: [
 		self flag: #dhn.  "The following must be either done conditionally or done elsewhere"
 			"what about after the inform OK button is pressed?"
-		model enableAll: {'End Turn'}]! !
+		"model enableAll: {'End Turn'}"]! !
 
 !EstateToken methodsFor: 'operations' stamp: 'dhn 5/16/2019 16:28:16'!
 position: aCell
@@ -1307,6 +1325,16 @@ moving: anObject
 	"Set the value of moving"
 
 	moving _ anObject! !
+
+!AuctionButton methodsFor: 'event handling' stamp: 'dhn 3/16/2020 12:06:09'!
+mouseButton2Down: event localPosition: point 
+	"Bring up the bid increment menu"
+	| x |
+
+	x _ (PopUpMenu labelArray: model bidIncrementList) startUpWithCaption: 'Bid Increment'.
+	{x}print.
+	"model propertyAuctionBid: (model class bidBump at: x)"
+! !
 
 !Monopoly methodsFor: 'accessing' stamp: 'dhn 5/15/2019 12:43:43'!
 describe
@@ -1473,7 +1501,7 @@ tourAt: anInterval
 	self startSteppingStepTime: anInterval. 	"time of each increment of the hop"
 ! !
 
-!Monopoly methodsFor: 'initialization' stamp: 'dhn 3/14/2020 20:44:08'!
+!Monopoly methodsFor: 'initialization' stamp: 'dhn 3/16/2020 12:45:42'!
 buildMorphicWindow
 
 	pasteup _ GamePasteUp new
@@ -1496,6 +1524,8 @@ buildMorphicWindow
 	model when: #showGo send: #showGo to: self.
 	model when: #showChance: send: #showChance: to: self with: #array.
 	model when: #showChest: send: #showChest: to: self with: #array.
+	model when: #showIncomeTax send: #showIncomeTax to: self.
+	model when: #showLuxuryTax send: #showLuxuryTax to: self.
 	"when:send:to:"
 	"when:send:to:with:"
 	"when:send:to:withArguments:"
@@ -1779,53 +1809,91 @@ showBuyView
 		startButtons;
 		details! !
 
-!Monopoly methodsFor: 'windows' stamp: 'dhn 3/15/2020 15:45:24'!
+!Monopoly methodsFor: 'windows' stamp: 'dhn 3/16/2020 21:47:10'!
 showChance: anArray
 	"Tell the player about the Chance card"
 	| win |
 		
 	win _ Notifier open: model label: 'Chance'.
 	win openInWorld: pasteup.
-	win textPane model actualContents: anArray last.
-	win textPane color: Color lightOrange.
+	win textPanel model actualContents: anArray last.
+	win textPanel color: Color lightOrange.
 	win
-		setWindowColor: win textPane color;
+		setWindowColor: win textPanel color;
 		morphPosition: self windowPosition;
 		setButton;
 		morphExtent: 360 @ 170.
-	win buttonArea color: win textPane color
+	win buttonArea color: win textPanel color
 ! !
 
-!Monopoly methodsFor: 'windows' stamp: 'dhn 3/15/2020 15:46:06'!
+!Monopoly methodsFor: 'windows' stamp: 'dhn 3/16/2020 21:46:40'!
 showChest: anArray
 	"Tell the player about the Community Chest card"
 	| win |
 		
 	win _ Notifier open: model label: 'Community Chest'.
 	win openInWorld: pasteup.
-	win textPane model actualContents: anArray last.
-	win textPane color: Color lightYellow.
+	win textPanel model actualContents: anArray last.
+	win textPanel color: Color lightYellow.
 	win
-		setWindowColor: win textPane color;
+		setWindowColor: win textPanel color;
 		morphPosition: self windowPosition;
 		setButton;
 		morphExtent: 360 @ 170.
-	win buttonArea color: win textPane color
+	win buttonArea color: win textPanel color
 ! !
 
-!Monopoly methodsFor: 'windows' stamp: 'dhn 3/14/2020 12:25:38'!
+!Monopoly methodsFor: 'windows' stamp: 'dhn 3/16/2020 21:45:56'!
 showGo
 	"Tell the player about his salary"
 	| win |
 		
 	win _ Notifier open: model label: 'Passed GO'.
 	win openInWorld: pasteup.
-	win textPane model actualContents: model note.
+	win textPanel model actualContents: model note.
 	win
 		setWindowColor: Color lightYellow;
 		morphPosition: self windowPosition;
 		setButton;
 		morphExtent: 315 @ 215! !
+
+!Monopoly methodsFor: 'windows' stamp: 'dhn 3/16/2020 21:48:53'!
+showIncomeTax
+	"Tell the player about his income tax"
+	| win |
+		
+	win _ Notifier open: model label: 'Income Tax'.
+	win openInWorld: pasteup.
+	win textPanel model actualContents: 'You will pay income tax in the amount of the larger of 10% of assets or $200.'.
+	win textPanel color: Color lightRed.
+	win nextDo addFirst: #(#enable: 'End Turn').
+	win nextDo addFirst: #(#tax: -200).
+	win
+		setWindowColor: win textPanel color;
+		morphPosition: self windowPosition;
+		setButton;
+		morphExtent: 315 @ 215.
+	win buttonArea color: win textPanel color
+! !
+
+!Monopoly methodsFor: 'windows' stamp: 'dhn 3/16/2020 21:49:32'!
+showLuxuryTax
+	"Tell the player about his luxury tax"
+	| win |
+		
+	win _ Notifier open: model label: 'Luxury Tax'.
+	win openInWorld: pasteup.
+	win textPanel model actualContents: 'You will pay $75 luxury tax.'.
+	win textPanel color: Color lightRed.
+	win nextDo addFirst: #(#enable: 'End Turn').
+	win nextDo addFirst: #(#tax: -75).
+	win
+		setWindowColor: win textPanel color;
+		morphPosition: self windowPosition;
+		setButton;
+		morphExtent: 315 @ 215.
+	win buttonArea color: win textPanel color
+! !
 
 !Monopoly methodsFor: 'windows' stamp: 'dhn 3/13/2020 12:43:30'!
 showPropertyAuction
@@ -1991,6 +2059,12 @@ buildMorphicWindow
 		addMorph: self setUpMidRow;
 		addMorph: (buyers _ self setUpBuyers)! !
 
+!AuctionProperty methodsFor: 'initialization' stamp: 'dhn 3/15/2020 20:19:28'!
+initialize
+
+	super initialize.
+! !
+
 !AuctionProperty methodsFor: 'initialization' stamp: 'dhn 3/3/2020 22:03:41'!
 setUpMidRow
 	"Answer the layout for the middle row of the property auction window"
@@ -2053,16 +2127,17 @@ setUpMidRow
 
 ! !
 
-!AuctionProperty methodsFor: 'buttons' stamp: 'dhn 3/3/2020 21:04:45'!
+!AuctionProperty methodsFor: 'buttons' stamp: 'dhn 3/15/2020 21:05:04'!
 buyerButtons
 	"Set bidding buttons for players."
 	| col |
 	
 	col _ OrderedCollection new.
 	model players do: [:ea |
-		col add: ((BidderButton label: ea identity action: #offer: state: true model: self)
+		col add: ((AuctionButton label: ea identity action: #offer: state: true model: model)
 			morphExtent: 70@30;
 			color: ea color;
+			setProperty: #'handlesMouseDown:' toValue: true;
 			setBalloonText: 'bidder')].
 	buyers addAllMorphs: col reversed! !
 
@@ -2351,17 +2426,25 @@ buildMorphicWindow
 		addMorph: listPane layoutSpec: (LayoutSpec fixedWidth: 250);
 		addAdjusterAndMorph: textPane layoutSpec: (LayoutSpec useAll)! !
 
-!Notifier methodsFor: 'initialization' stamp: 'dhn 3/14/2020 21:22:51'!
+!Notifier methodsFor: 'operating' stamp: 'dhn 3/16/2020 13:35:52'!
+finish
+	"Perform methods in reponse to the OK button"
+	
+	self nextDo do: [:ea |
+		model perform: ea first with: ea second].
+	self endIt! !
+
+!Notifier methodsFor: 'initialization' stamp: 'dhn 3/16/2020 21:54:01'!
 buildMorphicWindow
 	"Lay out the window for purchases"
 	
 	self layoutMorph beColumn.
 
-	textPane _ (TextModelMorph
+	textPanel _ (TextModelMorph
 		withModel: (TextModel withText: '')) 	"note the different model specification"
 			askBeforeDiscardingEdits: false;	"discard changes to the text"
 			name: 'property data'. 	"give the TextModelMorph a name which will appear in the halos"
-	textPane 
+	textPanel 
 		layoutSpec: (LayoutSpec 
 			proportionalWidth: 1.0
 			proportionalHeight: 0.7
@@ -2377,17 +2460,17 @@ buildMorphicWindow
 		padding: #center.
 	
 	self layoutMorph
-		addMorph: textPane;
+		addMorph: textPanel;
 		addMorph: buttonArea.
 		
 	model when: #deleteOpenWindows send: #endIt to: self.
 ! !
 
-!Notifier methodsFor: 'initialization' stamp: 'dhn 3/14/2020 14:23:51'!
+!Notifier methodsFor: 'initialization' stamp: 'dhn 3/16/2020 22:13:55'!
 setButton
 	"Set the button for acknowledging note"
 	
-	OkButton _ GameButtonMorph label: 'OK' action: self nextDo state: true model: self.
+	OkButton _ GameButtonMorph label: 'OK' action: #finish state: true model: self.
 	OkButton 
 		morphExtent: 50@30;
 		setBalloonText: 'Acknowledge the note.'.
@@ -2421,11 +2504,11 @@ buttonArea: anObject
 
 	buttonArea _ anObject! !
 
-!Notifier methodsFor: 'accessing' stamp: 'dhn 3/14/2020 14:22:56'!
+!Notifier methodsFor: 'accessing' stamp: 'dhn 3/16/2020 13:12:24'!
 nextDo
 	"Answer the value of nextDo"
 
-	^ nextDo ifNil: [#endIt] ifNotNil: [nextDo asSymbol]! !
+	^ nextDo ifNil: [nextDo _ OrderedCollection new]! !
 
 !Notifier methodsFor: 'accessing' stamp: 'dhn 3/14/2020 14:20:28'!
 nextDo: anObject
@@ -2433,17 +2516,17 @@ nextDo: anObject
 
 	nextDo _ anObject! !
 
-!Notifier methodsFor: 'accessing' stamp: 'dhn 3/13/2020 21:11:02'!
-textPane
-	"Answer the value of textPane"
+!Notifier methodsFor: 'accessing' stamp: 'dhn 3/16/2020 21:44:26'!
+textPanel
+	"Answer the value of textPanel"
 
-	^ textPane! !
+	^ textPanel! !
 
-!Notifier methodsFor: 'accessing' stamp: 'dhn 3/13/2020 21:11:02'!
-textPane: anObject
-	"Set the value of textPane"
+!Notifier methodsFor: 'accessing' stamp: 'dhn 3/16/2020 21:44:26'!
+textPanel: anObject
+	"Set the value of textPanel"
 
-	textPane _ anObject! !
+	textPanel _ anObject! !
 
 !Notifier methodsFor: 'termination' stamp: 'dhn 3/14/2020 12:19:29'!
 closeBoxHit
