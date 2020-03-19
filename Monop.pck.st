@@ -1,6 +1,6 @@
-'From Cuis 5.0 [latest update: #4042] on 19 March 2020 at 3:42:06 pm'!
+'From Cuis 5.0 [latest update: #4042] on 19 March 2020 at 3:51:15 pm'!
 'Description Simulation of the board game "Monopoly".'!
-!provides: 'Monop' 1 111!
+!provides: 'Monop' 1 112!
 !requires: 'Game' 1 44 nil!
 SystemOrganization addCategory: #'Monop-View'!
 SystemOrganization addCategory: #'Monop-Model'!
@@ -1823,20 +1823,18 @@ makeShowStatsButton
 		layoutSpec: self class buttonLayoutSpec;
 		setBalloonText: 'Lots of information here'! !
 
-!Monopoly methodsFor: 'initialization' stamp: 'dhn 5/16/2019 15:49:38'!
+!Monopoly methodsFor: 'initialization' stamp: 'dhn 3/19/2020 15:46:46'!
 playButtonSet
 	"Answer the buttons used to play the game"
 
 	buttonArea 
 		removeAllMorphs;
+		addMorph: (model moveButton: self makeMoveButton);
+		addMorph: self makeEndTurnButton;
 		addMorph: self makeShowStatsButton;
 		addMorph: self makeAuctionButton;
 		addMorph: self makePurchasesButton;
-		addMorph: self makeHistoryButton;
-		addMorph: self makeEndTurnButton;
-		addMorph: (model moveButton: self makeMoveButton);
-		addMorph: self makeQuitGameButton.
-! !
+		addMorph: self makeHistoryButton! !
 
 !Monopoly methodsFor: 'initialization' stamp: 'dhn 5/16/2019 20:41:52'!
 setupToken: aPlayer
