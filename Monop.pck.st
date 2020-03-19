@@ -1,6 +1,6 @@
-'From Cuis 5.0 [latest update: #4042] on 16 March 2020 at 10:58:49 pm'!
+'From Cuis 5.0 [latest update: #4042] on 18 March 2020 at 9:57:47 pm'!
 'Description Simulation of the board game "Monopoly".'!
-!provides: 'Monop' 1 108!
+!provides: 'Monop' 1 110!
 !requires: 'Game' 1 44 nil!
 SystemOrganization addCategory: #'Monop-View'!
 SystemOrganization addCategory: #'Monop-Model'!
@@ -78,7 +78,7 @@ MonopStats class
 
 !classDefinition: #Notifier category: #'Monop-View'!
 GameView subclass: #Notifier
-	instanceVariableNames: 'textPanel buttonArea OkButton nextDo'
+	instanceVariableNames: 'textPanel buttonArea okButton okCount nextDo'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Monop-View'!
@@ -286,16 +286,6 @@ Card subclass: #Move
 Move class
 	instanceVariableNames: ''!
 
-!classDefinition: #Pay category: #'Monop-Model'!
-Card subclass: #Pay
-	instanceVariableNames: ''
-	classVariableNames: ''
-	poolDictionaries: ''
-	category: 'Monop-Model'!
-!classDefinition: 'Pay class' category: #'Monop-Model'!
-Pay class
-	instanceVariableNames: ''!
-
 !classDefinition: #Repair category: #'Monop-Model'!
 Card subclass: #Repair
 	instanceVariableNames: ''
@@ -380,9 +370,6 @@ A "Get out of Jail Free" card.!
 
 !Move commentStamp: '<historical>' prior: 0!
 A card which demands that the player move.!
-
-!Pay commentStamp: '<historical>' prior: 0!
-A card that specifies a payment by the player.!
 
 !Repair commentStamp: '<historical>' prior: 0!
 A card that demands repairs on owned properties.!
@@ -543,7 +530,7 @@ doSpace
 			currentPlayer passedGo: false ].
 	^ self perform: (spaces atWrap: self currentPlayer position) routine! !
 
-!Estate methodsFor: 'operating' stamp: 'dhn 3/14/2020 20:18:39'!
+!Estate methodsFor: 'operating' stamp: 'dhn 3/17/2020 12:11:24'!
 drawChance
 	"Draw a Chance card"
 	| chan |
@@ -554,11 +541,9 @@ drawChance
 			chances second removeFirst.
 			currentPlayer cards: {#chances. chan}.
 			self triggerEvent: #showChance: with: chan] 
-		ifFalse: [
-			self perform: chan first with: (chan copyFrom: 2 to: 4).
-			self triggerEvent: #itemChange]! !
+		ifFalse: [self triggerEvent: #showChance: with: chan]! !
 
-!Estate methodsFor: 'operating' stamp: 'dhn 3/14/2020 20:19:34'!
+!Estate methodsFor: 'operating' stamp: 'dhn 3/17/2020 21:18:58'!
 drawChest
 	"Draw a Community Chest card"
 	| ches |
@@ -569,9 +554,7 @@ drawChest
 			chests second removeFirst.
 			currentPlayer cards: {#chests. ches}.
 			self triggerEvent: #showChest: with: ches] 
-		ifFalse: [
-			self perform: ches first with: (ches copyFrom: 2 to: 4).
-			self triggerEvent: #itemChange]! !
+		ifFalse: [self triggerEvent: #showChest: with: ches]! !
 
 !Estate methodsFor: 'operating' stamp: 'dhn 3/16/2020 13:43:58'!
 enable: aButton
@@ -615,6 +598,17 @@ exceptCurrent: anAmount
 	currentPlayer tally: ttl negated
 ! !
 
+!Estate methodsFor: 'operating' stamp: 'dhn 3/18/2020 21:47:27'!
+fromEach: anAmount
+	"Collect anAmount from each other player."
+
+	players do: [ :p |
+		p ~= currentPlayer
+			ifTrue: [ 
+				p tally: anAmount.
+				currentPlayer tally: anAmount negated]].
+	self triggerEvent: #itemChange! !
+
 !Estate methodsFor: 'operating' stamp: 'dhn 2/25/2020 14:58:42'!
 getOut: anObject! !
 
@@ -657,6 +651,42 @@ justVisit
 			self disableAll: {'Move'}]."
 	self testRoutine.! !
 
+!Estate methodsFor: 'operating' stamp: 'dhn 3/17/2020 19:06:35'!
+level11: anArray
+	"Cases for Chance and Community Chest"
+	| switch |
+	
+	switch _ Dictionary new
+		at: #fromEach put: [{#fromEach:. anArray third}];
+		at: #toEach put: [{#toEach:. anArray third}];
+		yourself.
+	^ (switch at: anArray second
+		ifAbsent:[{#tally:. anArray third negated}]) value! !
+
+!Estate methodsFor: 'operating' stamp: 'dhn 3/18/2020 21:15:51'!
+level123: anArray
+	"Cases for Chance and Community Chest"
+	| switch |
+	
+	switch _ Dictionary new
+		at: #railroad put: [{#toRailroad:. anArray third}];
+		at: #utility put: [{#toUtility:. anArray third}];
+		yourself.
+	^ (switch at: anArray third
+		ifAbsent:[{#moveAheadTo:. anArray third}]) value! !
+
+!Estate methodsFor: 'operating' stamp: 'dhn 3/17/2020 21:11:24'!
+level12: anArray
+	"Cases for Chance and Community Chest"
+	| switch |
+	
+	switch _ Dictionary new
+		at: #ahead put: [self level123: anArray];
+		at: #back put: [{#moveBackTo:. anArray third}];
+		at: #relative: put: [{#relative:. anArray third}];
+		yourself.
+	^ (switch at: anArray second) value! !
+
 !Estate methodsFor: 'operating' stamp: 'dhn 3/16/2020 12:51:00'!
 luxuryTax
 	"Charge a flat $75."
@@ -690,6 +720,20 @@ move
 
 			die1 show: die1 class faces shuffled.
 			"die2 show: die2 class faces shuffled."].! !
+
+!Estate methodsFor: 'operating' stamp: 'dhn 3/17/2020 20:51:31'!
+moveAheadTo: aSpace
+	"Slide player right to aSpace"
+	
+	token slideRight: currentPlayer position to: aSpace! !
+
+!Estate methodsFor: 'operating' stamp: 'dhn 3/17/2020 21:10:34'!
+moveBackTo: aSpace
+	"Slide player left to aSpace"
+	
+	token slideLeft: currentPlayer position to: aSpace.
+	aSpace = 11
+		ifTrue: ["currentPlayer jail: true with: 0."]! !
 
 !Estate methodsFor: 'operating' stamp: 'dhn 3/2/2020 20:29:38'!
 moveMoney: anArray
@@ -778,11 +822,11 @@ numbersReport
 			nextPutAll: 'Cash: $';
 			nextPutAll: currentPlayer cash truncated printStringWithCommas]! !
 
-!Estate methodsFor: 'operating' stamp: 'dhn 3/2/2020 19:08:33'!
+!Estate methodsFor: 'operating' stamp: 'dhn 3/18/2020 20:28:01'!
 parkFree
 	"Cool it."
 
-! !
+	self enableAll: {'End Turn'}! !
 
 !Estate methodsFor: 'operating' stamp: 'dhn 5/16/2019 15:21:32'!
 positionBoardTo: anIndex 
@@ -864,6 +908,27 @@ seasonsFrom: anIndex
 		col addLast: (self class season at: n)].	
 	^ col! !
 
+!Estate methodsFor: 'operating' stamp: 'dhn 3/18/2020 21:09:35'!
+setNext: anArray
+	"Cases for Chance and Community Chest"
+	| level1 result |
+	
+	level1 _ Dictionary new
+		at: #moveMoney: put: [self level11: anArray];
+		at: #movePlayer: put: [self level12: anArray];
+		at: #getOut: put: [#(#enable: 'End Turn')];  "redundant, for lack of better"
+		at: #repair: put: [{#repair:. anArray second}];
+		yourself.
+	result _ OrderedCollection with: #(#enable: 'End Turn').
+	^ result addFirst: (level1 at: anArray first) value; yourself! !
+
+!Estate methodsFor: 'operating' stamp: 'dhn 3/18/2020 21:24:37'!
+tally: anAmount
+	"Move cash per specs in anArray."
+	
+	currentPlayer tally: anAmount.
+	self triggerEvent: #itemChange! !
+
 !Estate methodsFor: 'operating' stamp: 'dhn 3/16/2020 13:33:19'!
 tax: anAmount
 	"Take money for tax"
@@ -896,14 +961,31 @@ testRoutine
 	Transcript show: what; newLine.
 	self enableAll: {'End Turn'}.! !
 
-!Estate methodsFor: 'operating' stamp: 'dhn 2/28/2020 18:25:38'!
-trainTrip
-	"Ride or purchase."
-	"If unowned, the 'owner' is the bank and the RR will be sold or auctioned."
-	"If owned, the ticket price will be charged based on the number of RRs owned."
+!Estate methodsFor: 'operating' stamp: 'dhn 3/18/2020 21:46:57'!
+toEach: anAmount
+	"Pay anAmount to each other player."
+
+	players do: [ :p |
+		p ~= currentPlayer
+			ifTrue: [ 
+				p tally: anAmount.
+				currentPlayer tally: anAmount negated]].
+	self triggerEvent: #itemChange! !
+
+!Estate methodsFor: 'operating' stamp: 'dhn 3/18/2020 21:14:36'!
+toRailroad: unused
+	"Slide player right to the nearest RR with factor 2"
 	
-	self broker.
-	self testReport! !
+	(spaces at: self nearestRailroad) factor: 2.
+	token slideRight: currentPlayer position to: self nearestRailroad
+! !
+
+!Estate methodsFor: 'operating' stamp: 'dhn 3/18/2020 21:16:27'!
+toUtility: unused
+	"Slide player right to the nearest utility"
+	
+	token slideRight: currentPlayer position to: self nearestUtility
+! !
 
 !Estate methodsFor: 'operating' stamp: 'dhn 2/28/2020 18:25:49'!
 utilityBill
@@ -1809,7 +1891,7 @@ showBuyView
 		startButtons;
 		details! !
 
-!Monopoly methodsFor: 'windows' stamp: 'dhn 3/16/2020 21:47:10'!
+!Monopoly methodsFor: 'windows' stamp: 'dhn 3/18/2020 12:54:15'!
 showChance: anArray
 	"Tell the player about the Chance card"
 	| win |
@@ -1818,6 +1900,7 @@ showChance: anArray
 	win openInWorld: pasteup.
 	win textPanel model actualContents: anArray last.
 	win textPanel color: Color lightOrange.
+	(model setNext: anArray) do: [:ea | win nextDo add: ea].
 	win
 		setWindowColor: win textPanel color;
 		morphPosition: self windowPosition;
@@ -1826,7 +1909,7 @@ showChance: anArray
 	win buttonArea color: win textPanel color
 ! !
 
-!Monopoly methodsFor: 'windows' stamp: 'dhn 3/16/2020 21:46:40'!
+!Monopoly methodsFor: 'windows' stamp: 'dhn 3/18/2020 21:29:48'!
 showChest: anArray
 	"Tell the player about the Community Chest card"
 	| win |
@@ -1835,6 +1918,7 @@ showChest: anArray
 	win openInWorld: pasteup.
 	win textPanel model actualContents: anArray last.
 	win textPanel color: Color lightYellow.
+	(model setNext: anArray) do: [:ea | win nextDo add: ea].
 	win
 		setWindowColor: win textPanel color;
 		morphPosition: self windowPosition;
@@ -1940,44 +2024,6 @@ windowPosition
 	"Answer the position for a window"
 	
 	^ self morphPosition + (model windowPosition: self class viewPositionLeft)! !
-
-!Monopoly class methodsFor: 'as yet unclassified' stamp: 'dhn 5/14/2019 16:07:11'!
-setPrices
-	"Establish initial values for class variable Prices."
-	| arr |
-	
-	arr := Array new: 40.
-	arr
-        at: 01 put: 60;
-        at: 03 put: 60;
-        at: 05 put: 200;
-        at: 15 put: 200;
-        at: 25 put: 200;
-        at: 35 put: 200;
-        at: 06 put: 100;
-        at: 08 put: 100;
-        at: 09 put: 120;
-        at: 11 put: 140;
-        at: 13 put: 140;
-        at: 14 put: 160;
-        at: 12 put: 150;
-        at: 28 put: 150;
-        at: 16 put: 180;
-        at: 18 put: 180;
-        at: 19 put: 200;
-        at: 21 put: 220;
-        at: 23 put: 220;
-        at: 24 put: 240;
-        at: 26 put: 260;
-        at: 27 put: 260;
-        at: 29 put: 280;
-        at: 31 put: 300;
-        at: 32 put: 300;
-        at: 34 put: 320;
-        at: 37 put: 350;
-        at: 39 put: 400.
-	Prices _ arr asOrderedCollection
-! !
 
 !Monopoly class methodsFor: 'instance creation' stamp: 'dhn 5/15/2019 12:29:04'!
 buttonLayoutSpec
@@ -2279,12 +2325,15 @@ auction
 	buyButton disableButton.
 	model propertyAuction! !
 
-!BuyView methodsFor: 'operating' stamp: 'dhn 3/4/2020 21:39:24'!
+!BuyView methodsFor: 'operating' stamp: 'dhn 3/18/2020 20:33:52'!
 buy
-
+	"cobbled to aid debugging"
+	
 	buyButton disableButton.
 	auctionButton disableButton.
-	model propertyBuy! !
+	"model propertyBuy"
+	model enableAll: {'End Turn'}.
+	self delete! !
 
 !BuyView methodsFor: 'operating' stamp: 'dhn 3/4/2020 21:53:43'!
 startButtons
@@ -2426,13 +2475,21 @@ buildMorphicWindow
 		addMorph: listPane layoutSpec: (LayoutSpec fixedWidth: 250);
 		addAdjusterAndMorph: textPane layoutSpec: (LayoutSpec useAll)! !
 
-!Notifier methodsFor: 'operating' stamp: 'dhn 3/16/2020 13:35:52'!
+!Notifier methodsFor: 'operating' stamp: 'dhn 3/18/2020 20:44:26'!
 finish
 	"Perform methods in reponse to the OK button"
-	
-	self nextDo do: [:ea |
-		model perform: ea first with: ea second].
-	self endIt! !
+
+	self okCount < 1
+		ifTrue: [
+			okButton disableButton.
+			okCount _ okCount + 1.
+			self nextDo do: [:ea |
+				model perform: ea first with: ea second].
+			self triggerEvent: #itemChange.
+			okButton
+				oldTarget: #endIt;
+				enableButton]
+		ifFalse: [okButton disableButton]! !
 
 !Notifier methodsFor: 'initialization' stamp: 'dhn 3/16/2020 21:54:01'!
 buildMorphicWindow
@@ -2466,31 +2523,19 @@ buildMorphicWindow
 	model when: #deleteOpenWindows send: #endIt to: self.
 ! !
 
-!Notifier methodsFor: 'initialization' stamp: 'dhn 3/16/2020 22:13:55'!
+!Notifier methodsFor: 'initialization' stamp: 'dhn 3/18/2020 12:46:10'!
 setButton
 	"Set the button for acknowledging note"
 	
-	OkButton _ GameButtonMorph label: 'OK' action: #finish state: true model: self.
-	OkButton 
+	okButton _ GameButtonMorph label: 'OK' action: #finish state: true model: self.
+	okButton 
 		morphExtent: 50@30;
 		setBalloonText: 'Acknowledge the note.'.
 
 	buttonArea
-		addMorph: OkButton;
+		addMorph: okButton;
 		padding: #center
 ! !
-
-!Notifier methodsFor: 'accessing' stamp: 'dhn 3/14/2020 12:17:33'!
-OkButton
-	"Answer the value of OkButton"
-
-	^ OkButton! !
-
-!Notifier methodsFor: 'accessing' stamp: 'dhn 3/14/2020 12:17:33'!
-OkButton: anObject
-	"Set the value of OkButton"
-
-	OkButton _ anObject! !
 
 !Notifier methodsFor: 'accessing' stamp: 'dhn 3/13/2020 21:11:02'!
 buttonArea
@@ -2515,6 +2560,30 @@ nextDo: anObject
 	"Set the value of nextDo"
 
 	nextDo _ anObject! !
+
+!Notifier methodsFor: 'accessing' stamp: 'dhn 3/18/2020 12:34:55'!
+okButton
+	"Answer the value of okButton"
+
+	^ okButton! !
+
+!Notifier methodsFor: 'accessing' stamp: 'dhn 3/18/2020 12:34:55'!
+okButton: anObject
+	"Set the value of okButton"
+
+	okButton _ anObject! !
+
+!Notifier methodsFor: 'accessing' stamp: 'dhn 3/18/2020 12:33:22'!
+okCount
+	"Answer the value of okCount"
+
+	^ okCount ifNil: [okCount _ 0]! !
+
+!Notifier methodsFor: 'accessing' stamp: 'dhn 3/18/2020 12:31:57'!
+okCount: anObject
+	"Set the value of okCount"
+
+	okCount _ anObject! !
 
 !Notifier methodsFor: 'accessing' stamp: 'dhn 3/16/2020 21:44:26'!
 textPanel
@@ -3579,64 +3648,6 @@ with: aMethod for: aString
 
 !Move class methodsFor: 'as yet unclassified'!
 with: aMethod to: anInteger for: aString
-        "Answer an instance of the class."
-    ^super new
-        method: aMethod;
-        amount: anInteger;
-        fortune: aString.! !
-
-!Pay methodsFor: 'as yet unclassified' stamp: 'dhn 5/14/2019 12:50:59'!
-fromEach: aPlayer
-	"Collect an amount from each other player."
-	| total |
-	
-	self salary: aPlayer.
-	total := 0.
-	self square board players do: [ :p |
-		p ~= aPlayer
-			ifTrue: [ 
-				p assess: self amount.
-				aPlayer cash: aPlayer cash + self amount.
-				total := total + self amount ]].
-	GamePopUp 
-		inform: self fortune, ' ', aPlayer name, ' receives $', total printString, '.' 
-		title: self square title! !
-
-!Pay methodsFor: 'as yet unclassified'!
-result: aPlayer
-        "Effect the result of aPlayer drawing this card."
-    method isNil
-        ifTrue: [ super result: aPlayer.
-            aPlayer assess: self amount ]
-        ifFalse: [self perform: method with: aPlayer].
-    aPlayer special: false.! !
-
-!Pay methodsFor: 'as yet unclassified' stamp: 'dhn 5/14/2019 12:59:08'!
-toEach: aPlayer
-	"Pay an amount to each other player."
-	| total |
-	
-	self salary: aPlayer.
-	total := 0.
-	self square board players do: [ :p |
-		p ~= aPlayer
-			ifTrue: [
-				aPlayer assess: self amount.
-				p cash: p cash + self amount.
-				total := total + self amount ]].
-	GamePopUp 
-		inform: self fortune, ' ', aPlayer name, ' is out $', total printString, '.' 
-		title: self square title! !
-
-!Pay class methodsFor: 'as yet unclassified'!
-of: anInteger for: aString
-        "Answer an instance of the class."
-    ^super new
-        amount: anInteger;
-        fortune: aString.! !
-
-!Pay class methodsFor: 'as yet unclassified'!
-with: aMethod of: anInteger for: aString
         "Answer an instance of the class."
     ^super new
         method: aMethod;
