@@ -1,6 +1,6 @@
-'From Cuis 5.0 [latest update: #4042] on 18 March 2020 at 9:57:47 pm'!
+'From Cuis 5.0 [latest update: #4042] on 19 March 2020 at 3:42:06 pm'!
 'Description Simulation of the board game "Monopoly".'!
-!provides: 'Monop' 1 110!
+!provides: 'Monop' 1 111!
 !requires: 'Game' 1 44 nil!
 SystemOrganization addCategory: #'Monop-View'!
 SystemOrganization addCategory: #'Monop-Model'!
@@ -870,6 +870,12 @@ propertyBuy
 	lot owner: currentPlayer.
 	self triggerEvent: #itemChange
 ! !
+
+!Estate methodsFor: 'operating' stamp: 'dhn 3/19/2020 15:37:24'!
+relative: anAmount
+	"Slide the player back by anAmount"
+
+	token slideLeft: currentPlayer position to: currentPlayer position + anAmount! !
 
 !Estate methodsFor: 'operating' stamp: 'dhn 3/2/2020 20:31:46'!
 repair: anObject
@@ -1891,7 +1897,7 @@ showBuyView
 		startButtons;
 		details! !
 
-!Monopoly methodsFor: 'windows' stamp: 'dhn 3/18/2020 12:54:15'!
+!Monopoly methodsFor: 'windows' stamp: 'dhn 3/19/2020 13:49:12'!
 showChance: anArray
 	"Tell the player about the Chance card"
 	| win |
@@ -1900,7 +1906,7 @@ showChance: anArray
 	win openInWorld: pasteup.
 	win textPanel model actualContents: anArray last.
 	win textPanel color: Color lightOrange.
-	(model setNext: anArray) do: [:ea | win nextDo add: ea].
+	win nextDo: (model setNext: anArray).
 	win
 		setWindowColor: win textPanel color;
 		morphPosition: self windowPosition;
@@ -1909,7 +1915,7 @@ showChance: anArray
 	win buttonArea color: win textPanel color
 ! !
 
-!Monopoly methodsFor: 'windows' stamp: 'dhn 3/18/2020 21:29:48'!
+!Monopoly methodsFor: 'windows' stamp: 'dhn 3/19/2020 13:49:29'!
 showChest: anArray
 	"Tell the player about the Community Chest card"
 	| win |
@@ -1918,7 +1924,7 @@ showChest: anArray
 	win openInWorld: pasteup.
 	win textPanel model actualContents: anArray last.
 	win textPanel color: Color lightYellow.
-	(model setNext: anArray) do: [:ea | win nextDo add: ea].
+	win nextDo: (model setNext: anArray).
 	win
 		setWindowColor: win textPanel color;
 		morphPosition: self windowPosition;
