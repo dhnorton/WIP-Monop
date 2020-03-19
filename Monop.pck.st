@@ -1,6 +1,6 @@
-'From Cuis 5.0 [latest update: #4042] on 19 March 2020 at 3:51:15 pm'!
+'From Cuis 5.0 [latest update: #4042] on 19 March 2020 at 4:05:14 pm'!
 'Description Simulation of the board game "Monopoly".'!
-!provides: 'Monop' 1 112!
+!provides: 'Monop' 1 113!
 !requires: 'Game' 1 44 nil!
 SystemOrganization addCategory: #'Monop-View'!
 SystemOrganization addCategory: #'Monop-Model'!
@@ -813,6 +813,10 @@ nextPlayer
 	x _ (FillInTheBlankMorph request: 'How many spaces' initialAnswer: '6' onCancel: ['0']) asNumber.
 	self hardRoll: ((1 to: 6) asArray atWrap: x)]! !
 
+!Estate methodsFor: 'operating' stamp: 'dhn 3/19/2020 15:56:32'!
+null: unused
+	"A method that does nothing, with a single parameter"! !
+
 !Estate methodsFor: 'operating' stamp: 'dhn 5/16/2019 16:03:47'!
 numbersReport
 	"Answer the string for displaying a player's status"
@@ -914,7 +918,7 @@ seasonsFrom: anIndex
 		col addLast: (self class season at: n)].	
 	^ col! !
 
-!Estate methodsFor: 'operating' stamp: 'dhn 3/18/2020 21:09:35'!
+!Estate methodsFor: 'operating' stamp: 'dhn 3/19/2020 15:58:05'!
 setNext: anArray
 	"Cases for Chance and Community Chest"
 	| level1 result |
@@ -922,7 +926,7 @@ setNext: anArray
 	level1 _ Dictionary new
 		at: #moveMoney: put: [self level11: anArray];
 		at: #movePlayer: put: [self level12: anArray];
-		at: #getOut: put: [#(#enable: 'End Turn')];  "redundant, for lack of better"
+		at: #getOut: put: [#(#null: nil)];
 		at: #repair: put: [{#repair:. anArray second}];
 		yourself.
 	result _ OrderedCollection with: #(#enable: 'End Turn').
