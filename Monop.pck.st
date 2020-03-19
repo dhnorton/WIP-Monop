@@ -1,6 +1,6 @@
-'From Cuis 5.0 [latest update: #4042] on 19 March 2020 at 5:09:43 pm'!
+'From Cuis 5.0 [latest update: #4042] on 19 March 2020 at 5:57:24 pm'!
 'Description Simulation of the board game "Monopoly".'!
-!provides: 'Monop' 1 114!
+!provides: 'Monop' 1 115!
 !requires: 'Game' 1 44 nil!
 SystemOrganization addCategory: #'Monop-View'!
 SystemOrganization addCategory: #'Monop-Model'!
@@ -675,15 +675,15 @@ level123: anArray
 	^ (switch at: anArray third
 		ifAbsent:[{{#moveAheadTo:. anArray third}}]) value! !
 
-!Estate methodsFor: 'operating' stamp: 'dhn 3/17/2020 21:11:24'!
+!Estate methodsFor: 'operating' stamp: 'dhn 3/19/2020 17:24:40'!
 level12: anArray
 	"Cases for Chance and Community Chest"
 	| switch |
 	
 	switch _ Dictionary new
 		at: #ahead put: [self level123: anArray];
-		at: #back put: [{#moveBackTo:. anArray third}];
-		at: #relative: put: [{#relative:. anArray third}];
+		at: #back put: [{{#moveBackTo:. anArray third}}];
+		at: #relative: put: [{{#relative:. anArray third}}];
 		yourself.
 	^ (switch at: anArray second) value! !
 
