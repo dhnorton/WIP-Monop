@@ -1,6 +1,6 @@
-'From Cuis 5.0 [latest update: #4042] on 19 March 2020 at 4:05:14 pm'!
+'From Cuis 5.0 [latest update: #4042] on 19 March 2020 at 5:09:43 pm'!
 'Description Simulation of the board game "Monopoly".'!
-!provides: 'Monop' 1 113!
+!provides: 'Monop' 1 114!
 !requires: 'Game' 1 44 nil!
 SystemOrganization addCategory: #'Monop-View'!
 SystemOrganization addCategory: #'Monop-Model'!
@@ -651,29 +651,29 @@ justVisit
 			self disableAll: {'Move'}]."
 	self testRoutine.! !
 
-!Estate methodsFor: 'operating' stamp: 'dhn 3/17/2020 19:06:35'!
+!Estate methodsFor: 'operating' stamp: 'dhn 3/19/2020 16:26:47'!
 level11: anArray
 	"Cases for Chance and Community Chest"
 	| switch |
 	
 	switch _ Dictionary new
-		at: #fromEach put: [{#fromEach:. anArray third}];
-		at: #toEach put: [{#toEach:. anArray third}];
+		at: #fromEach put: [{{#fromEach:. anArray third}. #(#enable: 'End Turn')}];
+		at: #toEach put: [{{#toEach:. anArray third}. #(#enable: 'End Turn')}];
 		yourself.
 	^ (switch at: anArray second
-		ifAbsent:[{#tally:. anArray third negated}]) value! !
+		ifAbsent:[{{#tally:. anArray third negated}. #(#enable: 'End Turn')}]) value! !
 
-!Estate methodsFor: 'operating' stamp: 'dhn 3/18/2020 21:15:51'!
+!Estate methodsFor: 'operating' stamp: 'dhn 3/19/2020 16:42:15'!
 level123: anArray
 	"Cases for Chance and Community Chest"
 	| switch |
 	
 	switch _ Dictionary new
-		at: #railroad put: [{#toRailroad:. anArray third}];
-		at: #utility put: [{#toUtility:. anArray third}];
+		at: #railroad put: [{{#toRailroad:. anArray third}}];
+		at: #utility put: [{{#toUtility:. anArray third}}];
 		yourself.
 	^ (switch at: anArray third
-		ifAbsent:[{#moveAheadTo:. anArray third}]) value! !
+		ifAbsent:[{{#moveAheadTo:. anArray third}}]) value! !
 
 !Estate methodsFor: 'operating' stamp: 'dhn 3/17/2020 21:11:24'!
 level12: anArray
@@ -918,19 +918,18 @@ seasonsFrom: anIndex
 		col addLast: (self class season at: n)].	
 	^ col! !
 
-!Estate methodsFor: 'operating' stamp: 'dhn 3/19/2020 15:58:05'!
+!Estate methodsFor: 'operating' stamp: 'dhn 3/19/2020 16:18:38'!
 setNext: anArray
 	"Cases for Chance and Community Chest"
-	| level1 result |
+	| level1 |
 	
 	level1 _ Dictionary new
 		at: #moveMoney: put: [self level11: anArray];
 		at: #movePlayer: put: [self level12: anArray];
-		at: #getOut: put: [#(#null: nil)];
-		at: #repair: put: [{#repair:. anArray second}];
+		at: #getOut: put: [{#(#null: nil). #(#enable: 'End Turn')}];
+		at: #repair: put: [{{#repair:. anArray second}. #(#enable: 'End Turn')}];
 		yourself.
-	result _ OrderedCollection with: #(#enable: 'End Turn').
-	^ result addFirst: (level1 at: anArray first) value; yourself! !
+	^ (level1 at: anArray first) value! !
 
 !Estate methodsFor: 'operating' stamp: 'dhn 3/18/2020 21:24:37'!
 tally: anAmount
