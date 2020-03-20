@@ -1,6 +1,6 @@
-'From Cuis 5.0 [latest update: #4042] on 20 March 2020 at 3:30:26 pm'!
+'From Cuis 5.0 [latest update: #4042] on 20 March 2020 at 3:38:03 pm'!
 'Description Simulation of the board game "Monopoly".'!
-!provides: 'Monop' 1 117!
+!provides: 'Monop' 1 118!
 !requires: 'Game' 1 44 nil!
 SystemOrganization addCategory: #'Monop-View'!
 SystemOrganization addCategory: #'Monop-Model'!
@@ -2481,9 +2481,9 @@ buildMorphicWindow
 		addMorph: listPane layoutSpec: (LayoutSpec fixedWidth: 250);
 		addAdjusterAndMorph: textPane layoutSpec: (LayoutSpec useAll)! !
 
-!Notifier methodsFor: 'operating' stamp: 'dhn 3/18/2020 20:44:26'!
+!Notifier methodsFor: 'operating' stamp: 'dhn 3/20/2020 15:33:26'!
 finish
-	"Perform methods in reponse to the OK button"
+	"Perform methods in response to the OK button"
 
 	self okCount < 1
 		ifTrue: [
@@ -2492,9 +2492,7 @@ finish
 			self nextDo do: [:ea |
 				model perform: ea first with: ea second].
 			self triggerEvent: #itemChange.
-			okButton
-				oldTarget: #endIt;
-				enableButton]
+			okButton delete]
 		ifFalse: [okButton disableButton]! !
 
 !Notifier methodsFor: 'initialization' stamp: 'dhn 3/16/2020 21:54:01'!
