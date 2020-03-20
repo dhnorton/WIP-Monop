@@ -1,6 +1,6 @@
-'From Cuis 5.0 [latest update: #4042] on 19 March 2020 at 5:57:24 pm'!
+'From Cuis 5.0 [latest update: #4042] on 20 March 2020 at 3:30:26 pm'!
 'Description Simulation of the board game "Monopoly".'!
-!provides: 'Monop' 1 115!
+!provides: 'Monop' 1 117!
 !requires: 'Game' 1 44 nil!
 SystemOrganization addCategory: #'Monop-View'!
 SystemOrganization addCategory: #'Monop-Model'!
@@ -517,16 +517,14 @@ broker
 	self token moving: false
 ! !
 
-!Estate methodsFor: 'operating' stamp: 'dhn 3/13/2020 21:42:17'!
+!Estate methodsFor: 'operating' stamp: 'dhn 3/20/2020 15:00:21'!
 doSpace
 	"Perform the method associated with the space where the player is"
 
 	currentPlayer passedGo 
 		ifTrue: [
-			note _ currentPlayer identity, ' has received a salary of $200 for passing GO.'.
-			currentPlayer tally: 200.
+			note _ currentPlayer identity, ' will receive a salary of $200 for passing GO.'.
 			self triggerEvent: #showGo.
-			self triggerEvent: #itemChange.
 			currentPlayer passedGo: false ].
 	^ self perform: (spaces atWrap: self currentPlayer position) routine! !
 
@@ -639,7 +637,7 @@ incomeTax
 
 	self triggerEvent: #showIncomeTax! !
 
-!Estate methodsFor: 'operating' stamp: 'dhn 2/27/2020 19:55:57'!
+!Estate methodsFor: 'operating' stamp: 'dhn 3/20/2020 15:17:13'!
 justVisit
 	"Just visiting jail."
 
@@ -649,7 +647,7 @@ justVisit
 				inform: currentPlayer identity, ' will be here a long time.' 
 				title: 'Life Sentence'.
 			self disableAll: {'Move'}]."
-	self testRoutine.! !
+	self enableAll: {'End Turn'}! !
 
 !Estate methodsFor: 'operating' stamp: 'dhn 3/19/2020 16:26:47'!
 level11: anArray
@@ -886,11 +884,11 @@ repair: anObject
 
 	self enableAll: {'End Turn'}! !
 
-!Estate methodsFor: 'operating' stamp: 'dhn 3/2/2020 19:29:51'!
+!Estate methodsFor: 'operating' stamp: 'dhn 3/19/2020 19:08:29'!
 salary
 	"Pay player $200."
 
-	self enableAll: {'End Turn'}! !
+	"self enableAll: {'End Turn'}"! !
 
 !Estate methodsFor: 'operating' stamp: 'dhn 3/2/2020 19:57:09'!
 sayChanceChest: aString
@@ -931,9 +929,9 @@ setNext: anArray
 		yourself.
 	^ (level1 at: anArray first) value! !
 
-!Estate methodsFor: 'operating' stamp: 'dhn 3/18/2020 21:24:37'!
+!Estate methodsFor: 'operating' stamp: 'dhn 3/19/2020 19:20:53'!
 tally: anAmount
-	"Move cash per specs in anArray."
+	"Adjust player's cash by anAmount."
 	
 	currentPlayer tally: anAmount.
 	self triggerEvent: #itemChange! !
@@ -1934,7 +1932,7 @@ showChest: anArray
 	win buttonArea color: win textPanel color
 ! !
 
-!Monopoly methodsFor: 'windows' stamp: 'dhn 3/16/2020 21:45:56'!
+!Monopoly methodsFor: 'windows' stamp: 'dhn 3/20/2020 15:29:44'!
 showGo
 	"Tell the player about his salary"
 	| win |
@@ -1942,6 +1940,7 @@ showGo
 	win _ Notifier open: model label: 'Passed GO'.
 	win openInWorld: pasteup.
 	win textPanel model actualContents: model note.
+	win nextDo: (OrderedCollection with: {#tally:. 200} with: {#enable:. 'End Turn'}).
 	win
 		setWindowColor: Color lightYellow;
 		morphPosition: self windowPosition;
@@ -2535,6 +2534,20 @@ setButton
 	"Set the button for acknowledging note"
 	
 	okButton _ GameButtonMorph label: 'OK' action: #finish state: true model: self.
+	okButton 
+		morphExtent: 50@30;
+		setBalloonText: 'Acknowledge the note.'.
+
+	buttonArea
+		addMorph: okButton;
+		padding: #center
+! !
+
+!Notifier methodsFor: 'initialization' stamp: 'dhn 3/19/2020 19:14:43'!
+setButton: aSymbol
+	"Set the button for acknowledging note"
+	
+	okButton _ GameButtonMorph label: 'OK' action: aSymbol state: true model: self.
 	okButton 
 		morphExtent: 50@30;
 		setBalloonText: 'Acknowledge the note.'.
@@ -3479,18 +3492,6 @@ goAgain
 goAgain: aBoolean
         "Set the 'go again' indicator to aBoolean."
     goAgain := aBoolean.! !
-
-!Developer methodsFor: 'accessing' stamp: 'dhn 2/24/2020 20:49:55'!
-passedGo
-	"Answer whether the Player passed Go."
-
-	passedGo ifNil: [passedGo _ false].
-	^ passedGo! !
-
-!Developer methodsFor: 'accessing' stamp: 'dhn 5/17/2019 12:29:19'!
-passedGo: aBoolean
-        "Set the indicator as to whether the player passed Go."
-    passedGo := aBoolean.! !
 
 !Developer methodsFor: 'accessing' stamp: 'dhn 5/17/2019 12:29:19'!
 roll
