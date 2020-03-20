@@ -1,6 +1,6 @@
-'From Cuis 5.0 [latest update: #4042] on 20 March 2020 at 3:38:03 pm'!
+'From Cuis 5.0 [latest update: #4042] on 20 March 2020 at 4:25:33 pm'!
 'Description Simulation of the board game "Monopoly".'!
-!provides: 'Monop' 1 118!
+!provides: 'Monop' 1 119!
 !requires: 'Game' 1 44 nil!
 SystemOrganization addCategory: #'Monop-View'!
 SystemOrganization addCategory: #'Monop-Model'!
@@ -2541,20 +2541,6 @@ setButton
 		padding: #center
 ! !
 
-!Notifier methodsFor: 'initialization' stamp: 'dhn 3/19/2020 19:14:43'!
-setButton: aSymbol
-	"Set the button for acknowledging note"
-	
-	okButton _ GameButtonMorph label: 'OK' action: aSymbol state: true model: self.
-	okButton 
-		morphExtent: 50@30;
-		setBalloonText: 'Acknowledge the note.'.
-
-	buttonArea
-		addMorph: okButton;
-		padding: #center
-! !
-
 !Notifier methodsFor: 'accessing' stamp: 'dhn 3/13/2020 21:11:02'!
 buttonArea
 	"Answer the value of buttonArea"
@@ -2585,12 +2571,6 @@ okButton
 
 	^ okButton! !
 
-!Notifier methodsFor: 'accessing' stamp: 'dhn 3/18/2020 12:34:55'!
-okButton: anObject
-	"Set the value of okButton"
-
-	okButton _ anObject! !
-
 !Notifier methodsFor: 'accessing' stamp: 'dhn 3/18/2020 12:33:22'!
 okCount
 	"Answer the value of okCount"
@@ -2608,12 +2588,6 @@ textPanel
 	"Answer the value of textPanel"
 
 	^ textPanel! !
-
-!Notifier methodsFor: 'accessing' stamp: 'dhn 3/16/2020 21:44:26'!
-textPanel: anObject
-	"Set the value of textPanel"
-
-	textPanel _ anObject! !
 
 !Notifier methodsFor: 'termination' stamp: 'dhn 3/14/2020 12:19:29'!
 closeBoxHit
