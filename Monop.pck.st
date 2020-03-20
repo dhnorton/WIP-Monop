@@ -1,6 +1,6 @@
-'From Cuis 5.0 [latest update: #4042] on 20 March 2020 at 4:25:33 pm'!
+'From Cuis 5.0 [latest update: #4042] on 20 March 2020 at 4:32:10 pm'!
 'Description Simulation of the board game "Monopoly".'!
-!provides: 'Monop' 1 119!
+!provides: 'Monop' 1 120!
 !requires: 'Game' 1 44 nil!
 SystemOrganization addCategory: #'Monop-View'!
 SystemOrganization addCategory: #'Monop-Model'!
@@ -1094,13 +1094,13 @@ cellsForGame
 	
 	^ 13! !
 
-!Estate class methodsFor: 'instance creation' stamp: 'dhn 2/26/2020 20:38:20'!
+!Estate class methodsFor: 'instance creation' stamp: 'dhn 3/20/2020 16:30:55'!
 chanceCards
 	"Answer the values for the Chance deck."
 
 	^ OrderedCollection new
 		add: #(#movePlayer: #relative: -3 'Go back three spaces.');
-		add: #(#movePlayer: #back 11 'Go to Jail.');
+		add: #(#movePlayer: #back 11 'Go to Jail. Go directly to jail. Do not pass go. Do not collect $200.');
 		add: #(#movePlayer: #ahead 40 'Advance to Boardwalk.');
 		add: #(#moveMoney: nil -150 'Building and loan matures - collect $150.');
 		add: #(#moveMoney: #toEach 50 'You''ve been elected Chairman of the Board. Pay each player $50.');
@@ -1118,12 +1118,12 @@ chanceCards
 		add: #(#movePlayer: #ahead 1 'Advance to Go.');
 		yourself! !
 
-!Estate class methodsFor: 'instance creation' stamp: 'dhn 2/25/2020 14:40:43'!
+!Estate class methodsFor: 'instance creation' stamp: 'dhn 3/20/2020 16:31:18'!
 chestCards
 	"Answer the values for the Community Chest deck."
 
 	^ OrderedCollection new
-		add: #(#movePlayer: #back 11 'Go to Jail.');
+		add: #(#movePlayer: #back 11 'Go to Jail. Go directly to jail. Do not pass go. Do not collect $200.');
 		add: #(#moveMoney: nil -100 'Xmas fund matures - collect $100.');
 		add: #(#moveMoney: nil -100 'Life insurance matures - collect $100.');
 		add: #(#moveMoney: nil -25 'Receive for services $25.');
