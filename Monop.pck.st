@@ -1,6 +1,6 @@
-'From Cuis 5.0 [latest update: #4042] on 22 March 2020 at 3:47:34 pm'!
+'From Cuis 5.0 [latest update: #4042] on 22 March 2020 at 4:15:49 pm'!
 'Description Simulation of the board game "Monopoly".'!
-!provides: 'Monop' 1 126!
+!provides: 'Monop' 1 127!
 !requires: 'Game' 1 44 nil!
 SystemOrganization addCategory: #'Monop-View'!
 SystemOrganization addCategory: #'Monop-Model'!
@@ -2110,68 +2110,6 @@ initialize
 	currentBid _ 0.
 	currentBump _ 10! !
 
-!AuctionProperty methodsFor: 'initialization' stamp: 'dhn 3/20/2020 21:11:04'!
-setUpMidRowX
-	"Answer the layout for the middle row of the property auction window"
-	| listMorph row leftPane headingArea |
-	
-	listMorph _ (PluggableListMorph
-		model: model
-		listGetter: #bidIncrementList
-		indexGetter: #propertyAuctionBid
-		indexSetter: #propertyAuctionBid:
-		mainView: self
-		menuGetter: nil
-		keystrokeAction: nil)
-			name: 'increment list';
-			layoutSpec: (LayoutSpec 
-				proportionalWidth: 1.0
-				proportionalHeight: 0.9
-				minorDirectionPadding: #center).
-
-	heading _ ((StringMorph contents: 'Bid Increment') 
-		emphasis: AbstractFont boldCode;
-		font: (AbstractFont familyName: 'DejaVu' pointSize: 10)).
-	headingArea _ (LayoutMorph newRow)
-		layoutSpec: (LayoutSpec 
-			proportionalWidth: 1.0
-			proportionalHeight: 0.1
-			minorDirectionPadding: #center);
-		name: 'heading area';
-		padding: #left.
-	headingArea addMorph: heading.
-
-	
-	leftPane _ (LayoutMorph newColumn)
-		name: 'left pane';
-		addMorph: headingArea;
-		addMorph: listMorph.
-
-	textPane _ (TextModelMorph
-		withModel: (TextModel withText: '')) 	"note the different model specification"
-			askBeforeDiscardingEdits: false;	"discard changes to the text"
-			name: 'chant'. 	"give the TextModelMorph a name which will appear in the halos"
-	textPane 
-		layoutSpec: (LayoutSpec 
-			proportionalWidth: 0.6
-			proportionalHeight: 1.0
-			minorDirectionPadding: #center).
-
-	row _ (LayoutMorph newRow)
-		layoutSpec: (LayoutSpec 
-			proportionalWidth: 1.0
-			proportionalHeight: 0.7
-			minorDirectionPadding: #center).
-	row
-		name: 'mid row';
-		addMorph: leftPane proportionalWidth: 0.4;
-		addAdjusterAndMorph: textPane layoutSpec: (LayoutSpec useAll).
-		
-	^ row
-	
-
-! !
-
 !AuctionProperty methodsFor: 'buttons' stamp: 'dhn 3/21/2020 11:00:47'!
 buyerButtons
 	"Set bidding buttons for players."
@@ -2186,11 +2124,11 @@ buyerButtons
 			setBalloonText: 'bidder')].
 	buyers addAllMorphs: col reversed! !
 
-!AuctionProperty methodsFor: 'buttons' stamp: 'dhn 3/12/2020 12:12:35'!
+!AuctionProperty methodsFor: 'buttons' stamp: 'dhn 3/22/2020 16:05:15'!
 makeEndButton
 	"Answer the 'End' button"
 	
-	endButton _ GameButtonMorph label: 'End' action: #endIt state: false model: self.
+	endButton _ GameButtonMorph label: 'End' action: #endIt state: true model: self.
 	endButton 
 		morphExtent: 70@30;
 		setBalloonText: 'Close the auction window.'.
@@ -2267,12 +2205,14 @@ offer: anObject by: aName
 	(buyers findDeepSubmorphThat: [:mm | mm label = aName] ifAbsent: []) disableButton
 ! !
 
-!AuctionProperty methodsFor: 'operation' stamp: 'dhn 3/21/2020 21:01:12'!
+!AuctionProperty methodsFor: 'operation' stamp: 'dhn 3/22/2020 15:59:35'!
 propertySold
 	"SOLD!! the property."
 	| prop |
 	
-	buyers removeAllMorphs.
+	buyers 
+		removeAllMorphs
+		addMorph: self makeEndButton.
 	chant addFirst: (String streamContents: [:str |
 		str
 			nextPutAll: 'SOLD!! to ';
