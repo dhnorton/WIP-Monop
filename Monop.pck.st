@@ -1,6 +1,6 @@
-'From Cuis 5.0 [latest update: #4042] on 22 March 2020 at 1:37:27 pm'!
+'From Cuis 5.0 [latest update: #4042] on 22 March 2020 at 3:47:34 pm'!
 'Description Simulation of the board game "Monopoly".'!
-!provides: 'Monop' 1 125!
+!provides: 'Monop' 1 126!
 !requires: 'Game' 1 44 nil!
 SystemOrganization addCategory: #'Monop-View'!
 SystemOrganization addCategory: #'Monop-Model'!
@@ -48,7 +48,7 @@ Monopoly class
 
 !classDefinition: #AuctionProperty category: #'Monop-View'!
 AuctionView subclass: #AuctionProperty
-	instanceVariableNames: ''
+	instanceVariableNames: 'currentBump'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Monop-View'!
@@ -1402,16 +1402,15 @@ moving: anObject
 
 	moving _ anObject! !
 
-!AuctionButton methodsFor: 'event handling' stamp: 'dhn 3/21/2020 11:08:46'!
+!AuctionButton methodsFor: 'event handling' stamp: 'dhn 3/22/2020 15:37:09'!
 mouseButton2Down: event localPosition: point 
 	"Bring up the bid increment menu"
-	| x amt |
+	| x |
 
 	x _ (PopUpMenu labelArray: model bidIncrementList) 
 		startUpWithCaption: 'Bid Increment'.
-	amt _ model class bidBump at: x.
-	model currentBid: model currentBid + amt.
-	self triggerEvent: #itemChange! !
+	model currentBump: (model class bidBump at: x).
+	model offer: label! !
 
 !Monopoly methodsFor: 'accessing' stamp: 'dhn 5/15/2019 12:43:43'!
 describe
@@ -2104,11 +2103,12 @@ buildMorphicWindow
 		addAdjusterAndMorph: textPane layoutSpec: (LayoutSpec useAll);
 		addMorph: (buyers _ self setUpBuyers)! !
 
-!AuctionProperty methodsFor: 'initialization' stamp: 'dhn 3/15/2020 20:19:28'!
+!AuctionProperty methodsFor: 'initialization' stamp: 'dhn 3/22/2020 15:43:04'!
 initialize
 
 	super initialize.
-! !
+	currentBid _ 0.
+	currentBump _ 10! !
 
 !AuctionProperty methodsFor: 'initialization' stamp: 'dhn 3/20/2020 21:11:04'!
 setUpMidRowX
@@ -2242,16 +2242,30 @@ details
 
 	self showChant ! !
 
-!AuctionProperty methodsFor: 'operation' stamp: 'dhn 3/21/2020 20:55:55'!
+!AuctionProperty methodsFor: 'operation' stamp: 'dhn 3/22/2020 15:22:34'!
 offer: aName
 	"Record a bid by aName and start the auction"
-	{currentBid}print.
-	self currentBid > 0 
-		ifTrue: [self offer: currentBid by: aName]
-		ifFalse: [
-			buyers submorphsDo: [:ea | ea enableButton].
-			(buyers findDeepSubmorphThat: [:mm | mm label = currentBidder] ifAbsent: [^ self]) disableButton].
+
+	self offer: currentBid + currentBump by: aName.
 	begun  _ true! !
+
+!AuctionProperty methodsFor: 'operation' stamp: 'dhn 3/22/2020 15:24:39'!
+offer: anObject by: aName
+	"State that an offer referred to by anObject was made by aName"
+
+	self currentBid: anObject.
+	currentBidder _ aName.
+	self chant addFirst: (String streamContents: [:str |
+		str
+			nextPut: $$;
+			nextPutAll: self currentBid printStringWithCommas;
+			nextPutAll: ' was bid by '; 
+			nextPutAll: currentBidder; newLine]).
+	self showChant.
+	going _ 0.
+	buyers submorphsDo: [:ea | ea enableButton].
+	(buyers findDeepSubmorphThat: [:mm | mm label = aName] ifAbsent: []) disableButton
+! !
 
 !AuctionProperty methodsFor: 'operation' stamp: 'dhn 3/21/2020 21:01:12'!
 propertySold
@@ -2288,7 +2302,19 @@ endIt
 	self delete
 ! !
 
-!AuctionProperty methodsFor: 'access' stamp: 'dhn 3/12/2020 12:39:55'!
+!AuctionProperty methodsFor: 'accessing' stamp: 'dhn 3/22/2020 15:12:14'!
+currentBump
+	"Answer the value of currentBump"
+
+	^ currentBump! !
+
+!AuctionProperty methodsFor: 'accessing' stamp: 'dhn 3/22/2020 15:12:14'!
+currentBump: anObject
+	"Set the value of currentBump"
+
+	currentBump _ anObject! !
+
+!AuctionProperty methodsFor: 'accessing' stamp: 'dhn 3/12/2020 12:39:55'!
 heading
 	"Answer the value of heading"
 	
