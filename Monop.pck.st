@@ -1,6 +1,6 @@
-'From Cuis 5.0 [latest update: #4042] on 20 March 2020 at 4:32:10 pm'!
+'From Cuis 5.0 [latest update: #4042] on 22 March 2020 at 1:21:03 pm'!
 'Description Simulation of the board game "Monopoly".'!
-!provides: 'Monop' 1 120!
+!provides: 'Monop' 1 124!
 !requires: 'Game' 1 44 nil!
 SystemOrganization addCategory: #'Monop-View'!
 SystemOrganization addCategory: #'Monop-Model'!
@@ -486,12 +486,6 @@ statsReport: anAsset
 auction: aProperty
 	"Sell aProperty at auction."! !
 
-!Estate methodsFor: 'operating' stamp: 'dhn 3/4/2020 14:54:43'!
-bidIncrementList
-	"Answer the list of bid increments"
-	
-	^ self class bidIncrement! !
-
 !Estate methodsFor: 'operating' stamp: 'dhn 3/12/2020 17:23:08'!
 broker
 	"Represent the property"
@@ -845,20 +839,12 @@ propertyAuction
 	self triggerEvent: #itemChange
 ! !
 
-!Estate methodsFor: 'operating' stamp: 'dhn 3/12/2020 15:04:00'!
-propertyAuctionBid
-	"Answer the value of propertyAuctionBid"
-
-	propertyAuctionBid ifNil: [propertyAuctionBid _ 1]. 	"nil is unacceptable during model initialization"
-	^ propertyAuctionBid! !
-
-!Estate methodsFor: 'operating' stamp: 'dhn 3/3/2020 21:56:58'!
+!Estate methodsFor: 'operating' stamp: 'dhn 3/20/2020 22:08:39'!
 propertyAuctionBid: anObject
 	"Set the value of propertyAuctionBid"
 	
-	(propertyAuctionBid _ anObject) ifNotNil: [
-		self triggerEvent: #itemChange.
-		self changed: #propertyAuctionBid]! !
+	(propertyAuctionBid _ anObject) 
+		ifNotNil: [self triggerEvent: #itemChange]! !
 
 !Estate methodsFor: 'operating' stamp: 'dhn 3/4/2020 21:26:26'!
 propertyBuy
@@ -1064,6 +1050,12 @@ note: anObject
 
 	note _ anObject! !
 
+!Estate methodsFor: 'accessing' stamp: 'dhn 3/20/2020 22:06:05'!
+propertyAuctionBid
+	"Answer the value of propertyAuctionBid"
+	
+	^ propertyAuctionBid ifNil: [propertyAuctionBid _ 0]! !
+
 !Estate methodsFor: 'accessing' stamp: 'dhn 2/21/2020 20:55:59'!
 spaces
 	"Answer the value of spaces."
@@ -1081,12 +1073,6 @@ windowCount: anObject
 	"Set the value of windowCount"
 
 	windowCount _ anObject! !
-
-!Estate class methodsFor: 'instance creation' stamp: 'dhn 3/4/2020 14:51:20'!
-bidBump
-	"Answer the bid increments"
-	
-	^ (Interval from: 10 to: 100 by: 10) asOrderedCollection! !
 
 !Estate class methodsFor: 'instance creation' stamp: 'dhn 5/14/2019 17:07:12'!
 cellsForGame
@@ -1415,15 +1401,16 @@ moving: anObject
 
 	moving _ anObject! !
 
-!AuctionButton methodsFor: 'event handling' stamp: 'dhn 3/16/2020 12:06:09'!
+!AuctionButton methodsFor: 'event handling' stamp: 'dhn 3/21/2020 11:08:46'!
 mouseButton2Down: event localPosition: point 
 	"Bring up the bid increment menu"
-	| x |
+	| x amt |
 
-	x _ (PopUpMenu labelArray: model bidIncrementList) startUpWithCaption: 'Bid Increment'.
-	{x}print.
-	"model propertyAuctionBid: (model class bidBump at: x)"
-! !
+	x _ (PopUpMenu labelArray: model bidIncrementList) 
+		startUpWithCaption: 'Bid Increment'.
+	amt _ model class bidBump at: x.
+	model currentBid: model currentBid + amt.
+	self triggerEvent: #itemChange! !
 
 !Monopoly methodsFor: 'accessing' stamp: 'dhn 5/15/2019 12:43:43'!
 describe
@@ -1985,30 +1972,23 @@ showLuxuryTax
 	win buttonArea color: win textPanel color
 ! !
 
-!Monopoly methodsFor: 'windows' stamp: 'dhn 3/13/2020 12:43:30'!
+!Monopoly methodsFor: 'windows' stamp: 'dhn 3/20/2020 22:00:39'!
 showPropertyAuction
 	"Open a window on a property at auction"
 	| win where |
 		
-	win _ AuctionProperty openOn: model.
+	win _ AuctionProperty open: model label: ' '.
 	where _ model currentPlayer position.
 	win openInWorld: pasteup.
 	win
-		setLabel: (model spaces at: where) title, ' auction';
 		setWindowColor: (model seasonAt: where) color;
 		morphPosition: self windowPosition;
-		makeEndButton;
+		morphExtent: 570 @ 400;
 		buyerButtons.
-	win morphExtent: 570 @ 400.
+	win heading contents: (model spaces at: where) title, ' auction'.
 	win chant addFirst: 'The auction has started, what am I bid?'.
 	win showChant.
-	win beat: #propertySold.
-
-	model 
-		propertyAuctionBid: 1;
-		changed: #bidIncrementList.
-	win heading contents: 'Bid Increment'
-! !
+	win beat: #propertySold! !
 
 !Monopoly methodsFor: 'windows' stamp: 'dhn 3/1/2020 15:33:12'!
 showStats
@@ -2094,21 +2074,33 @@ start
 	^ win
 ! !
 
-!AuctionProperty methodsFor: 'initialization' stamp: 'dhn 3/12/2020 20:42:26'!
+!AuctionProperty methodsFor: 'initialization' stamp: 'dhn 3/21/2020 10:59:25'!
 buildMorphicWindow
 	"Lay out the window for auctioning a property"
+	| headingArea |
 	
-	buttonsArea _ (LayoutMorph newRow)
-		name: #buttons;
+	heading _ ((StringMorph contents: '')  "for the title of the property"
+		emphasis: AbstractFont boldCode;
+		font: (AbstractFont familyName: 'DejaVu' pointSize: 14)).
+	headingArea _ (LayoutMorph newRow)
 		layoutSpec: (LayoutSpec 
 			proportionalWidth: 1.0
 			proportionalHeight: 0.15
-			minorDirectionPadding: #center).
-	buttonsArea padding: #center.
-			
-	self layoutMorph
-		addMorph: buttonsArea;
-		addMorph: self setUpMidRow;
+			minorDirectionPadding: #center);
+		name: 'heading area';
+		padding: #center.
+	headingArea addMorph: heading.
+
+	textPane _ (TextModelMorph
+		withModel: (TextModel withText: ''))
+			askBeforeDiscardingEdits: false;
+			name: 'chant'. 
+	textPane layoutSpec: (LayoutSpec proportionalWidth: 1.0).
+
+	self beColumn.
+	layoutMorph
+		addMorph: heading;
+		addAdjusterAndMorph: textPane layoutSpec: (LayoutSpec useAll);
 		addMorph: (buyers _ self setUpBuyers)! !
 
 !AuctionProperty methodsFor: 'initialization' stamp: 'dhn 3/15/2020 20:19:28'!
@@ -2117,8 +2109,8 @@ initialize
 	super initialize.
 ! !
 
-!AuctionProperty methodsFor: 'initialization' stamp: 'dhn 3/3/2020 22:03:41'!
-setUpMidRow
+!AuctionProperty methodsFor: 'initialization' stamp: 'dhn 3/20/2020 21:11:04'!
+setUpMidRowX
 	"Answer the layout for the middle row of the property auction window"
 	| listMorph row leftPane headingArea |
 	
@@ -2179,14 +2171,14 @@ setUpMidRow
 
 ! !
 
-!AuctionProperty methodsFor: 'buttons' stamp: 'dhn 3/15/2020 21:05:04'!
+!AuctionProperty methodsFor: 'buttons' stamp: 'dhn 3/21/2020 11:00:47'!
 buyerButtons
 	"Set bidding buttons for players."
 	| col |
 	
 	col _ OrderedCollection new.
 	model players do: [:ea |
-		col add: ((AuctionButton label: ea identity action: #offer: state: true model: model)
+		col add: ((AuctionButton label: ea identity action: #offer: state: true model: self)
 			morphExtent: 70@30;
 			color: ea color;
 			setProperty: #'handlesMouseDown:' toValue: true;
@@ -2202,14 +2194,6 @@ makeEndButton
 		morphExtent: 70@30;
 		setBalloonText: 'Close the auction window.'.
 	^ endButton! !
-
-!AuctionProperty methodsFor: 'buttons' stamp: 'dhn 3/12/2020 13:10:16'!
-startButtons
-	"can be deleted?"
-	self halt.
-	buttonsArea addMorph: 
-		(StringMorph contents: 
-			(model spaces at: model currentPlayer position) title)! !
 
 !AuctionProperty methodsFor: 'operation' stamp: 'dhn 3/12/2020 12:45:24'!
 beat: aSymbol
@@ -2235,46 +2219,45 @@ beat: aSymbol
 						self removeActionsForEvent: #morphicStep]]].
 	self startSteppingStepTime: model chantBeat. 	"time between chants"! !
 
-!AuctionProperty methodsFor: 'operation' stamp: 'dhn 3/4/2020 15:09:06'!
+!AuctionProperty methodsFor: 'operation' stamp: 'dhn 3/21/2020 20:49:30'!
 beginAuction
-	"Show the bid increments and let the bidding begin"
+	"Show the bidders and let the bidding begin"
 	
 	begun _ true.
 	self chant addFirst: 'The auction has started, what am I bid?'.
 	self 
 		beat: #propertySold;
-		startButtons;
-		buyerButtons.
-	model 
-		propertyAuctionBid: 1;
-		changed: #bidIncrementList.
-	heading contents: 'Bid Increment'
-! !
+		buyerButtons! !
 
-!AuctionProperty methodsFor: 'operation' stamp: 'dhn 3/12/2020 12:49:13'!
+!AuctionProperty methodsFor: 'operation' stamp: 'dhn 3/21/2020 11:35:35'!
+bidIncrementList
+	"Answer the list of bid increments"
+	
+	^ self class bidIncrement! !
+
+!AuctionProperty methodsFor: 'operation' stamp: 'dhn 3/21/2020 11:20:08'!
 details
-	"Not required for property auctions"
-! !
+	""
 
-!AuctionProperty methodsFor: 'operation' stamp: 'dhn 3/12/2020 12:55:27'!
+	self showChant ! !
+
+!AuctionProperty methodsFor: 'operation' stamp: 'dhn 3/21/2020 20:55:55'!
 offer: aName
 	"Record a bid by aName and start the auction"
-	
-	model propertyAuctionBid > 0 
-		ifTrue: [self offer: model propertyAuctionBid by: aName]
+	{currentBid}print.
+	self currentBid > 0 
+		ifTrue: [self offer: currentBid by: aName]
 		ifFalse: [
 			buyers submorphsDo: [:ea | ea enableButton].
 			(buyers findDeepSubmorphThat: [:mm | mm label = currentBidder] ifAbsent: [^ self]) disableButton].
 	begun  _ true! !
 
-!AuctionProperty methodsFor: 'operation' stamp: 'dhn 3/12/2020 20:58:11'!
+!AuctionProperty methodsFor: 'operation' stamp: 'dhn 3/21/2020 21:01:12'!
 propertySold
 	"SOLD!! the property."
 	| prop |
 	
 	buyers removeAllMorphs.
-	buttonsArea addMorph: self makeEndButton.
-	endButton enableButton.
 	chant addFirst: (String streamContents: [:str |
 		str
 			nextPutAll: 'SOLD!! to ';
@@ -2310,6 +2293,20 @@ heading
 	
 	^ heading! !
 
+!AuctionProperty class methodsFor: 'class initialization' stamp: 'dhn 3/21/2020 11:18:18'!
+open: aModel label: aString
+	"Answer a view on aModel with label aString"
+	|  window |
+	
+	window _ self new.
+	window
+		model: aModel;
+		buildMorphicWindow.
+	aString ifNotNil: [ window setLabel: aString ].
+	aModel when: #itemChange send: #details to: window.
+	aModel when: #deleteOpenWindows send: #endIt to: window.
+	^ window! !
+
 !AuctionProperty class methodsFor: 'class initialization' stamp: 'dhn 3/3/2020 20:57:17'!
 openOn: aModel
 	"Answer an instance of this class on aModel"
@@ -2324,6 +2321,23 @@ openOn: aModel
 	^ win
 ! !
 
+!AuctionProperty class methodsFor: 'accessing' stamp: 'dhn 3/21/2020 11:28:54'!
+bidBump
+	"Answer the bid increments"
+	
+	^ (Interval from: 10 to: 100 by: 10) asOrderedCollection! !
+
+!AuctionProperty class methodsFor: 'accessing' stamp: 'dhn 3/21/2020 11:34:44'!
+bidIncrement
+	"Answer the list for an auction"
+	| col |
+	
+	col _ OrderedCollection new.
+	self bidBump do: [:each | col add: '$', each printStringWithCommas].
+	^ col
+
+	! !
+
 !BuyView methodsFor: 'operating' stamp: 'dhn 3/4/2020 21:40:52'!
 auction
 
@@ -2331,13 +2345,13 @@ auction
 	buyButton disableButton.
 	model propertyAuction! !
 
-!BuyView methodsFor: 'operating' stamp: 'dhn 3/18/2020 20:33:52'!
+!BuyView methodsFor: 'operating' stamp: 'dhn 3/22/2020 13:07:43'!
 buy
-	"cobbled to aid debugging"
+	"Buy the property, record the result"
 	
 	buyButton disableButton.
 	auctionButton disableButton.
-	"model propertyBuy"
+	model propertyBuy.
 	model enableAll: {'End Turn'}.
 	self delete! !
 
