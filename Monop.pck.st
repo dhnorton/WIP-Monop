@@ -1,6 +1,6 @@
-'From Cuis 5.0 [latest update: #4042] on 22 March 2020 at 1:21:03 pm'!
+'From Cuis 5.0 [latest update: #4042] on 22 March 2020 at 1:37:27 pm'!
 'Description Simulation of the board game "Monopoly".'!
-!provides: 'Monop' 1 124!
+!provides: 'Monop' 1 125!
 !requires: 'Game' 1 44 nil!
 SystemOrganization addCategory: #'Monop-View'!
 SystemOrganization addCategory: #'Monop-Model'!
@@ -486,7 +486,7 @@ statsReport: anAsset
 auction: aProperty
 	"Sell aProperty at auction."! !
 
-!Estate methodsFor: 'operating' stamp: 'dhn 3/12/2020 17:23:08'!
+!Estate methodsFor: 'operating' stamp: 'dhn 3/22/2020 13:26:46'!
 broker
 	"Represent the property"
 	"If unowned, the 'owner' is the bank and the property will be sold or auctioned."
@@ -507,7 +507,8 @@ broker
 					currentPlayer tally: rent negated.
 					lot owner tally: rent.
 					self enableAll: {'End Turn'}.
-					self triggerEvent: #itemChange]].
+					self triggerEvent: #itemChange]
+				ifFalse: [self enableAll: {'End Turn'}]].
 	self token moving: false
 ! !
 
