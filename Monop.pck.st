@@ -1,6 +1,6 @@
-'From Cuis 5.0 [latest update: #4042] on 22 March 2020 at 9:39:24 pm'!
+'From Cuis 5.0 [latest update: #4042] on 23 March 2020 at 10:46:53 am'!
 'Description Simulation of the board game "Monopoly".'!
-!provides: 'Monop' 1 130!
+!provides: 'Monop' 1 131!
 !requires: 'Game' 1 44 nil!
 SystemOrganization addCategory: #'Monop-View'!
 SystemOrganization addCategory: #'Monop-Model'!
@@ -2381,6 +2381,13 @@ buildMorphicWindow
 	model when: #buyButton: send: #buyButton: to: self with: #state.
 ! !
 
+!BuyView methodsFor: 'initialization' stamp: 'dhn 3/23/2020 10:43:52'!
+cleanTitleBar
+	"Remove buttons from the title bar"
+	
+	self submorphs do: [:ea | 
+		ea class = PluggableButtonMorph ifTrue: [ea delete]]! !
+
 !BuyView methodsFor: 'accessing' stamp: 'dhn 3/4/2020 20:00:03'!
 buyButton: aBool
 	"Change buy button state according to aBool"
@@ -2408,13 +2415,13 @@ endIt
 	
 	self delete! !
 
-!BuyView class methodsFor: 'class initialization' stamp: 'dhn 3/4/2020 20:00:03'!
+!BuyView class methodsFor: 'class initialization' stamp: 'dhn 3/23/2020 10:44:54'!
 openOn: aModel
 	"Answer an instance of this class on aModel"
 	| win |
 
 	win _ self open: aModel.
-	win removeWindowMenu.
+	win cleanTitleBar.
 			
 	aModel when: #itemChange send: #details to: win.
 	aModel when: #deleteOpenWindows send: #endIt to: win.
