@@ -1,6 +1,6 @@
-'From Cuis 5.0 [latest update: #4042] on 22 March 2020 at 8:37:38 pm'!
+'From Cuis 5.0 [latest update: #4042] on 22 March 2020 at 9:07:03 pm'!
 'Description Simulation of the board game "Monopoly".'!
-!provides: 'Monop' 1 128!
+!provides: 'Monop' 1 129!
 !requires: 'Game' 1 44 nil!
 SystemOrganization addCategory: #'Monop-View'!
 SystemOrganization addCategory: #'Monop-Model'!
@@ -1973,7 +1973,7 @@ showLuxuryTax
 	win buttonArea color: win textPanel color
 ! !
 
-!Monopoly methodsFor: 'windows' stamp: 'dhn 3/20/2020 22:00:39'!
+!Monopoly methodsFor: 'windows' stamp: 'dhn 3/22/2020 20:50:37'!
 showPropertyAuction
 	"Open a window on a property at auction"
 	| win where |
@@ -1989,7 +1989,7 @@ showPropertyAuction
 	win heading contents: (model spaces at: where) title, ' auction'.
 	win chant addFirst: 'The auction has started, what am I bid?'.
 	win showChant.
-	win beat: #propertySold! !
+	win beat: #announceSold! !
 
 !Monopoly methodsFor: 'windows' stamp: 'dhn 3/1/2020 15:33:12'!
 showStats
@@ -2125,15 +2125,30 @@ buyerButtons
 			setBalloonText: 'bidder')].
 	buyers addAllMorphs: col reversed! !
 
-!AuctionProperty methodsFor: 'buttons' stamp: 'dhn 3/22/2020 16:05:15'!
+!AuctionProperty methodsFor: 'buttons' stamp: 'dhn 3/22/2020 20:48:54'!
 makeEndButton
 	"Answer the 'End' button"
 	
-	endButton _ GameButtonMorph label: 'End' action: #endIt state: true model: self.
+	endButton _ GameButtonMorph label: 'End' action: #propertySold state: true model: self.
 	endButton 
 		morphExtent: 70@30;
 		setBalloonText: 'Close the auction window.'.
 	^ endButton! !
+
+!AuctionProperty methodsFor: 'operation' stamp: 'dhn 3/22/2020 20:46:52'!
+announceSold
+	"SOLD!! the property."
+	
+	buyers 
+		removeAllMorphs
+		addMorph: self makeEndButton.
+	chant addFirst: (String streamContents: [:str |
+		str
+			nextPutAll: 'SOLD!! to ';
+			nextPutAll: currentBidder;
+			nextPutAll: ' for $';
+			nextPutAll: currentBid printStringWithCommas; newLine]).
+	self showChant! !
 
 !AuctionProperty methodsFor: 'operation' stamp: 'dhn 3/12/2020 12:45:24'!
 beat: aSymbol
@@ -2159,15 +2174,12 @@ beat: aSymbol
 						self removeActionsForEvent: #morphicStep]]].
 	self startSteppingStepTime: model chantBeat. 	"time between chants"! !
 
-!AuctionProperty methodsFor: 'operation' stamp: 'dhn 3/21/2020 20:49:30'!
+!AuctionProperty methodsFor: 'operation' stamp: 'dhn 3/22/2020 20:43:39'!
 beginAuction
 	"Show the bidders and let the bidding begin"
 	
 	begun _ true.
-	self chant addFirst: 'The auction has started, what am I bid?'.
-	self 
-		beat: #propertySold;
-		buyerButtons! !
+	self buyerButtons! !
 
 !AuctionProperty methodsFor: 'operation' stamp: 'dhn 3/21/2020 11:35:35'!
 bidIncrementList
@@ -2206,23 +2218,15 @@ offer: anObject by: aName
 	(buyers findDeepSubmorphThat: [:mm | mm label = aName] ifAbsent: []) disableButton
 ! !
 
-!AuctionProperty methodsFor: 'operation' stamp: 'dhn 3/22/2020 15:59:35'!
+!AuctionProperty methodsFor: 'operation' stamp: 'dhn 3/22/2020 20:59:07'!
 propertySold
-	"SOLD!! the property."
+	"Finalize the sale"
 	| prop |
 	
-	buyers 
-		removeAllMorphs
-		addMorph: self makeEndButton.
-	chant addFirst: (String streamContents: [:str |
-		str
-			nextPutAll: 'SOLD!! to ';
-			nextPutAll: currentBidder;
-			nextPutAll: ' for $';
-			nextPutAll: currentBid printStringWithCommas; newLine]).
-	self showChant.
 	prop _ model spaces at: model currentPlayer position.
-	model hammerDown: currentBid for: prop by: currentBidder
+	model hammerDown: currentBid for: prop by: currentBidder.
+	model enableAll: {'End Turn'}.
+	self delete
 ! !
 
 !AuctionProperty methodsFor: 'termination' stamp: 'dhn 3/3/2020 21:57:33'!
