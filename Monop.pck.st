@@ -1,6 +1,6 @@
-'From Cuis 5.0 [latest update: #4042] on 23 March 2020 at 10:46:53 am'!
+'From Cuis 5.0 [latest update: #4042] on 23 March 2020 at 3:15:51 pm'!
 'Description Simulation of the board game "Monopoly".'!
-!provides: 'Monop' 1 131!
+!provides: 'Monop' 1 132!
 !requires: 'Game' 1 44 nil!
 SystemOrganization addCategory: #'Monop-View'!
 SystemOrganization addCategory: #'Monop-Model'!
@@ -1869,7 +1869,7 @@ startGame
 		nextPlayer.
 	model initialButtonState! !
 
-!Monopoly methodsFor: 'windows' stamp: 'dhn 3/4/2020 21:04:13'!
+!Monopoly methodsFor: 'windows' stamp: 'dhn 3/23/2020 12:13:50'!
 showBuyView
 	"Open a window on a property held by the bank"
 	| win |
@@ -1877,6 +1877,7 @@ showBuyView
 	win _ BuyView openOn: model.
 	win openInWorld: pasteup.
 	win
+		cleanTitleBar;
 		setLabel: (model spaces at: model currentPlayer position) title;
 		setWindowColor: (model seasonAt: model currentPlayer position) color;
 		morphPosition: self windowPosition;
@@ -1884,17 +1885,19 @@ showBuyView
 		startButtons;
 		details! !
 
-!Monopoly methodsFor: 'windows' stamp: 'dhn 3/19/2020 13:49:12'!
+!Monopoly methodsFor: 'windows' stamp: 'dhn 3/23/2020 14:55:55'!
 showChance: anArray
 	"Tell the player about the Chance card"
 	| win |
 		
-	win _ Notifier open: model label: 'Chance'.
+	win _ Notifier openOn: model.
 	win openInWorld: pasteup.
 	win textPanel model actualContents: anArray last.
 	win textPanel color: Color lightOrange.
 	win nextDo: (model setNext: anArray).
 	win
+		cleanTitleBar;
+		setLabel: 'Chance';
 		setWindowColor: win textPanel color;
 		morphPosition: self windowPosition;
 		setButton;
@@ -1902,17 +1905,19 @@ showChance: anArray
 	win buttonArea color: win textPanel color
 ! !
 
-!Monopoly methodsFor: 'windows' stamp: 'dhn 3/19/2020 13:49:29'!
+!Monopoly methodsFor: 'windows' stamp: 'dhn 3/23/2020 14:55:44'!
 showChest: anArray
 	"Tell the player about the Community Chest card"
 	| win |
 		
-	win _ Notifier open: model label: 'Community Chest'.
+	win _ Notifier openOn: model.
 	win openInWorld: pasteup.
 	win textPanel model actualContents: anArray last.
 	win textPanel color: Color lightYellow.
 	win nextDo: (model setNext: anArray).
 	win
+		cleanTitleBar;
+		setLabel: 'Community Chest';
 		setWindowColor: win textPanel color;
 		morphPosition: self windowPosition;
 		setButton;
@@ -1920,16 +1925,18 @@ showChest: anArray
 	win buttonArea color: win textPanel color
 ! !
 
-!Monopoly methodsFor: 'windows' stamp: 'dhn 3/20/2020 15:29:44'!
+!Monopoly methodsFor: 'windows' stamp: 'dhn 3/23/2020 14:56:06'!
 showGo
 	"Tell the player about his salary"
 	| win |
 		
-	win _ Notifier open: model label: 'Passed GO'.
+	win _ Notifier openOn: model.
 	win openInWorld: pasteup.
 	win textPanel model actualContents: model note.
 	win nextDo: (OrderedCollection with: {#tally:. 200} with: {#enable:. 'End Turn'}).
 	win
+		cleanTitleBar;
+		setLabel: 'Passed GO';
 		setWindowColor: Color lightYellow;
 		morphPosition: self windowPosition;
 		setButton;
@@ -1991,7 +1998,7 @@ showPropertyAuction
 	win showChant.
 	win beat: #announceSold! !
 
-!Monopoly methodsFor: 'windows' stamp: 'dhn 3/1/2020 15:33:12'!
+!Monopoly methodsFor: 'windows' stamp: 'dhn 3/23/2020 12:06:14'!
 showStats
 	"Open a window on a player's statistics"
 	| pl win |
@@ -2000,6 +2007,7 @@ showStats
 	win _ MonopStats openOn: model.
 	win openInWorld: pasteup.
 	win
+		cleanTitleBar;
 		setLabel: pl identity, '''s Statistics';
 		setWindowColor: pl color;
 		morphPosition: self windowPosition;
@@ -2265,7 +2273,7 @@ heading
 	
 	^ heading! !
 
-!AuctionProperty class methodsFor: 'class initialization' stamp: 'dhn 3/21/2020 11:18:18'!
+!AuctionProperty class methodsFor: 'class initialization' stamp: 'dhn 3/23/2020 14:11:43'!
 open: aModel label: aString
 	"Answer a view on aModel with label aString"
 	|  window |
@@ -2279,13 +2287,12 @@ open: aModel label: aString
 	aModel when: #deleteOpenWindows send: #endIt to: window.
 	^ window! !
 
-!AuctionProperty class methodsFor: 'class initialization' stamp: 'dhn 3/3/2020 20:57:17'!
+!AuctionProperty class methodsFor: 'class initialization' stamp: 'dhn 3/23/2020 12:14:27'!
 openOn: aModel
 	"Answer an instance of this class on aModel"
 	| win |
 
 	win _ self open: aModel.
-	win removeWindowMenu.
 			
 	aModel when: #itemChange send: #details to: win.
 	aModel when: #deleteOpenWindows send: #endIt to: win.
@@ -2381,13 +2388,6 @@ buildMorphicWindow
 	model when: #buyButton: send: #buyButton: to: self with: #state.
 ! !
 
-!BuyView methodsFor: 'initialization' stamp: 'dhn 3/23/2020 10:43:52'!
-cleanTitleBar
-	"Remove buttons from the title bar"
-	
-	self submorphs do: [:ea | 
-		ea class = PluggableButtonMorph ifTrue: [ea delete]]! !
-
 !BuyView methodsFor: 'accessing' stamp: 'dhn 3/4/2020 20:00:03'!
 buyButton: aBool
 	"Change buy button state according to aBool"
@@ -2414,20 +2414,6 @@ endIt
 	"Close the receiver"
 	
 	self delete! !
-
-!BuyView class methodsFor: 'class initialization' stamp: 'dhn 3/23/2020 10:44:54'!
-openOn: aModel
-	"Answer an instance of this class on aModel"
-	| win |
-
-	win _ self open: aModel.
-	win cleanTitleBar.
-			
-	aModel when: #itemChange send: #details to: win.
-	aModel when: #deleteOpenWindows send: #endIt to: win.
-	
-	^ win
-! !
 
 !MonopStats methodsFor: 'termination' stamp: 'dhn 2/23/2020 20:44:15'!
 closeBoxHit
@@ -2601,13 +2587,12 @@ endTurn
 	model enableAll: {'End Turn'}.
 	self endIt ! !
 
-!Notifier class methodsFor: 'class initialization' stamp: 'dhn 3/14/2020 12:14:17'!
+!Notifier class methodsFor: 'class initialization' stamp: 'dhn 3/23/2020 12:32:37'!
 openOn: aModel
 	"Answer an instance of this class on aModel"
 	| win |
 
 	win _ self open: aModel.
-	win removeWindowMenu.
 			
 	aModel when: #deleteOpenWindows send: #endIt to: win.
 	
