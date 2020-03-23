@@ -1,6 +1,6 @@
-'From Cuis 5.0 [latest update: #4042] on 23 March 2020 at 3:15:51 pm'!
+'From Cuis 5.0 [latest update: #4042] on 23 March 2020 at 5:06:48 pm'!
 'Description Simulation of the board game "Monopoly".'!
-!provides: 'Monop' 1 132!
+!provides: 'Monop' 1 133!
 !requires: 'Game' 1 44 nil!
 SystemOrganization addCategory: #'Monop-View'!
 SystemOrganization addCategory: #'Monop-Model'!
@@ -58,7 +58,7 @@ AuctionProperty class
 
 !classDefinition: #BuyView category: #'Monop-View'!
 GameView subclass: #BuyView
-	instanceVariableNames: 'textPane buttonArea buyButton auctionButton'
+	instanceVariableNames: 'textPane buttonArea buyButton auctionButton heading'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Monop-View'!
@@ -1869,7 +1869,7 @@ startGame
 		nextPlayer.
 	model initialButtonState! !
 
-!Monopoly methodsFor: 'windows' stamp: 'dhn 3/23/2020 12:13:50'!
+!Monopoly methodsFor: 'windows' stamp: 'dhn 3/23/2020 15:59:22'!
 showBuyView
 	"Open a window on a property held by the bank"
 	| win |
@@ -1878,12 +1878,13 @@ showBuyView
 	win openInWorld: pasteup.
 	win
 		cleanTitleBar;
-		setLabel: (model spaces at: model currentPlayer position) title;
+		setLabel: ' ';
 		setWindowColor: (model seasonAt: model currentPlayer position) color;
 		morphPosition: self windowPosition;
 		morphExtent: 390 @ 260;
 		startButtons;
-		details! !
+		details.
+	win heading contents: (model spaces at: model currentPlayer position) title! !
 
 !Monopoly methodsFor: 'windows' stamp: 'dhn 3/23/2020 14:55:55'!
 showChance: anArray
@@ -2334,18 +2335,18 @@ buy
 	model enableAll: {'End Turn'}.
 	self delete! !
 
-!BuyView methodsFor: 'operating' stamp: 'dhn 3/4/2020 21:53:43'!
+!BuyView methodsFor: 'operating' stamp: 'dhn 3/23/2020 16:31:17'!
 startButtons
 	"Set the buttons for buying assets"
 	
 	buyButton _ GameButtonMorph label: 'Buy' action: #buy state: true model: self.
 	buyButton 
-		morphExtent: 100@40;
+		morphExtent: 100@30;
 		setBalloonText: 'Make the purchase.'.
 		
 	auctionButton _ GameButtonMorph label: 'Auction' action: #auction state: true model: self.
 	auctionButton 
-		morphExtent: 100@40;
+		morphExtent: 100@30;
 		setBalloonText: 'Let everyone bid on it'.
 
 	buttonArea
@@ -2356,32 +2357,42 @@ startButtons
 		padding: #center.
 ! !
 
-!BuyView methodsFor: 'initialization' stamp: 'dhn 3/4/2020 22:04:01'!
+!BuyView methodsFor: 'initialization' stamp: 'dhn 3/23/2020 16:35:43'!
 buildMorphicWindow
 	"Lay out the window for purchases"
+	| headingArea |
 	
 	self layoutMorph beColumn.
 
-	textPane _ (TextModelMorph
-		withModel: (TextModel withText: '')) 	"note the different model specification"
-			askBeforeDiscardingEdits: false;	"discard changes to the text"
-			name: 'property data'. 	"give the TextModelMorph a name which will appear in the halos"
-	textPane 
+	heading _ ((StringMorph contents: '')  "for the title of the property"
+		font: (AbstractFont familyName: 'DejaVu' pointSize: 14)).
+	headingArea _ (LayoutMorph newRow)
 		layoutSpec: (LayoutSpec 
 			proportionalWidth: 1.0
-			proportionalHeight: 0.7
-			minorDirectionPadding: #center).
-			
+			proportionalHeight: 0.2
+			minorDirectionPadding: #center);
+		name: 'heading area';
+		padding: #center.
+	headingArea addMorph: heading.
+
+	textPane _ (TextModelMorph
+		withModel: (TextModel withText: ''))
+			askBeforeDiscardingEdits: false;
+			name: 'description';
+		layoutSpec: (LayoutSpec useAll;
+			proportionalHeight: 0.6).
+
 	buttonArea _ (LayoutMorph newRow)
 		layoutSpec: (LayoutSpec new
 			proportionalWidth: 1.0;
-			proportionalHeight: 0.3;
+			proportionalHeight: 0.15;
 			minorDirectionPadding: #center).
 	buttonArea
 		name: #buttons;
 		padding: #center.
 	
 	self layoutMorph
+		addMorph: heading;
 		addMorph: textPane;
 		addMorph: buttonArea.	
 
@@ -2402,6 +2413,12 @@ buyButton: aBool
 details
 
 	textPane model actualContents: (model spaces at: model currentPlayer position) saleReport! !
+
+!BuyView methodsFor: 'accessing' stamp: 'dhn 3/23/2020 15:35:24'!
+heading
+	"Answer the value of heading"
+	
+	^ heading! !
 
 !BuyView methodsFor: 'termination' stamp: 'dhn 3/4/2020 21:12:59'!
 closeBoxHit
