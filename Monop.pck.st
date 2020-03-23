@@ -1,6 +1,6 @@
-'From Cuis 5.0 [latest update: #4042] on 22 March 2020 at 9:07:03 pm'!
+'From Cuis 5.0 [latest update: #4042] on 22 March 2020 at 9:39:24 pm'!
 'Description Simulation of the board game "Monopoly".'!
-!provides: 'Monop' 1 129!
+!provides: 'Monop' 1 130!
 !requires: 'Game' 1 44 nil!
 SystemOrganization addCategory: #'Monop-View'!
 SystemOrganization addCategory: #'Monop-Model'!
@@ -2831,6 +2831,19 @@ ownedByOwner
 
 	^ (set select: [ :i | (mgr spaces at: i) owner = owner]) size! !
 
+!Property methodsFor: 'operating' stamp: 'dhn 3/22/2020 21:30:12'!
+ownersInSet
+	"Answer players who own assets in the set."
+	| owned arr |
+	
+	owned _ OrderedCollection new.
+	set do: [:ea | (mgr spaces at: ea) owner notNil ifTrue: [owned add: ea]].
+	arr _ OrderedCollection new.
+	owned do: [:ea | | where |
+		where _ mgr spaces at: ea.
+		arr add: {where owner identity. where title}].
+	^ arr! !
+
 !Lot methodsFor: 'accessing' stamp: 'dhn 2/20/2020 16:55:55'!
 houseCost
         "Answer the cost of a house."
@@ -2914,14 +2927,14 @@ report
 			nextPutAll: 'Rent is $', self rentAmount asString; nextPut: $.; newLine.
 		mortgaged ifTrue: [str nextPutAll: 'Mortgaged for $', (price / 2) asString; nextPut: $.; newLine]]! !
 
-!Lot methodsFor: 'operating' stamp: 'dhn 3/5/2020 12:53:44'!
+!Lot methodsFor: 'operating' stamp: 'dhn 3/22/2020 21:24:05'!
 saleReport
 	"Answer the sale data  for this lot."
 	| oth |
 	
 	^ String streamContents: [:str |
 		str nextPutAll: 'Price $', price asString; newLine.
-		(oth _ self othersBeside: mgr currentPlayer) isEmpty
+		(oth _ self ownersInSet) isEmpty
 			ifFalse: [
 				oth do: [:ea | 
 					str 
@@ -2997,14 +3010,14 @@ report
 			ifNotNil: [str nextPutAll: 'Rent is $', self rentAmount asString; nextPut: $.; newLine].
 		mortgaged ifTrue: [str nextPutAll: 'Mortgaged for $', (price / 2) asString; nextPut: $.; newLine]]! !
 
-!Railroad methodsFor: 'operating' stamp: 'dhn 3/5/2020 13:01:11'!
+!Railroad methodsFor: 'operating' stamp: 'dhn 3/22/2020 21:24:31'!
 saleReport
 	"Answer the sale data  for this railroad."
 	| oth |
 	
 	^ String streamContents: [:str |
 		str nextPutAll: 'Price $', price asString; newLine.
-		(oth _ self othersBeside: mgr currentPlayer) isEmpty 
+		(oth _ self ownersInSet) isEmpty
 			ifFalse: [
 				oth do: [:ea | 
 					str 
@@ -3104,7 +3117,7 @@ report
 					nextPutAll: ' times the amount rolled.'; newLine].
 		mortgaged ifTrue: [str nextPutAll: 'Mortgaged for $', (price / 2) asString; nextPut: $.; newLine]]! !
 
-!Utility methodsFor: 'operating' stamp: 'dhn 3/5/2020 12:41:46'!
+!Utility methodsFor: 'operating' stamp: 'dhn 3/22/2020 21:24:43'!
 saleReport
 	"Answer the sale data  for this utility."
 
@@ -3112,7 +3125,7 @@ saleReport
 	
 	^ String streamContents: [:str |
 		str nextPutAll: 'Price $', price asString; newLine.
-		(oth _ self othersBeside: mgr currentPlayer) isEmpty 
+		(oth _ self ownersInSet) isEmpty
 			ifFalse: [
 				oth do: [:ea | 
 					str 
