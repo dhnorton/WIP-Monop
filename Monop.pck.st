@@ -1,6 +1,6 @@
-'From Cuis 5.0 [latest update: #4042] on 22 March 2020 at 4:15:49 pm'!
+'From Cuis 5.0 [latest update: #4042] on 22 March 2020 at 8:37:38 pm'!
 'Description Simulation of the board game "Monopoly".'!
-!provides: 'Monop' 1 127!
+!provides: 'Monop' 1 128!
 !requires: 'Game' 1 44 nil!
 SystemOrganization addCategory: #'Monop-View'!
 SystemOrganization addCategory: #'Monop-Model'!
@@ -1402,13 +1402,14 @@ moving: anObject
 
 	moving _ anObject! !
 
-!AuctionButton methodsFor: 'event handling' stamp: 'dhn 3/22/2020 15:37:09'!
+!AuctionButton methodsFor: 'event handling' stamp: 'dhn 3/22/2020 20:28:19'!
 mouseButton2Down: event localPosition: point 
 	"Bring up the bid increment menu"
 	| x |
 
 	x _ (PopUpMenu labelArray: model bidIncrementList) 
 		startUpWithCaption: 'Bid Increment'.
+	x _ x max: 1.
 	model currentBump: (model class bidBump at: x).
 	model offer: label! !
 
@@ -2850,11 +2851,11 @@ houses: anInteger
         Value 5 means hotel."
     houses := anInteger.! !
 
-!Lot methodsFor: 'operating' stamp: 'dhn 3/3/2020 17:23:21'!
+!Lot methodsFor: 'operating' stamp: 'dhn 3/22/2020 19:43:31'!
 allInSet
 	"Answer whether the complete set of property is owned."
 
-	^ self numberOwned = (set size)! !
+	^ self ownedByOwner = (set size)! !
 
 !Lot methodsFor: 'operating' stamp: 'dhn 3/3/2020 17:24:05'!
 complete
@@ -2961,22 +2962,8 @@ rent: aPlayer
             amt := 2 * amt ].
     ^amt! !
 
-!Railroad methodsFor: 'operating' stamp: 'dhn 3/5/2020 12:13:18'!
+!Railroad methodsFor: 'operating' stamp: 'dhn 3/22/2020 19:31:25'!
 rentAmount
-	"Answer the rent based on the number of railroads owned and whether it is doubled."
-	| amt |
-
-	self owner isNil ifTrue: [ ^nil ].
-	self mortgaged ifTrue: [ ^0 ].
-	self numberOwned > 0
-		ifTrue: [
-			amt _ (rents at: self numberOwned) * factor.
-			factor _ 1]
-		ifFalse: [amt _ 0].
-	^ amt! !
-
-!Railroad methodsFor: 'operating' stamp: 'dhn 3/5/2020 15:55:02'!
-rentDue
 	"Answer the rent based on the number of railroads owned and whether it is doubled."
 	| amt |
 
@@ -3059,11 +3046,11 @@ title: aTitle price: aPrice set: aSet
 		set: aSet.
 	^ rr! !
 
-!Utility methodsFor: 'operating' stamp: 'dhn 2/29/2020 22:00:10'!
+!Utility methodsFor: 'operating' stamp: 'dhn 3/22/2020 19:55:18'!
 complete
 	"Answer a factor based on whether the complete set of property is owned."
 
-	^ self numberOwned = (set size) ifTrue: [10] ifFalse: [4]! !
+	^ self ownedByOwner = (set size) ifTrue: [10] ifFalse: [4]! !
 
 !Utility methodsFor: 'operating' stamp: 'dhn 5/14/2019 15:30:21'!
 rent: aPlayer
@@ -3541,13 +3528,6 @@ direct: aPlayer
         "Move aPlayer directly to a board position."
     super result: aPlayer.
     aPlayer position: self amount.! !
-
-!Move methodsFor: 'as yet unclassified'!
-nearRR: aPlayer
-        "Move aPlayer to the nearest railroad."
-    super result: aPlayer.
-    aPlayer position: 5.
-"The above statement is temporary."! !
 
 !Move methodsFor: 'as yet unclassified'!
 nearUt: aPlayer
