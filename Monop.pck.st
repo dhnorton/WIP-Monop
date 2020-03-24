@@ -1,6 +1,6 @@
-'From Cuis 5.0 [latest update: #4042] on 24 March 2020 at 11:08:55 am'!
+'From Cuis 5.0 [latest update: #4042] on 24 March 2020 at 11:21:08 am'!
 'Description Simulation of the board game "Monopoly".'!
-!provides: 'Monop' 1 138!
+!provides: 'Monop' 1 139!
 !requires: 'Game' 1 44 nil!
 SystemOrganization addCategory: #'Monop-View'!
 SystemOrganization addCategory: #'Monop-Model'!
@@ -266,16 +266,6 @@ Object subclass: #Card
 Card class
 	instanceVariableNames: ''!
 
-!classDefinition: #GetOut category: #'Monop-Model'!
-Card subclass: #GetOut
-	instanceVariableNames: ''
-	classVariableNames: ''
-	poolDictionaries: ''
-	category: 'Monop-Model'!
-!classDefinition: 'GetOut class' category: #'Monop-Model'!
-GetOut class
-	instanceVariableNames: ''!
-
 
 !Estate commentStamp: '<historical>' prior: 0!
 The model for the Monopoly board.!
@@ -344,9 +334,6 @@ A player in Monopoly.!
 
 !Card commentStamp: '<historical>' prior: 0!
 A card model for Monopoly.!
-
-!GetOut commentStamp: '<historical>' prior: 0!
-A "Get out of Jail Free" card.!
 
 !Estate methodsFor: 'initialization' stamp: 'dhn 5/16/2019 18:26:09'!
 initialButtonState
@@ -3523,17 +3510,3 @@ for: aString
 	^ super new initialize
 		fortune: aString;
 		yourself! !
-
-!GetOut methodsFor: 'as yet unclassified'!
-result: aPlayer
-        "Effect the result of aPlayer drawing this card."
-    super result: aPlayer.
-    aPlayer cards: self;
-        special: false.! !
-
-!GetOut class methodsFor: 'as yet unclassified'!
-for: aString
-        "Establish an instance of the class."
-    ^super new
-        fortune: aString;
-        yourself! !
