@@ -1,6 +1,6 @@
-'From Cuis 5.0 [latest update: #4042] on 24 March 2020 at 10:57:20 am'!
+'From Cuis 5.0 [latest update: #4042] on 24 March 2020 at 10:58:30 am'!
 'Description Simulation of the board game "Monopoly".'!
-!provides: 'Monop' 1 136!
+!provides: 'Monop' 1 137!
 !requires: 'Game' 1 44 nil!
 SystemOrganization addCategory: #'Monop-View'!
 SystemOrganization addCategory: #'Monop-Model'!
@@ -276,16 +276,6 @@ Card subclass: #GetOut
 GetOut class
 	instanceVariableNames: ''!
 
-!classDefinition: #Repair category: #'Monop-Model'!
-Card subclass: #Repair
-	instanceVariableNames: ''
-	classVariableNames: ''
-	poolDictionaries: ''
-	category: 'Monop-Model'!
-!classDefinition: 'Repair class' category: #'Monop-Model'!
-Repair class
-	instanceVariableNames: ''!
-
 
 !Estate commentStamp: '<historical>' prior: 0!
 The model for the Monopoly board.!
@@ -357,9 +347,6 @@ A card model for Monopoly.!
 
 !GetOut commentStamp: '<historical>' prior: 0!
 A "Get out of Jail Free" card.!
-
-!Repair commentStamp: '<historical>' prior: 0!
-A card that demands repairs on owned properties.!
 
 !Estate methodsFor: 'initialization' stamp: 'dhn 5/16/2019 18:26:09'!
 initialButtonState
@@ -3554,31 +3541,3 @@ for: aString
     ^super new
         fortune: aString;
         yourself! !
-
-!Repair methodsFor: 'as yet unclassified' stamp: 'dhn 5/14/2019 13:55:57'!
-result: aPlayer
-	"Effect the result of aPlayer drawing this card."
-	| houses hotels total |
-	
-    self salary: aPlayer.
-    houses := 0.
-    hotels := 0.
-    aPlayer property do: [ :p |
-        (p isKindOf: Lot)
-            ifTrue: [
-            p houses < 5
-                ifTrue: [houses := houses + p houses]
-                ifFalse: [hotels := hotels + 1] ] ].
-    total := (houses * (amount at: 1)) + (hotels * (amount at: 2)).
-    aPlayer cash: aPlayer cash - total;
-        special: false.
-	GamePopUp 
-		inform: aPlayer name, ': ', self fortune, ' That will be $', total printString, '.', ' is out $', total printString, '.' 
-		title: self square title! !
-
-!Repair class methodsFor: 'as yet unclassified'!
-of: anArray for: aString
-        "Answer an instance of the class."
-    ^super new
-        amount: anArray;
-        fortune: aString.! !
