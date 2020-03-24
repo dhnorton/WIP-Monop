@@ -1,6 +1,6 @@
-'From Cuis 5.0 [latest update: #4042] on 24 March 2020 at 11:25:16 am'!
+'From Cuis 5.0 [latest update: #4042] on 24 March 2020 at 11:49:27 am'!
 'Description Simulation of the board game "Monopoly".'!
-!provides: 'Monop' 1 140!
+!provides: 'Monop' 1 141!
 !requires: 'Game' 1 44 nil!
 SystemOrganization addCategory: #'Monop-View'!
 SystemOrganization addCategory: #'Monop-Model'!
@@ -1951,7 +1951,7 @@ showPropertyAuction
 	win showChant.
 	win beat: #announceSold! !
 
-!Monopoly methodsFor: 'windows' stamp: 'dhn 3/23/2020 20:01:11'!
+!Monopoly methodsFor: 'windows' stamp: 'dhn 3/24/2020 11:44:42'!
 showRentDue
 	"Tell the player about the rent"
 	| win lot rent story |
@@ -1960,8 +1960,11 @@ showRentDue
 	rent _ lot rentAmount.
 	story _ String streamContents: [:str |
 		str
-			nextPutAll: model currentPlayer identity, ' must pay ';
-			nextPutAll: lot owner identity, ' $', rent printStringWithCommas].
+			nextPutAll: model currentPlayer identity, ' has landed on ';
+			nextPutAll: lot title, ' and must pay ';
+			nextPutAll: lot owner identity, ' the sum of';
+			nextPutAll: ' $', rent printStringWithCommas;
+			nextPutAll: ' rent.'].
 	win _ Notifier openOn: model.
 	win openInWorld: pasteup.
 	win textPanel model actualContents: story.
