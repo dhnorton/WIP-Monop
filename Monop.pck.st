@@ -1,6 +1,6 @@
-'From Cuis 5.0 [latest update: #4042] on 24 March 2020 at 11:49:27 am'!
+'From Cuis 5.0 [latest update: #4042] on 24 March 2020 at 12:09:12 pm'!
 'Description Simulation of the board game "Monopoly".'!
-!provides: 'Monop' 1 141!
+!provides: 'Monop' 1 142!
 !requires: 'Game' 1 44 nil!
 SystemOrganization addCategory: #'Monop-View'!
 SystemOrganization addCategory: #'Monop-Model'!
@@ -96,6 +96,16 @@ BoardSpace subclass: #Square
 Square class
 	instanceVariableNames: ''!
 
+!classDefinition: #Go category: #'Monop-Model'!
+Square subclass: #Go
+	instanceVariableNames: ''
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'Monop-Model'!
+!classDefinition: 'Go class' category: #'Monop-Model'!
+Go class
+	instanceVariableNames: ''!
+
 !classDefinition: #Hazard category: #'Monop-Model'!
 Square subclass: #Hazard
 	instanceVariableNames: ''
@@ -104,6 +114,26 @@ Square subclass: #Hazard
 	category: 'Monop-Model'!
 !classDefinition: 'Hazard class' category: #'Monop-Model'!
 Hazard class
+	instanceVariableNames: ''!
+
+!classDefinition: #Jail category: #'Monop-Model'!
+Square subclass: #Jail
+	instanceVariableNames: ''
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'Monop-Model'!
+!classDefinition: 'Jail class' category: #'Monop-Model'!
+Jail class
+	instanceVariableNames: ''!
+
+!classDefinition: #Park category: #'Monop-Model'!
+Square subclass: #Park
+	instanceVariableNames: ''
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'Monop-Model'!
+!classDefinition: 'Park class' category: #'Monop-Model'!
+Park class
 	instanceVariableNames: ''!
 
 !classDefinition: #Property category: #'Monop-Model'!
@@ -174,46 +204,6 @@ Risk subclass: #Chest
 	category: 'Monop-Model'!
 !classDefinition: 'Chest class' category: #'Monop-Model'!
 Chest class
-	instanceVariableNames: ''!
-
-!classDefinition: #Shelter category: #'Monop-Model'!
-Square subclass: #Shelter
-	instanceVariableNames: ''
-	classVariableNames: ''
-	poolDictionaries: ''
-	category: 'Monop-Model'!
-!classDefinition: 'Shelter class' category: #'Monop-Model'!
-Shelter class
-	instanceVariableNames: ''!
-
-!classDefinition: #Go category: #'Monop-Model'!
-Shelter subclass: #Go
-	instanceVariableNames: ''
-	classVariableNames: ''
-	poolDictionaries: ''
-	category: 'Monop-Model'!
-!classDefinition: 'Go class' category: #'Monop-Model'!
-Go class
-	instanceVariableNames: ''!
-
-!classDefinition: #Jail category: #'Monop-Model'!
-Shelter subclass: #Jail
-	instanceVariableNames: ''
-	classVariableNames: ''
-	poolDictionaries: ''
-	category: 'Monop-Model'!
-!classDefinition: 'Jail class' category: #'Monop-Model'!
-Jail class
-	instanceVariableNames: ''!
-
-!classDefinition: #Park category: #'Monop-Model'!
-Shelter subclass: #Park
-	instanceVariableNames: ''
-	classVariableNames: ''
-	poolDictionaries: ''
-	category: 'Monop-Model'!
-!classDefinition: 'Park class' category: #'Monop-Model'!
-Park class
 	instanceVariableNames: ''!
 
 !classDefinition: #Tax category: #'Monop-Model'!
@@ -289,6 +279,9 @@ A square on the board.!
 !Hazard commentStamp: '<historical>' prior: 0!
 A square where bad things occur.!
 
+!Jail commentStamp: '<historical>' prior: 0!
+The Jail square.!
+
 !Property commentStamp: '<historical>' prior: 0!
 A square which can be bought and sold. Entitles the owner to collect rent as long as it is unmortgaged.!
 
@@ -303,12 +296,6 @@ A utility property.!
 
 !Risk commentStamp: '<historical>' prior: 0!
 A square which can specify a risk or a reward.!
-
-!Shelter commentStamp: '<historical>' prior: 0!
-A square which provides a breather from the rent race.!
-
-!Jail commentStamp: '<historical>' prior: 0!
-The Jail square.!
 
 !Tax commentStamp: '<historical>' prior: 0!
 A square which demands payment of tax.!
@@ -2647,6 +2634,12 @@ for: aPosition title: aString
         position: aPosition;
         title: aString! !
 
+!Go methodsFor: 'initialization' stamp: 'dhn 2/23/2020 13:39:30'!
+initialize
+
+	super initialize.
+	routine _ #salary! !
+
 !Hazard methodsFor: 'operating' stamp: 'dhn 5/14/2019 12:00:45'!
 result: aPlayer
         "Effect the result of aPlayer landing on 'Go to Jail'."
@@ -2664,6 +2657,18 @@ initialize
 
 	super initialize.
 	routine _ #goToJail! !
+
+!Jail methodsFor: 'initialization' stamp: 'dhn 2/23/2020 15:11:20'!
+initialize
+
+	super initialize.
+	routine _ #justVisit! !
+
+!Park methodsFor: 'initialization' stamp: 'dhn 2/23/2020 15:12:12'!
+initialize
+
+	super initialize.
+	routine _ #parkFree! !
 
 !Property methodsFor: 'as yet unclassified'!
 development
@@ -2687,25 +2692,6 @@ rentedBy: aPlayer
 		title: self title.
 	aPlayer assess: pmt.
 	self owner cash: self owner cash + pmt! !
-
-!Property methodsFor: 'as yet unclassified' stamp: 'dhn 5/14/2019 15:09:43'!
-result: aPlayer
-	"Effect the result of aPlayer landing on the property."
-	
-	super result: aPlayer.
-	aPlayer special: false.
-	self owner isNil
-		ifTrue: [self sellTo: aPlayer]
-		ifFalse: [ 
-			aPlayer = self owner
-		            ifFalse: [self rentedBy: aPlayer]
-		            ifTrue: [
-					GamePopUp 
-						inform: 
-							self owner name, ' landed own his own property. Doubles = ',
-							aPlayer doubles printString,
-							'; cash = $', aPlayer cash printString, '.' 
-						title: self title]]! !
 
 !Property methodsFor: 'as yet unclassified' stamp: 'dhn 5/14/2019 15:28:02'!
 sellTo: aPlayer
@@ -3155,12 +3141,6 @@ initialize: aCollection
         "Establish the initial state by setting the instance variables."
     cards := aCollection.! !
 
-!Risk methodsFor: 'as yet unclassified' stamp: 'dhn 5/14/2019 15:31:28'!
-result: aPlayer
-        "Effect the result of randomly picking one of the cards."
-    (cards at: (DieMorph new cards size) first)
-        result: aPlayer! !
-
 !Chance methodsFor: 'initialization' stamp: 'dhn 2/23/2020 13:43:55'!
 initialize
 
@@ -3172,48 +3152,6 @@ initialize
 
 	super initialize.
 	routine _ #drawChest! !
-
-!Shelter methodsFor: 'as yet unclassified' stamp: 'dhn 5/14/2019 15:36:03'!
-result: aPlayer
-	"Effect the result of aPlayer landing on the square."
-	
-	super result: aPlayer.
-	GamePopUp 
-		inform: 
-			'This is where ', aPlayer name, ' landed. Doubles = ', 
-			aPlayer doubles printString, '; cash = $', aPlayer cash printString, '.' 
-		title: self title.
-	aPlayer special: false.! !
-
-!Go methodsFor: 'initialization' stamp: 'dhn 2/23/2020 13:39:30'!
-initialize
-
-	super initialize.
-	routine _ #salary! !
-
-!Jail methodsFor: 'as yet unclassified' stamp: 'dhn 5/14/2019 12:01:24'!
-result: aPlayer
-        "Effect the result of aPlayer landing on the square."
-
-    super result: aPlayer.
-    GamePopUp 
-		inform: 'This is where ',
-            aPlayer name,
-            ' landed. Doubles = ', aPlayer doubles printString,
-            '; cash = $', aPlayer cash printString, '.'.
-    aPlayer special: false.! !
-
-!Jail methodsFor: 'initialization' stamp: 'dhn 2/23/2020 15:11:20'!
-initialize
-
-	super initialize.
-	routine _ #justVisit! !
-
-!Park methodsFor: 'initialization' stamp: 'dhn 2/23/2020 15:12:12'!
-initialize
-
-	super initialize.
-	routine _ #parkFree! !
 
 !Tax methodsFor: 'as yet unclassified' stamp: 'dhn 5/14/2019 15:39:28'!
 income: aPlayer
