@@ -1,6 +1,6 @@
-'From Cuis 5.0 [latest update: #4042] on 23 March 2020 at 5:06:48 pm'!
+'From Cuis 5.0 [latest update: #4042] on 23 March 2020 at 8:39:36 pm'!
 'Description Simulation of the board game "Monopoly".'!
-!provides: 'Monop' 1 133!
+!provides: 'Monop' 1 134!
 !requires: 'Game' 1 44 nil!
 SystemOrganization addCategory: #'Monop-View'!
 SystemOrganization addCategory: #'Monop-Model'!
@@ -486,28 +486,19 @@ statsReport: anAsset
 auction: aProperty
 	"Sell aProperty at auction."! !
 
-!Estate methodsFor: 'operating' stamp: 'dhn 3/22/2020 13:26:46'!
+!Estate methodsFor: 'operating' stamp: 'dhn 3/23/2020 19:51:56'!
 broker
 	"Represent the property"
 	"If unowned, the 'owner' is the bank and the property will be sold or auctioned."
 	"If owned, rent will be collected."
-	| lot rent |
+	| property |
 	
-	lot _ spaces at: currentPlayer position.
-	lot owner
+	property _ spaces at: currentPlayer position.
+	property owner
 		ifNil: [self triggerEvent: #showBuyView]
 		ifNotNil: [
-			lot owner ~= currentPlayer 
-				ifTrue: [
-					rent _ lot rentAmount.
-					GamePopUp 
-						inform: currentPlayer identity, ' must pay ', 
-							lot owner identity, ' $', rent asString
-						title: 'Rent Due'.
-					currentPlayer tally: rent negated.
-					lot owner tally: rent.
-					self enableAll: {'End Turn'}.
-					self triggerEvent: #itemChange]
+			property owner ~= currentPlayer 
+				ifTrue: [self triggerEvent: #showRentDue]
 				ifFalse: [self enableAll: {'End Turn'}]].
 	self token moving: false
 ! !
@@ -965,6 +956,18 @@ toEach: anAmount
 				p tally: anAmount.
 				currentPlayer tally: anAmount negated]].
 	self triggerEvent: #itemChange! !
+
+!Estate methodsFor: 'operating' stamp: 'dhn 3/23/2020 20:05:26'!
+toOwner: anArray
+	"Transfer money from the current player to the property owner for rent"
+	| rent |
+	
+	rent _ anArray second.
+	currentPlayer tally: rent negated.
+	anArray first tally: rent.
+	self triggerEvent: #itemChange.
+	self enableAll: {'End Turn'}
+! !
 
 !Estate methodsFor: 'operating' stamp: 'dhn 3/18/2020 21:14:36'!
 toRailroad: unused
@@ -1578,7 +1581,7 @@ tourAt: anInterval
 	self startSteppingStepTime: anInterval. 	"time of each increment of the hop"
 ! !
 
-!Monopoly methodsFor: 'initialization' stamp: 'dhn 3/16/2020 12:45:42'!
+!Monopoly methodsFor: 'initialization' stamp: 'dhn 3/23/2020 19:53:01'!
 buildMorphicWindow
 
 	pasteup _ GamePasteUp new
@@ -1603,6 +1606,7 @@ buildMorphicWindow
 	model when: #showChest: send: #showChest: to: self with: #array.
 	model when: #showIncomeTax send: #showIncomeTax to: self.
 	model when: #showLuxuryTax send: #showLuxuryTax to: self.
+	model when: #showRentDue send: #showRentDue to: self.
 	"when:send:to:"
 	"when:send:to:with:"
 	"when:send:to:withArguments:"
@@ -1998,6 +2002,32 @@ showPropertyAuction
 	win chant addFirst: 'The auction has started, what am I bid?'.
 	win showChant.
 	win beat: #announceSold! !
+
+!Monopoly methodsFor: 'windows' stamp: 'dhn 3/23/2020 20:01:11'!
+showRentDue
+	"Tell the player about the rent"
+	| win lot rent story |
+		
+	lot _ model spaces at: model currentPlayer position.
+	rent _ lot rentAmount.
+	story _ String streamContents: [:str |
+		str
+			nextPutAll: model currentPlayer identity, ' must pay ';
+			nextPutAll: lot owner identity, ' $', rent printStringWithCommas].
+	win _ Notifier openOn: model.
+	win openInWorld: pasteup.
+	win textPanel model actualContents: story.
+	win textPanel color: Color lightRed.
+	win nextDo add: {#toOwner:. {lot owner. rent}}.
+	win
+		cleanTitleBar;
+		setLabel: 'Pay Rent';
+		setWindowColor: win textPanel color;
+		morphPosition: self windowPosition;
+		setButton;
+		morphExtent: 360 @ 170.
+	win buttonArea color: win textPanel color
+! !
 
 !Monopoly methodsFor: 'windows' stamp: 'dhn 3/23/2020 12:06:14'!
 showStats
