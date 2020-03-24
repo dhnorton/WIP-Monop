@@ -1,6 +1,6 @@
-'From Cuis 5.0 [latest update: #4042] on 24 March 2020 at 10:58:30 am'!
+'From Cuis 5.0 [latest update: #4042] on 24 March 2020 at 11:08:55 am'!
 'Description Simulation of the board game "Monopoly".'!
-!provides: 'Monop' 1 137!
+!provides: 'Monop' 1 138!
 !requires: 'Game' 1 44 nil!
 SystemOrganization addCategory: #'Monop-View'!
 SystemOrganization addCategory: #'Monop-Model'!
@@ -3096,7 +3096,7 @@ rent: aPlayer
             amt := 10 * (DieMorph new) ].
     ^amt! !
 
-!Utility methodsFor: 'operating' stamp: 'dhn 2/29/2020 21:24:31'!
+!Utility methodsFor: 'operating' stamp: 'dhn 3/24/2020 11:07:15'!
 rentAmount
 	"Answer the rent for this property in its current state."
 	| amt |
@@ -3104,10 +3104,6 @@ rentAmount
 	self owner isNil ifTrue: [ ^nil ].
 	self mortgaged ifTrue: [ ^0 ].
 	amt _ self complete * mgr currentPlayer roll.
-	mgr currentPlayer special
-		ifTrue: [
-			mgr currentPlayer special: false.
-			amt _ 10 * (DieMorph new) ].
 	^ amt! !
 
 !Utility methodsFor: 'operating' stamp: 'dhn 3/5/2020 14:54:15'!
