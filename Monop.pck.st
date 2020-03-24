@@ -1,6 +1,6 @@
-'From Cuis 5.0 [latest update: #4042] on 24 March 2020 at 12:09:12 pm'!
+'From Cuis 5.0 [latest update: #4042] on 24 March 2020 at 12:24:56 pm'!
 'Description Simulation of the board game "Monopoly".'!
-!provides: 'Monop' 1 142!
+!provides: 'Monop' 1 143!
 !requires: 'Game' 1 44 nil!
 SystemOrganization addCategory: #'Monop-View'!
 SystemOrganization addCategory: #'Monop-Model'!
@@ -1882,7 +1882,7 @@ showGo
 		setButton;
 		morphExtent: 315 @ 215! !
 
-!Monopoly methodsFor: 'windows' stamp: 'dhn 3/16/2020 21:48:53'!
+!Monopoly methodsFor: 'windows' stamp: 'dhn 3/24/2020 12:21:24'!
 showIncomeTax
 	"Tell the player about his income tax"
 	| win |
@@ -1894,6 +1894,7 @@ showIncomeTax
 	win nextDo addFirst: #(#enable: 'End Turn').
 	win nextDo addFirst: #(#tax: -200).
 	win
+		cleanTitleBar;
 		setWindowColor: win textPanel color;
 		morphPosition: self windowPosition;
 		setButton;
