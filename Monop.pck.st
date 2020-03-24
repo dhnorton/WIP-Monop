@@ -1,6 +1,6 @@
-'From Cuis 5.0 [latest update: #4042] on 24 March 2020 at 11:21:08 am'!
+'From Cuis 5.0 [latest update: #4042] on 24 March 2020 at 11:25:16 am'!
 'Description Simulation of the board game "Monopoly".'!
-!provides: 'Monop' 1 139!
+!provides: 'Monop' 1 140!
 !requires: 'Game' 1 44 nil!
 SystemOrganization addCategory: #'Monop-View'!
 SystemOrganization addCategory: #'Monop-Model'!
@@ -256,16 +256,6 @@ Gamer subclass: #Developer
 Developer class
 	instanceVariableNames: ''!
 
-!classDefinition: #Card category: #'Monop-Model'!
-Object subclass: #Card
-	instanceVariableNames: 'amount fortune method square'
-	classVariableNames: ''
-	poolDictionaries: ''
-	category: 'Monop-Model'!
-!classDefinition: 'Card class' category: #'Monop-Model'!
-Card class
-	instanceVariableNames: ''!
-
 
 !Estate commentStamp: '<historical>' prior: 0!
 The model for the Monopoly board.!
@@ -331,9 +321,6 @@ Charge the player luxury tax.!
 
 !Developer commentStamp: '<historical>' prior: 0!
 A player in Monopoly.!
-
-!Card commentStamp: '<historical>' prior: 0!
-A card model for Monopoly.!
 
 !Estate methodsFor: 'initialization' stamp: 'dhn 5/16/2019 18:26:09'!
 initialButtonState
@@ -3454,59 +3441,3 @@ roll
 roll: anInteger
         "Set the sum of the Player's roll of the dice."
     roll := anInteger.! !
-
-!Card methodsFor: 'accessing' stamp: 'dhn 5/13/2019 22:07:12'!
-amount
-	"Answer the value of amount"
-
-	^ amount! !
-
-!Card methodsFor: 'accessing' stamp: 'dhn 5/13/2019 22:07:12'!
-amount: anObject
-	"Set the value of amount"
-
-	amount _ anObject! !
-
-!Card methodsFor: 'accessing' stamp: 'dhn 5/13/2019 22:07:12'!
-fortune
-	"Answer the value of fortune"
-
-	^ fortune! !
-
-!Card methodsFor: 'accessing' stamp: 'dhn 5/13/2019 22:07:12'!
-fortune: anObject
-	"Set the value of fortune"
-
-	fortune _ anObject! !
-
-!Card methodsFor: 'accessing' stamp: 'dhn 5/13/2019 22:10:45'!
-method
-	"Answer the value of method"
-
-	^ method! !
-
-!Card methodsFor: 'accessing' stamp: 'dhn 5/13/2019 22:07:12'!
-method: anObject
-	"Set the value of method"
-
-	method _ anObject! !
-
-!Card methodsFor: 'accessing' stamp: 'dhn 5/13/2019 22:07:12'!
-square
-	"Answer the value of square"
-
-	^ square! !
-
-!Card methodsFor: 'accessing' stamp: 'dhn 5/13/2019 22:07:12'!
-square: anObject
-	"Set the value of square"
-
-	square _ anObject! !
-
-!Card class methodsFor: 'initialize-release' stamp: 'dhn 5/13/2019 22:06:17'!
-for: aString
-	"Establish an instance of the class."
-	
-	^ super new initialize
-		fortune: aString;
-		yourself! !
