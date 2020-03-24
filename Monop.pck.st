@@ -1,6 +1,6 @@
-'From Cuis 5.0 [latest update: #4042] on 24 March 2020 at 10:49:12 am'!
+'From Cuis 5.0 [latest update: #4042] on 24 March 2020 at 10:57:20 am'!
 'Description Simulation of the board game "Monopoly".'!
-!provides: 'Monop' 1 135!
+!provides: 'Monop' 1 136!
 !requires: 'Game' 1 44 nil!
 SystemOrganization addCategory: #'Monop-View'!
 SystemOrganization addCategory: #'Monop-Model'!
@@ -276,16 +276,6 @@ Card subclass: #GetOut
 GetOut class
 	instanceVariableNames: ''!
 
-!classDefinition: #Move category: #'Monop-Model'!
-Card subclass: #Move
-	instanceVariableNames: 'special'
-	classVariableNames: ''
-	poolDictionaries: ''
-	category: 'Monop-Model'!
-!classDefinition: 'Move class' category: #'Monop-Model'!
-Move class
-	instanceVariableNames: ''!
-
 !classDefinition: #Repair category: #'Monop-Model'!
 Card subclass: #Repair
 	instanceVariableNames: ''
@@ -367,9 +357,6 @@ A card model for Monopoly.!
 
 !GetOut commentStamp: '<historical>' prior: 0!
 A "Get out of Jail Free" card.!
-
-!Move commentStamp: '<historical>' prior: 0!
-A card which demands that the player move.!
 
 !Repair commentStamp: '<historical>' prior: 0!
 A card that demands repairs on owned properties.!
@@ -3567,78 +3554,6 @@ for: aString
     ^super new
         fortune: aString;
         yourself! !
-
-!Move methodsFor: 'as yet unclassified'!
-direct: aPlayer
-        "Move aPlayer directly to a board position."
-    super result: aPlayer.
-    aPlayer position: self amount.! !
-
-!Move methodsFor: 'as yet unclassified'!
-nearUt: aPlayer
-        "Move aPlayer to the nearest utility."
-    super result: aPlayer.
-    aPlayer position: 12.
-"The above statement is temporary."! !
-
-!Move methodsFor: 'as yet unclassified'!
-relative: aPlayer
-        "Move aPlayer relative to his current board position."
-    super result: aPlayer.
-    aPlayer position: aPlayer position + self amount.! !
-
-!Move methodsFor: 'as yet unclassified'!
-result: aPlayer
-        "Effect the result of aPlayer drawing this card."
-    self perform: self method with: aPlayer.! !
-
-!Move methodsFor: 'as yet unclassified'!
-special
-        "Answer the special instance variable."
-    ^special! !
-
-!Move methodsFor: 'as yet unclassified'!
-special: aBoolean
-        "Set the special instance variable."
-    special := aBoolean.! !
-
-!Move methodsFor: 'as yet unclassified'!
-summarily: aPlayer
-        "Move aPlayer to a board position and end his turn."
-    self direct: aPlayer.
-    aPlayer special: false.
-    aPlayer position = 10
-        ifTrue: [aPlayer jail: true with: 0].! !
-
-!Move class methodsFor: 'as yet unclassified'!
-special: aBoolean to: anInteger for: aString
-        "Answer a special instance of the class."
-    ^super new
-        special: aBoolean;
-        amount: anInteger;
-        fortune: aString.! !
-
-!Move class methodsFor: 'as yet unclassified'!
-to: anInteger for: aString
-        "Answer an instance of the class."
-    ^super new
-        amount: anInteger;
-        fortune: aString.! !
-
-!Move class methodsFor: 'as yet unclassified'!
-with: aMethod for: aString
-        "Answer an instance of the class."
-    ^super new
-        method: aMethod;
-        fortune: aString.! !
-
-!Move class methodsFor: 'as yet unclassified'!
-with: aMethod to: anInteger for: aString
-        "Answer an instance of the class."
-    ^super new
-        method: aMethod;
-        amount: anInteger;
-        fortune: aString.! !
 
 !Repair methodsFor: 'as yet unclassified' stamp: 'dhn 5/14/2019 13:55:57'!
 result: aPlayer
