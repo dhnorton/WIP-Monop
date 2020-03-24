@@ -1,6 +1,6 @@
-'From Cuis 5.0 [latest update: #4042] on 23 March 2020 at 8:39:36 pm'!
+'From Cuis 5.0 [latest update: #4042] on 24 March 2020 at 10:49:12 am'!
 'Description Simulation of the board game "Monopoly".'!
-!provides: 'Monop' 1 134!
+!provides: 'Monop' 1 135!
 !requires: 'Game' 1 44 nil!
 SystemOrganization addCategory: #'Monop-View'!
 SystemOrganization addCategory: #'Monop-Model'!
@@ -248,7 +248,7 @@ Luxury class
 
 !classDefinition: #Developer category: #'Monop-Model'!
 Gamer subclass: #Developer
-	instanceVariableNames: 'cards doubles jail goAgain special doubledString'
+	instanceVariableNames: 'cards doubles jail goAgain doubledString'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Monop-Model'!
@@ -3303,7 +3303,7 @@ initialize
 	super initialize.
 	routine _ #luxuryTax! !
 
-!Developer methodsFor: 'initialization' stamp: 'dhn 3/1/2020 14:39:31'!
+!Developer methodsFor: 'initialization' stamp: 'dhn 3/24/2020 10:31:21'!
 initialize
 
 	cash _ 1500.
@@ -3313,8 +3313,7 @@ initialize
 	cards := OrderedCollection new.
 	self
 		jail: false with: 0;
-		doubles: 0;
-		special: false! !
+		doubles: 0! !
 
 !Developer methodsFor: 'as yet unclassified' stamp: 'dhn 5/17/2019 12:29:19'!
 assess: anInteger
@@ -3498,16 +3497,6 @@ roll
 roll: anInteger
         "Set the sum of the Player's roll of the dice."
     roll := anInteger.! !
-
-!Developer methodsFor: 'accessing' stamp: 'dhn 5/17/2019 12:29:19'!
-special
-        "Answer the special instance variable."
-    ^special! !
-
-!Developer methodsFor: 'accessing' stamp: 'dhn 5/17/2019 12:29:19'!
-special: aBoolean
-        "Set the special instance variable."
-    special := aBoolean.! !
 
 !Card methodsFor: 'accessing' stamp: 'dhn 5/13/2019 22:07:12'!
 amount
