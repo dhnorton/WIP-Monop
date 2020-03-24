@@ -1,6 +1,6 @@
-'From Cuis 5.0 [latest update: #4042] on 24 March 2020 at 5:11:34 pm'!
+'From Cuis 5.0 [latest update: #4042] on 24 March 2020 at 7:37:34 pm'!
 'Description Simulation of the board game "Monopoly".'!
-!provides: 'Monop' 1 145!
+!provides: 'Monop' 1 146!
 !requires: 'Game' 1 44 nil!
 SystemOrganization addCategory: #'Monop-View'!
 SystemOrganization addCategory: #'Monop-Model'!
@@ -539,7 +539,13 @@ goToJail
 	"currentPlayer jail: true with: 0."
 ! !
 
-!Estate methodsFor: 'operating' stamp: 'dhn 3/12/2020 21:18:41'!
+!Estate methodsFor: 'operating' stamp: 'dhn 3/24/2020 17:56:53'!
+goal
+	"Answer the goal of the game"
+	
+	^ 4000! !
+
+!Estate methodsFor: 'operating' stamp: 'dhn 3/24/2020 17:50:09'!
 hammerDown: aBid for: aProperty by: aBidder
 	"Record the sale at auction"
 	| winner |
@@ -549,6 +555,7 @@ hammerDown: aBid for: aProperty by: aBidder
 	winner assets add: aProperty.
 	winner assets reSort.
 	aProperty owner: winner.
+	winner history addLast: winner history last  + aProperty price.
 	self triggerEvent: #itemChange
 ! !
 
@@ -773,7 +780,7 @@ propertyAuctionBid: anObject
 	(propertyAuctionBid _ anObject) 
 		ifNotNil: [self triggerEvent: #itemChange]! !
 
-!Estate methodsFor: 'operating' stamp: 'dhn 3/4/2020 21:26:26'!
+!Estate methodsFor: 'operating' stamp: 'dhn 3/24/2020 18:05:20'!
 propertyBuy
 	"Finalize the sale"
 	| lot |
@@ -783,6 +790,7 @@ propertyBuy
 	currentPlayer assets add: lot.
 	currentPlayer assets reSort.
 	lot owner: currentPlayer.
+	currentPlayer history addLast: currentPlayer history last  + lot price.
 	self triggerEvent: #itemChange
 ! !
 
