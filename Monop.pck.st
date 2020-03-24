@@ -1,6 +1,6 @@
-'From Cuis 5.0 [latest update: #4042] on 24 March 2020 at 2:23:28 pm'!
+'From Cuis 5.0 [latest update: #4042] on 24 March 2020 at 5:11:34 pm'!
 'Description Simulation of the board game "Monopoly".'!
-!provides: 'Monop' 1 144!
+!provides: 'Monop' 1 145!
 !requires: 'Game' 1 44 nil!
 SystemOrganization addCategory: #'Monop-View'!
 SystemOrganization addCategory: #'Monop-Model'!
@@ -3348,6 +3348,15 @@ jail: aBoolean with: anInteger
         "Set the jail state array as (aBoolean anInteger),
         where anInteger is the number of attempts to roll out."
     jail := Array with: aBoolean with: anInteger! !
+
+!Developer methodsFor: 'operating' stamp: 'dhn 3/24/2020 15:51:02'!
+propertyValue
+	"Answer the value, based on list price, of property"
+	| ttl |
+	
+	ttl _ 0.
+	assets do: [:ea | ea mortgaged ifFalse: [ttl _ ttl + ea price]].
+	^ ttl! !
 
 !Developer methodsFor: 'accessing' stamp: 'dhn 2/25/2020 20:08:21'!
 doubledString
