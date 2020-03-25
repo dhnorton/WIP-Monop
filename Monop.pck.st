@@ -1,6 +1,6 @@
-'From Cuis 5.0 [latest update: #4042] on 25 March 2020 at 3:20:32 pm'!
+'From Cuis 5.0 [latest update: #4042] on 25 March 2020 at 3:24:40 pm'!
 'Description Simulation of the board game "Monopoly".'!
-!provides: 'Monop' 1 150!
+!provides: 'Monop' 1 151!
 !requires: 'Game' 1 44 nil!
 SystemOrganization addCategory: #'Monop-View'!
 SystemOrganization addCategory: #'Monop-Model'!
@@ -2564,12 +2564,6 @@ buttonArea
 	"Answer the value of buttonArea"
 
 	^ buttonArea! !
-
-!Notifier methodsFor: 'accessing' stamp: 'dhn 3/13/2020 21:11:02'!
-buttonArea: anObject
-	"Set the value of buttonArea"
-
-	buttonArea _ anObject! !
 
 !Notifier methodsFor: 'accessing' stamp: 'dhn 3/16/2020 13:12:24'!
 nextDo
