@@ -1,6 +1,6 @@
-'From Cuis 5.0 [latest update: #4042] on 24 March 2020 at 9:04:07 pm'!
+'From Cuis 5.0 [latest update: #4042] on 25 March 2020 at 11:30:14 am'!
 'Description Simulation of the board game "Monopoly".'!
-!provides: 'Monop' 1 147!
+!provides: 'Monop' 1 148!
 !requires: 'Game' 1 44 nil!
 SystemOrganization addCategory: #'Monop-View'!
 SystemOrganization addCategory: #'Monop-Model'!
@@ -1794,7 +1794,7 @@ showSeasons: anIndex
 	1 to: seasonsArea submorphs size do: [ :n |
 		(seasonsArea submorphs at: n) color: (seas at: n) color]! !
 
-!Monopoly methodsFor: 'initialization' stamp: 'dhn 5/15/2019 12:40:40'!
+!Monopoly methodsFor: 'initialization' stamp: 'dhn 3/25/2020 11:08:00'!
 startButtonSet
 	"Answer the buttons used to start the game"
 
@@ -1802,9 +1802,7 @@ startButtonSet
 		removeAllMorphs;
 		addMorph: self makeAddPlayerButton;
 		addMorph: self makeSettingsButton;
-		addMorph: self makeTourButton;
-		addMorph: self makeQuitGameButton.
-! !
+		addMorph: self makeTourButton! !
 
 !Monopoly methodsFor: 'initialization' stamp: 'dhn 5/16/2019 16:00:49'!
 startGame
