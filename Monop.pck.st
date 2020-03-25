@@ -1,6 +1,6 @@
-'From Cuis 5.0 [latest update: #4042] on 25 March 2020 at 4:27:49 pm'!
+'From Cuis 5.0 [latest update: #4042] on 25 March 2020 at 5:03:25 pm'!
 'Description Simulation of the board game "Monopoly".'!
-!provides: 'Monop' 1 154!
+!provides: 'Monop' 1 155!
 !requires: 'Game' 1 44 nil!
 SystemOrganization addCategory: #'Monop-View'!
 SystemOrganization addCategory: #'Monop-Model'!
@@ -1903,14 +1903,14 @@ showGo
 	win buttonArea color: win textPanel color
 ! !
 
-!Monopoly methodsFor: 'windows' stamp: 'dhn 3/25/2020 12:03:55'!
+!Monopoly methodsFor: 'windows' stamp: 'dhn 3/25/2020 16:42:57'!
 showIncomeTax
 	"Tell the player about his income tax"
 	| win |
 		
 	win _ Notifier open: model label: 'Income Tax'.
 	win openInWorld: pasteup.
-	win textPanel model actualContents: 'You will pay income tax in the amount of the larger of 10% of assets or $200.'.
+	win textPanel model actualContents: 'You will pay income tax of the larger of either $200 or 10% of assets. It''s your choice.'.
 	win textPanel color: Color lightRed.
 	win nextDo addFirst: #(#enable: 'End Turn').
 	win nextDo addFirst: #(#tax: -200).
