@@ -1,6 +1,6 @@
-'From Cuis 5.0 [latest update: #4042] on 25 March 2020 at 3:11:53 pm'!
+'From Cuis 5.0 [latest update: #4042] on 25 March 2020 at 3:20:32 pm'!
 'Description Simulation of the board game "Monopoly".'!
-!provides: 'Monop' 1 149!
+!provides: 'Monop' 1 150!
 !requires: 'Game' 1 44 nil!
 SystemOrganization addCategory: #'Monop-View'!
 SystemOrganization addCategory: #'Monop-Model'!
@@ -276,11 +276,17 @@ A window for notifying players.!
 !Square commentStamp: '<historical>' prior: 0!
 A square on the board.!
 
+!Go commentStamp: '<historical>' prior: 0!
+The beginning square.!
+
 !Hazard commentStamp: '<historical>' prior: 0!
 A square where bad things occur.!
 
 !Jail commentStamp: '<historical>' prior: 0!
 The Jail square.!
+
+!Park commentStamp: '<historical>' prior: 0!
+The free parking square.!
 
 !Property commentStamp: '<historical>' prior: 0!
 A square which can be bought and sold. Entitles the owner to collect rent as long as it is unmortgaged.!
@@ -296,6 +302,12 @@ A utility property.!
 
 !Risk commentStamp: '<historical>' prior: 0!
 A square which can specify a risk or a reward.!
+
+!Chance commentStamp: '<historical>' prior: 0!
+A square for drawing a Chance card.!
+
+!Chest commentStamp: '<historical>' prior: 0!
+A square for drawing a Community Chest card.!
 
 !Tax commentStamp: '<historical>' prior: 0!
 A square which demands payment of tax.!
