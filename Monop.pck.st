@@ -1,6 +1,6 @@
-'From Cuis 5.0 [latest update: #4042] on 25 March 2020 at 11:30:14 am'!
+'From Cuis 5.0 [latest update: #4042] on 25 March 2020 at 3:11:53 pm'!
 'Description Simulation of the board game "Monopoly".'!
-!provides: 'Monop' 1 148!
+!provides: 'Monop' 1 149!
 !requires: 'Game' 1 44 nil!
 SystemOrganization addCategory: #'Monop-View'!
 SystemOrganization addCategory: #'Monop-Model'!
@@ -78,7 +78,7 @@ MonopStats class
 
 !classDefinition: #Notifier category: #'Monop-View'!
 GameView subclass: #Notifier
-	instanceVariableNames: 'textPanel buttonArea okButton okCount nextDo'
+	instanceVariableNames: 'textPanel buttonArea okButton okCount nextDo pctButton'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Monop-View'!
@@ -1888,7 +1888,7 @@ showGo
 		setButton;
 		morphExtent: 315 @ 215! !
 
-!Monopoly methodsFor: 'windows' stamp: 'dhn 3/24/2020 12:21:24'!
+!Monopoly methodsFor: 'windows' stamp: 'dhn 3/25/2020 12:03:55'!
 showIncomeTax
 	"Tell the player about his income tax"
 	| win |
@@ -1903,7 +1903,7 @@ showIncomeTax
 		cleanTitleBar;
 		setWindowColor: win textPanel color;
 		morphPosition: self windowPosition;
-		setButton;
+		twoButton;
 		morphExtent: 315 @ 215.
 	win buttonArea color: win textPanel color
 ! !
@@ -2466,6 +2466,21 @@ finish
 			okButton delete]
 		ifFalse: [okButton disableButton]! !
 
+!Notifier methodsFor: 'operating' stamp: 'dhn 3/25/2020 13:16:24'!
+finish2
+	"Perform methods in response to the 10% button"
+	| col |
+
+	self okCount < 1
+		ifTrue: [
+			okCount _ okCount + 1.
+			col _ self nextDo removeFirst; yourself.
+			col addFirst: {#tax:. (model currentPlayer taxWorth negated * 0.1)}.
+			col do: [:ea |
+				model perform: ea first with: ea second].
+			model enable: 'End Turn'.
+			buttonArea removeAllMorphs]! !
+
 !Notifier methodsFor: 'initialization' stamp: 'dhn 3/16/2020 21:54:01'!
 buildMorphicWindow
 	"Lay out the window for purchases"
@@ -2509,6 +2524,26 @@ setButton
 
 	buttonArea
 		addMorph: okButton;
+		padding: #center
+! !
+
+!Notifier methodsFor: 'initialization' stamp: 'dhn 3/25/2020 13:01:29'!
+twoButton
+	"Set the buttons for income tax"
+	
+	okButton _ GameButtonMorph label: '$200' action: #finish state: true model: self.
+	okButton 
+		morphExtent: 70@30;
+		setBalloonText: 'Cheaper late'.
+
+	pctButton _ GameButtonMorph label: '10%' action: #finish2 state: true model: self.
+	pctButton 
+		morphExtent: 70@30;
+		setBalloonText: 'Cheaper early'.
+
+	buttonArea
+		addMorph: okButton;
+		addMorph: pctButton;
 		padding: #center
 ! !
 
@@ -3355,25 +3390,19 @@ jail: aBoolean with: anInteger
         where anInteger is the number of attempts to roll out."
     jail := Array with: aBoolean with: anInteger! !
 
-!Developer methodsFor: 'operating' stamp: 'dhn 3/24/2020 19:55:32'!
+!Developer methodsFor: 'operating' stamp: 'dhn 3/25/2020 12:38:04'!
 netWorth
 	"Answer the total value of cash, property, and houses"
-	| development |
+	"Mortgaged property has zero value"
+	| development values |
 	
 	development _ 0.
+	values _ 0.
 	assets do: [:ea |
 		ea class = Lot
-			ifTrue: [development _ development + (ea houses * ea houseCost)]].
-	^ cash + self propertyValue + development! !
-
-!Developer methodsFor: 'operating' stamp: 'dhn 3/24/2020 15:51:02'!
-propertyValue
-	"Answer the value, based on list price, of property"
-	| ttl |
-	
-	ttl _ 0.
-	assets do: [:ea | ea mortgaged ifFalse: [ttl _ ttl + ea price]].
-	^ ttl! !
+			ifTrue: [development _ development + (ea houses * ea houseCost)].
+		values _ values + (ea mortgaged ifTrue: [0] ifFalse: [ea price])].
+	^ cash + values + development! !
 
 !Developer methodsFor: 'operating' stamp: 'dhn 3/24/2020 20:05:39'!
 tally: anAmount
@@ -3388,6 +3417,19 @@ tally: anAmount
 		self halt: 'need to mortgage'].
 	^ anAmount
 ! !
+
+!Developer methodsFor: 'operating' stamp: 'dhn 3/25/2020 11:50:41'!
+taxWorth
+	"Answer the total value of cash, property, and houses for income tax purposes"
+	| development prices |
+	
+	development _ 0.
+	prices _ 0.
+	assets do: [:ea |
+		ea class = Lot
+			ifTrue: [development _ development + (ea houses * ea houseCost)].
+		prices _ prices + ea price].
+	^ cash + prices + development! !
 
 !Developer methodsFor: 'accessing' stamp: 'dhn 2/25/2020 20:08:21'!
 doubledString
