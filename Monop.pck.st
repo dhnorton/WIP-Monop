@@ -1,6 +1,6 @@
-'From Cuis 5.0 [latest update: #4042] on 25 March 2020 at 3:24:40 pm'!
+'From Cuis 5.0 [latest update: #4042] on 25 March 2020 at 3:59:48 pm'!
 'Description Simulation of the board game "Monopoly".'!
-!provides: 'Monop' 1 151!
+!provides: 'Monop' 1 152!
 !requires: 'Game' 1 44 nil!
 SystemOrganization addCategory: #'Monop-View'!
 SystemOrganization addCategory: #'Monop-Model'!
@@ -78,7 +78,7 @@ MonopStats class
 
 !classDefinition: #Notifier category: #'Monop-View'!
 GameView subclass: #Notifier
-	instanceVariableNames: 'textPanel buttonArea okButton okCount nextDo pctButton'
+	instanceVariableNames: 'textPanel buttonArea okButton nextDo pctButton'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Monop-View'!
@@ -2464,34 +2464,26 @@ buildMorphicWindow
 		addMorph: listPane layoutSpec: (LayoutSpec fixedWidth: 250);
 		addAdjusterAndMorph: textPane layoutSpec: (LayoutSpec useAll)! !
 
-!Notifier methodsFor: 'operating' stamp: 'dhn 3/24/2020 20:51:56'!
+!Notifier methodsFor: 'operating' stamp: 'dhn 3/25/2020 15:46:17'!
 finish
 	"Perform methods in response to the OK button"
 
-	self okCount < 1
-		ifTrue: [
-			okButton disableButton.
-			okCount _ okCount + 1.
-			self nextDo do: [:ea |
-				model perform: ea first with: ea second].
-			model enable: 'End Turn'.
-			okButton delete]
-		ifFalse: [okButton disableButton]! !
+	self nextDo do: [:ea |
+		model perform: ea first with: ea second].
+	model enable: 'End Turn'.
+	buttonArea removeAllMorphs! !
 
-!Notifier methodsFor: 'operating' stamp: 'dhn 3/25/2020 13:16:24'!
+!Notifier methodsFor: 'operating' stamp: 'dhn 3/25/2020 15:47:17'!
 finish2
 	"Perform methods in response to the 10% button"
 	| col |
 
-	self okCount < 1
-		ifTrue: [
-			okCount _ okCount + 1.
-			col _ self nextDo removeFirst; yourself.
-			col addFirst: {#tax:. (model currentPlayer taxWorth negated * 0.1)}.
-			col do: [:ea |
-				model perform: ea first with: ea second].
-			model enable: 'End Turn'.
-			buttonArea removeAllMorphs]! !
+	col _ self nextDo removeFirst; yourself.
+	col addFirst: {#tax:. (model currentPlayer taxWorth negated * 0.1)}.
+	col do: [:ea |
+		model perform: ea first with: ea second].
+	model enable: 'End Turn'.
+	buttonArea removeAllMorphs! !
 
 !Notifier methodsFor: 'initialization' stamp: 'dhn 3/16/2020 21:54:01'!
 buildMorphicWindow
@@ -2582,18 +2574,6 @@ okButton
 	"Answer the value of okButton"
 
 	^ okButton! !
-
-!Notifier methodsFor: 'accessing' stamp: 'dhn 3/18/2020 12:33:22'!
-okCount
-	"Answer the value of okCount"
-
-	^ okCount ifNil: [okCount _ 0]! !
-
-!Notifier methodsFor: 'accessing' stamp: 'dhn 3/18/2020 12:31:57'!
-okCount: anObject
-	"Set the value of okCount"
-
-	okCount _ anObject! !
 
 !Notifier methodsFor: 'accessing' stamp: 'dhn 3/16/2020 21:44:26'!
 textPanel
