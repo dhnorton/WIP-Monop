@@ -1,6 +1,6 @@
-'From Cuis 5.0 [latest update: #4042] on 24 March 2020 at 7:37:34 pm'!
+'From Cuis 5.0 [latest update: #4042] on 24 March 2020 at 9:04:07 pm'!
 'Description Simulation of the board game "Monopoly".'!
-!provides: 'Monop' 1 146!
+!provides: 'Monop' 1 147!
 !requires: 'Game' 1 44 nil!
 SystemOrganization addCategory: #'Monop-View'!
 SystemOrganization addCategory: #'Monop-Model'!
@@ -475,13 +475,15 @@ drawChest
 			self triggerEvent: #showChest: with: ches] 
 		ifFalse: [self triggerEvent: #showChest: with: ches]! !
 
-!Estate methodsFor: 'operating' stamp: 'dhn 3/16/2020 13:43:58'!
+!Estate methodsFor: 'operating' stamp: 'dhn 3/24/2020 20:43:57'!
 enable: aButton
-	"Enable the button named aButton"
+	"Update histories and enable the button named aButton"
 	
+	players do: [:ea | ea history addLast: ea netWorth].
+	self triggerEvent: #itemChange.
 	self enableAll: {aButton}! !
 
-!Estate methodsFor: 'operating' stamp: 'dhn 5/16/2019 18:38:59'!
+!Estate methodsFor: 'operating' stamp: 'dhn 3/24/2020 20:28:33'!
 endTurn
 	"End a player's turn"
 	
@@ -545,7 +547,7 @@ goal
 	
 	^ 4000! !
 
-!Estate methodsFor: 'operating' stamp: 'dhn 3/24/2020 17:50:09'!
+!Estate methodsFor: 'operating' stamp: 'dhn 3/24/2020 20:21:26'!
 hammerDown: aBid for: aProperty by: aBidder
 	"Record the sale at auction"
 	| winner |
@@ -555,7 +557,6 @@ hammerDown: aBid for: aProperty by: aBidder
 	winner assets add: aProperty.
 	winner assets reSort.
 	aProperty owner: winner.
-	winner history addLast: winner history last  + aProperty price.
 	self triggerEvent: #itemChange
 ! !
 
@@ -661,7 +662,7 @@ moveBackTo: aSpace
 	aSpace = 11
 		ifTrue: ["currentPlayer jail: true with: 0."]! !
 
-!Estate methodsFor: 'operating' stamp: 'dhn 3/2/2020 20:29:38'!
+!Estate methodsFor: 'operating' stamp: 'dhn 3/24/2020 20:34:58'!
 moveMoney: anArray
 	"Move cash per specs in anArray."
 	
@@ -671,7 +672,7 @@ moveMoney: anArray
 		ifTrue: [self exceptCurrent: anArray second].
 	anArray first = #toEach
 		ifTrue: [self exceptCurrent: anArray second].
-	self enableAll: {'End Turn'}! !
+	self enable: 'End Turn'! !
 
 !Estate methodsFor: 'operating' stamp: 'dhn 3/3/2020 17:19:03'!
 movePlayer: anArray
@@ -780,7 +781,7 @@ propertyAuctionBid: anObject
 	(propertyAuctionBid _ anObject) 
 		ifNotNil: [self triggerEvent: #itemChange]! !
 
-!Estate methodsFor: 'operating' stamp: 'dhn 3/24/2020 18:05:20'!
+!Estate methodsFor: 'operating' stamp: 'dhn 3/24/2020 20:20:52'!
 propertyBuy
 	"Finalize the sale"
 	| lot |
@@ -790,7 +791,6 @@ propertyBuy
 	currentPlayer assets add: lot.
 	currentPlayer assets reSort.
 	lot owner: currentPlayer.
-	currentPlayer history addLast: currentPlayer history last  + lot price.
 	self triggerEvent: #itemChange
 ! !
 
@@ -2204,14 +2204,14 @@ offer: anObject by: aName
 	(buyers findDeepSubmorphThat: [:mm | mm label = aName] ifAbsent: []) disableButton
 ! !
 
-!AuctionProperty methodsFor: 'operation' stamp: 'dhn 3/22/2020 20:59:07'!
+!AuctionProperty methodsFor: 'operation' stamp: 'dhn 3/24/2020 20:32:44'!
 propertySold
 	"Finalize the sale"
 	| prop |
 	
 	prop _ model spaces at: model currentPlayer position.
 	model hammerDown: currentBid for: prop by: currentBidder.
-	model enableAll: {'End Turn'}.
+	model enable: 'End Turn'.
 	self delete
 ! !
 
@@ -2302,14 +2302,14 @@ auction
 	buyButton disableButton.
 	model propertyAuction! !
 
-!BuyView methodsFor: 'operating' stamp: 'dhn 3/22/2020 13:07:43'!
+!BuyView methodsFor: 'operating' stamp: 'dhn 3/24/2020 20:33:15'!
 buy
 	"Buy the property, record the result"
 	
 	buyButton disableButton.
 	auctionButton disableButton.
 	model propertyBuy.
-	model enableAll: {'End Turn'}.
+	model enable: 'End Turn'.
 	self delete! !
 
 !BuyView methodsFor: 'operating' stamp: 'dhn 3/23/2020 16:31:17'!
@@ -2454,7 +2454,7 @@ buildMorphicWindow
 		addMorph: listPane layoutSpec: (LayoutSpec fixedWidth: 250);
 		addAdjusterAndMorph: textPane layoutSpec: (LayoutSpec useAll)! !
 
-!Notifier methodsFor: 'operating' stamp: 'dhn 3/20/2020 15:33:26'!
+!Notifier methodsFor: 'operating' stamp: 'dhn 3/24/2020 20:51:56'!
 finish
 	"Perform methods in response to the OK button"
 
@@ -2464,7 +2464,7 @@ finish
 			okCount _ okCount + 1.
 			self nextDo do: [:ea |
 				model perform: ea first with: ea second].
-			self triggerEvent: #itemChange.
+			model enable: 'End Turn'.
 			okButton delete]
 		ifFalse: [okButton disableButton]! !
 
@@ -3199,13 +3199,13 @@ initialize
 	super initialize.
 	routine _ #luxuryTax! !
 
-!Developer methodsFor: 'initialization' stamp: 'dhn 3/24/2020 10:31:21'!
+!Developer methodsFor: 'initialization' stamp: 'dhn 3/24/2020 20:00:54'!
 initialize
 
 	cash _ 1500.
 	debt _ 0.
 	assets _ SortedCollection sortBlock: [:a :c | a boardPosition > c boardPosition].
-	history _ OrderedCollection with: self netAssets.
+	history _ OrderedCollection with: cash.
 	cards := OrderedCollection new.
 	self
 		jail: false with: 0;
@@ -3357,6 +3357,17 @@ jail: aBoolean with: anInteger
         where anInteger is the number of attempts to roll out."
     jail := Array with: aBoolean with: anInteger! !
 
+!Developer methodsFor: 'operating' stamp: 'dhn 3/24/2020 19:55:32'!
+netWorth
+	"Answer the total value of cash, property, and houses"
+	| development |
+	
+	development _ 0.
+	assets do: [:ea |
+		ea class = Lot
+			ifTrue: [development _ development + (ea houses * ea houseCost)]].
+	^ cash + self propertyValue + development! !
+
 !Developer methodsFor: 'operating' stamp: 'dhn 3/24/2020 15:51:02'!
 propertyValue
 	"Answer the value, based on list price, of property"
@@ -3365,6 +3376,20 @@ propertyValue
 	ttl _ 0.
 	assets do: [:ea | ea mortgaged ifFalse: [ttl _ ttl + ea price]].
 	^ ttl! !
+
+!Developer methodsFor: 'operating' stamp: 'dhn 3/24/2020 20:05:39'!
+tally: anAmount
+	"Answer anAmount after accounting for it"
+	
+	self cash: anAmount + self cash.
+	anAmount > 0 
+		ifTrue: [self inFlow: anAmount + self inFlow]
+		ifFalse: [self outFlow: anAmount + self outFlow].
+	0 > self cash 
+		ifTrue: [
+		self halt: 'need to mortgage'].
+	^ anAmount
+! !
 
 !Developer methodsFor: 'accessing' stamp: 'dhn 2/25/2020 20:08:21'!
 doubledString
