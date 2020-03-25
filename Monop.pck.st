@@ -1,6 +1,6 @@
-'From Cuis 5.0 [latest update: #4042] on 25 March 2020 at 4:18:47 pm'!
+'From Cuis 5.0 [latest update: #4042] on 25 March 2020 at 4:27:49 pm'!
 'Description Simulation of the board game "Monopoly".'!
-!provides: 'Monop' 1 153!
+!provides: 'Monop' 1 154!
 !requires: 'Game' 1 44 nil!
 SystemOrganization addCategory: #'Monop-View'!
 SystemOrganization addCategory: #'Monop-Model'!
@@ -1960,7 +1960,7 @@ showPropertyAuction
 	win showChant.
 	win beat: #announceSold! !
 
-!Monopoly methodsFor: 'windows' stamp: 'dhn 3/24/2020 11:44:42'!
+!Monopoly methodsFor: 'windows' stamp: 'dhn 3/25/2020 16:22:48'!
 showRentDue
 	"Tell the player about the rent"
 	| win lot rent story |
@@ -1977,7 +1977,7 @@ showRentDue
 	win _ Notifier openOn: model.
 	win openInWorld: pasteup.
 	win textPanel model actualContents: story.
-	win textPanel color: Color lightRed.
+	win textPanel color: lot owner color.
 	win nextDo add: {#toOwner:. {lot owner. rent}}.
 	win
 		cleanTitleBar;
