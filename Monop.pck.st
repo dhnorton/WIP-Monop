@@ -1,6 +1,6 @@
-'From Cuis 5.0 [latest update: #4042] on 25 March 2020 at 3:59:48 pm'!
+'From Cuis 5.0 [latest update: #4042] on 25 March 2020 at 4:18:47 pm'!
 'Description Simulation of the board game "Monopoly".'!
-!provides: 'Monop' 1 152!
+!provides: 'Monop' 1 153!
 !requires: 'Game' 1 44 nil!
 SystemOrganization addCategory: #'Monop-View'!
 SystemOrganization addCategory: #'Monop-Model'!
@@ -1883,7 +1883,7 @@ showChest: anArray
 	win buttonArea color: win textPanel color
 ! !
 
-!Monopoly methodsFor: 'windows' stamp: 'dhn 3/23/2020 14:56:06'!
+!Monopoly methodsFor: 'windows' stamp: 'dhn 3/25/2020 16:06:13'!
 showGo
 	"Tell the player about his salary"
 	| win |
@@ -1892,13 +1892,16 @@ showGo
 	win openInWorld: pasteup.
 	win textPanel model actualContents: model note.
 	win nextDo: (OrderedCollection with: {#tally:. 200} with: {#enable:. 'End Turn'}).
+	win textPanel color: model currentPlayer color.
 	win
 		cleanTitleBar;
 		setLabel: 'Passed GO';
-		setWindowColor: Color lightYellow;
+		setWindowColor: win textPanel color;
 		morphPosition: self windowPosition;
 		setButton;
-		morphExtent: 315 @ 215! !
+		morphExtent: 315 @ 215.
+	win buttonArea color: win textPanel color
+! !
 
 !Monopoly methodsFor: 'windows' stamp: 'dhn 3/25/2020 12:03:55'!
 showIncomeTax
