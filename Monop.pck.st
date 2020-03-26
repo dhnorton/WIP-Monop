@@ -1,6 +1,6 @@
-'From Cuis 5.0 [latest update: #4042] on 26 March 2020 at 1:18:02 pm'!
+'From Cuis 5.0 [latest update: #4042] on 26 March 2020 at 2:26:56 pm'!
 'Description Simulation of the board game "Monopoly".'!
-!provides: 'Monop' 1 156!
+!provides: 'Monop' 1 157!
 !requires: 'Game' 1 44 nil!
 SystemOrganization addCategory: #'Monop-View'!
 SystemOrganization addCategory: #'Monop-Model'!
@@ -435,11 +435,11 @@ devReport
 		ifFalse: [^ '']
 ! !
 
-!Estate methodsFor: 'development' stamp: 'dhn 3/26/2020 11:27:04'!
+!Estate methodsFor: 'development' stamp: 'dhn 3/26/2020 14:20:09'!
 devReport: anAsset
 	"Answer the development of anAsset."
 
-	^ anAsset report! !
+	^ anAsset houseReport! !
 
 !Estate methodsFor: 'statistics' stamp: 'dhn 2/23/2020 20:59:01'!
 statsItem
@@ -1969,7 +1969,7 @@ showGo
 	win buttonArea color: win textPanel color
 ! !
 
-!Monopoly methodsFor: 'windows' stamp: 'dhn 3/26/2020 11:31:56'!
+!Monopoly methodsFor: 'windows' stamp: 'dhn 3/26/2020 14:03:55'!
 showHouse
 	"Open a window for houses and hotels"
 	| pl win |
@@ -1978,7 +1978,7 @@ showHouse
 	win _ MonopHouse openOn: model.
 	win openInWorld: pasteup.
 	win
-		cleanTitleBar;
+		removeWindowMenu;
 		setLabel: pl identity, '''s Development';
 		setWindowColor: pl color;
 		morphPosition: self windowPosition;
@@ -3024,6 +3024,20 @@ developable
 development
         "Answer the value of development on the lot."
     ^self houses * 50 * ( 1 + self position // 10 )! !
+
+!Lot methodsFor: 'operating' stamp: 'dhn 3/26/2020 14:24:42'!
+houseReport
+	"Answer the status of development on this lot."
+	
+	^ String streamContents: [:str |
+		houses < 5
+			ifTrue: [str nextPutAll: houses asString, ' Houses.'; newLine] 
+			ifFalse: [str nextPutAll: '1 Hotel.'; newLine].
+		str
+			nextPutAll: 'Houses cost $', houseCost asString; newLine;
+			nextPutAll: 'Rent is $', self rentAmount asString; nextPut: $.; newLine.
+		mortgaged ifTrue: [
+			str nextPutAll: 'Mortgaged for $', (price / 2) asString; nextPut: $.; newLine]]! !
 
 !Lot methodsFor: 'operating'!
 rent: aPlayer
