@@ -1,6 +1,6 @@
-'From Cuis 5.0 [latest update: #4042] on 25 March 2020 at 5:03:25 pm'!
+'From Cuis 5.0 [latest update: #4042] on 26 March 2020 at 1:18:02 pm'!
 'Description Simulation of the board game "Monopoly".'!
-!provides: 'Monop' 1 155!
+!provides: 'Monop' 1 156!
 !requires: 'Game' 1 44 nil!
 SystemOrganization addCategory: #'Monop-View'!
 SystemOrganization addCategory: #'Monop-Model'!
@@ -8,7 +8,7 @@ SystemOrganization addCategory: #'Monop-Model'!
 
 !classDefinition: #Estate category: #'Monop-Model'!
 Game subclass: #Estate
-	instanceVariableNames: 'demo windowCount chances chests moveButton statsItem propertyAuctionBid note'
+	instanceVariableNames: 'demo windowCount chances chests moveButton statsItem propertyAuctionBid note devItem'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Monop-Model'!
@@ -64,6 +64,16 @@ GameView subclass: #BuyView
 	category: 'Monop-View'!
 !classDefinition: 'BuyView class' category: #'Monop-View'!
 BuyView class
+	instanceVariableNames: ''!
+
+!classDefinition: #MonopHouse category: #'Monop-View'!
+GameView subclass: #MonopHouse
+	instanceVariableNames: 'textPane listPane'
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'Monop-View'!
+!classDefinition: 'MonopHouse class' category: #'Monop-View'!
+MonopHouse class
 	instanceVariableNames: ''!
 
 !classDefinition: #MonopStats category: #'Monop-View'!
@@ -267,6 +277,9 @@ A Monopoly window which makes it possible for players to bid on property.!
 !BuyView commentStamp: '<historical>' prior: 0!
 A window where players must either buy or auction a property.!
 
+!MonopHouse commentStamp: '<historical>' prior: 0!
+A Monopoly window for managing lot development.!
+
 !MonopStats commentStamp: '<historical>' prior: 0!
 A Monopoly window which shows statistics about the player's assets.!
 
@@ -383,6 +396,50 @@ setupPlayer: aName color: aColor
 		mgr: self;
 		identity: aName).
 	currentPlayer _ pl! !
+
+!Estate methodsFor: 'development' stamp: 'dhn 3/26/2020 11:19:42'!
+devItem
+	"Answer the value of devItem"
+
+	^ devItem ifNil: [devItem _ 0]! !
+
+!Estate methodsFor: 'development' stamp: 'dhn 3/26/2020 11:20:45'!
+devItem: anObject
+	"Set the value of devItem"
+	
+	(devItem _ anObject) ifNotNil: [
+		self triggerEvent: #itemChange.
+		self changed: #devItem]! !
+
+!Estate methodsFor: 'development' stamp: 'dhn 3/26/2020 12:34:23'!
+devList
+	"Answer a list for the develop window"
+	| col |
+	
+	col _ OrderedCollection new.
+	currentPlayer assets do: [:ea |
+		((ea class = Lot) and: [ea developable])
+			ifTrue: [col add: ea title]].
+	^ col! !
+
+!Estate methodsFor: 'development' stamp: 'dhn 3/26/2020 13:10:35'!
+devReport
+	"Answer the development report for the asset listed at devItem"
+	| nam |
+
+	devItem > 0
+		ifTrue: [
+			nam _ self devList at: devItem.
+			^ self devReport: (currentPlayer assets 
+				detect: [:a | a title = nam] ifNone: [])]
+		ifFalse: [^ '']
+! !
+
+!Estate methodsFor: 'development' stamp: 'dhn 3/26/2020 11:27:04'!
+devReport: anAsset
+	"Answer the development of anAsset."
+
+	^ anAsset report! !
 
 !Estate methodsFor: 'statistics' stamp: 'dhn 2/23/2020 20:59:01'!
 statsItem
@@ -1701,6 +1758,14 @@ makeHistoryButton
 		layoutSpec: self class buttonLayoutSpec;
 		setBalloonText: 'Show a graph of players'' cash flow'! !
 
+!Monopoly methodsFor: 'initialization' stamp: 'dhn 3/26/2020 11:39:06'!
+makeHouseButton
+	"Answer the 'Develop' button"
+	
+	^ (GameButtonMorph label: 'Develop' action: #showHouse state: true model: self)
+		layoutSpec: self class buttonLayoutSpec;
+		setBalloonText: 'Houses and hotels'! !
+
 !Monopoly methodsFor: 'initialization' stamp: 'dhn 5/16/2019 15:57:25'!
 makeMoveButton
 	"Answer the 'Move' button"
@@ -1771,7 +1836,7 @@ makeShowStatsButton
 		layoutSpec: self class buttonLayoutSpec;
 		setBalloonText: 'Lots of information here'! !
 
-!Monopoly methodsFor: 'initialization' stamp: 'dhn 3/19/2020 15:46:46'!
+!Monopoly methodsFor: 'initialization' stamp: 'dhn 3/26/2020 11:41:58'!
 playButtonSet
 	"Answer the buttons used to play the game"
 
@@ -1780,6 +1845,7 @@ playButtonSet
 		addMorph: (model moveButton: self makeMoveButton);
 		addMorph: self makeEndTurnButton;
 		addMorph: self makeShowStatsButton;
+		addMorph: self makeHouseButton;
 		addMorph: self makeAuctionButton;
 		addMorph: self makePurchasesButton;
 		addMorph: self makeHistoryButton! !
@@ -1902,6 +1968,22 @@ showGo
 		morphExtent: 315 @ 215.
 	win buttonArea color: win textPanel color
 ! !
+
+!Monopoly methodsFor: 'windows' stamp: 'dhn 3/26/2020 11:31:56'!
+showHouse
+	"Open a window for houses and hotels"
+	| pl win |
+		
+	pl _ model currentPlayer.
+	win _ MonopHouse openOn: model.
+	win openInWorld: pasteup.
+	win
+		cleanTitleBar;
+		setLabel: pl identity, '''s Development';
+		setWindowColor: pl color;
+		morphPosition: self windowPosition;
+		morphExtent: 500 @ 260.
+	model disableAll: {'Develop'}! !
 
 !Monopoly methodsFor: 'windows' stamp: 'dhn 3/25/2020 16:42:57'!
 showIncomeTax
@@ -2422,6 +2504,51 @@ endIt
 	
 	self delete! !
 
+!MonopHouse methodsFor: 'termination' stamp: 'dhn 3/26/2020 11:12:58'!
+closeBoxHit
+
+	model 
+		devItem: nil;
+		enableAll: {'Develop'}.
+	super closeBoxHit! !
+
+!MonopHouse methodsFor: 'termination' stamp: 'dhn 3/26/2020 11:14:16'!
+endIt
+	
+	model 
+		devItem: nil;
+		enableAll: {'Develop'}.
+	self delete! !
+
+!MonopHouse methodsFor: 'accessing' stamp: 'dhn 3/26/2020 11:13:36'!
+details
+
+	listPane updateList.
+	textPane model actualContents: model devReport! !
+
+!MonopHouse methodsFor: 'initialization' stamp: 'dhn 3/26/2020 11:16:36'!
+buildMorphicWindow
+	"Lay out the window for statistics"
+	
+	self layoutMorph beRow.
+	listPane _ (PluggableListMorph
+		model: model
+		listGetter: #devList
+		indexGetter: #devItem
+		indexSetter: #devItem:
+		mainView: self
+		menuGetter: nil
+		keystrokeAction: nil)
+			name: 'developable list'.
+	textPane _ (TextModelMorph
+		withModel: (TextModel withText: ''))
+			askBeforeDiscardingEdits: false;
+			name: 'property description'.
+
+	self layoutMorph
+		addMorph: listPane layoutSpec: (LayoutSpec fixedWidth: 250);
+		addAdjusterAndMorph: textPane layoutSpec: (LayoutSpec useAll)! !
+
 !MonopStats methodsFor: 'termination' stamp: 'dhn 2/23/2020 20:44:15'!
 closeBoxHit
 
@@ -2886,6 +3013,12 @@ complete
 	"Answer a factor based on whether the complete set of property is owned."
 
 	^ self allInSet ifTrue: [2] ifFalse: [1]! !
+
+!Lot methodsFor: 'operating' stamp: 'dhn 3/26/2020 12:27:17'!
+developable
+	"Answer whether the complete set of property is owned."
+
+	^ self ownedByMe = (set size)! !
 
 !Lot methodsFor: 'operating'!
 development
