@@ -1,6 +1,6 @@
-'From Cuis 5.0 [latest update: #4042] on 27 March 2020 at 12:00:05 pm'!
+'From Cuis 5.0 [latest update: #4042] on 27 March 2020 at 1:08:27 pm'!
 'Description Simulation of the board game "Monopoly".'!
-!provides: 'Monop' 1 160!
+!provides: 'Monop' 1 161!
 !requires: 'Game' 1 44 nil!
 SystemOrganization addCategory: #'Monop-View'!
 SystemOrganization addCategory: #'Monop-Model'!
@@ -2669,15 +2669,17 @@ finish
 	model enable: 'End Turn'.
 	buttonArea removeAllMorphs! !
 
-!Notifier methodsFor: 'operating' stamp: 'dhn 3/25/2020 15:47:17'!
+!Notifier methodsFor: 'operating' stamp: 'dhn 3/27/2020 12:50:28'!
 finish2
 	"Perform methods in response to the 10% button"
-	| col |
+	| col amt |
 
 	col _ self nextDo removeFirst; yourself.
-	col addFirst: {#tax:. (model currentPlayer taxWorth negated * 0.1)}.
+	col addFirst: {#tax:. (amt _ model currentPlayer taxWorth negated * 0.1)}.
 	col do: [:ea |
 		model perform: ea first with: ea second].
+	textPanel model actualContents: 
+		textPanel model actualContents, ' You paid $', amt negated rounded printStringWithCommas.
 	model enable: 'End Turn'.
 	buttonArea removeAllMorphs! !
 
