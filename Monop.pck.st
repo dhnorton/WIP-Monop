@@ -1,6 +1,6 @@
-'From Cuis 5.0 [latest update: #4042] on 27 March 2020 at 1:08:27 pm'!
+'From Cuis 5.0 [latest update: #4042] on 27 March 2020 at 2:25:02 pm'!
 'Description Simulation of the board game "Monopoly".'!
-!provides: 'Monop' 1 161!
+!provides: 'Monop' 1 162!
 !requires: 'Game' 1 44 nil!
 SystemOrganization addCategory: #'Monop-View'!
 SystemOrganization addCategory: #'Monop-Model'!
@@ -2039,7 +2039,7 @@ showPropertyAuction
 	win showChant.
 	win beat: #announceSold! !
 
-!Monopoly methodsFor: 'windows' stamp: 'dhn 3/25/2020 16:22:48'!
+!Monopoly methodsFor: 'windows' stamp: 'dhn 3/27/2020 14:08:04'!
 showRentDue
 	"Tell the player about the rent"
 	| win lot rent story |
@@ -2049,7 +2049,7 @@ showRentDue
 	story _ String streamContents: [:str |
 		str
 			nextPutAll: model currentPlayer identity, ' has landed on ';
-			nextPutAll: lot title, ' and must pay ';
+			nextPutAll: lot title, lot development, ' and must pay ';
 			nextPutAll: lot owner identity, ' the sum of';
 			nextPutAll: ' $', rent printStringWithCommas;
 			nextPutAll: ' rent.'].
@@ -2896,12 +2896,11 @@ initialize
 	super initialize.
 	routine _ #parkFree! !
 
-!Property methodsFor: 'as yet unclassified'!
+!Property methodsFor: 'as yet unclassified' stamp: 'dhn 3/27/2020 14:13:04'!
 development
-        "Answer the value of development on the property (used
-        for income tax purposes). To be overridden by subclasses
-        capable of development."
-    ^0! !
+        "Answer the default value of development"
+
+    ^ ''! !
 
 !Property methodsFor: 'as yet unclassified' stamp: 'dhn 5/14/2019 15:28:02'!
 sellTo: aPlayer
@@ -3082,6 +3081,19 @@ developable
 	"Answer whether the complete set of property is owned."
 
 	^ self ownedByMe = (set size)! !
+
+!Lot methodsFor: 'operating' stamp: 'dhn 3/27/2020 14:08:35'!
+development
+	"Answer a description of development, if any"
+	| switch |
+	
+	switch _ Dictionary new.
+	switch at: 0 put: [''].
+	switch at: 1 put: [' with 1 house'].
+	switch at: 5 put: [' with a hotel'].
+	^ (switch includesKey: houses) 
+		ifTrue: [(switch at: houses) value]
+		ifFalse: [' with ', houses asString, ' houses']! !
 
 !Lot methodsFor: 'operating' stamp: 'dhn 3/26/2020 14:24:42'!
 houseReport
