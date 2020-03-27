@@ -1,6 +1,6 @@
-'From Cuis 5.0 [latest update: #4042] on 26 March 2020 at 9:35:56 pm'!
+'From Cuis 5.0 [latest update: #4042] on 27 March 2020 at 12:00:05 pm'!
 'Description Simulation of the board game "Monopoly".'!
-!provides: 'Monop' 1 159!
+!provides: 'Monop' 1 160!
 !requires: 'Game' 1 44 nil!
 SystemOrganization addCategory: #'Monop-View'!
 SystemOrganization addCategory: #'Monop-Model'!
@@ -1825,13 +1825,13 @@ makeSeasonsArea
 			color: Color transparent;
 			name: #seasons! !
 
-!Monopoly methodsFor: 'initialization' stamp: 'dhn 5/16/2019 15:48:28'!
+!Monopoly methodsFor: 'initialization' stamp: 'dhn 3/27/2020 11:26:49'!
 makeShowStatsButton
 	"Answer the 'Stats' button"
 	
-	^ (GameButtonMorph label: 'Stats' action: #showStats state: true model: self)
+	^ (GameButtonMorph label: 'Holdings' action: #showStats state: true model: self)
 		layoutSpec: self class buttonLayoutSpec;
-		setBalloonText: 'Lots of information here'! !
+		setBalloonText: 'List of owned property'! !
 
 !Monopoly methodsFor: 'initialization' stamp: 'dhn 3/26/2020 11:41:58'!
 playButtonSet
@@ -2068,7 +2068,7 @@ showRentDue
 	win buttonArea color: win textPanel color
 ! !
 
-!Monopoly methodsFor: 'windows' stamp: 'dhn 3/23/2020 12:06:14'!
+!Monopoly methodsFor: 'windows' stamp: 'dhn 3/27/2020 11:33:10'!
 showStats
 	"Open a window on a player's statistics"
 	| pl win |
@@ -2082,7 +2082,7 @@ showStats
 		setWindowColor: pl color;
 		morphPosition: self windowPosition;
 		morphExtent: 500 @ 260.
-	model disableAll: {'Stats'}! !
+	model disableAll: {'Holdings'}! !
 
 !Monopoly methodsFor: 'windows' stamp: 'dhn 2/23/2020 21:15:08'!
 windowPosition
@@ -2615,20 +2615,20 @@ sellHouse
 	model currentPlayer tally: prop houseCost / 2.
 	model triggerEvent: #itemChange! !
 
-!MonopStats methodsFor: 'termination' stamp: 'dhn 2/23/2020 20:44:15'!
+!MonopStats methodsFor: 'termination' stamp: 'dhn 3/27/2020 11:34:35'!
 closeBoxHit
 
 	model 
 		statsItem: nil;
-		enableAll: {'Stats'}.
+		enableAll: {'Holdings'}.
 	super closeBoxHit! !
 
-!MonopStats methodsFor: 'termination' stamp: 'dhn 2/23/2020 20:44:43'!
+!MonopStats methodsFor: 'termination' stamp: 'dhn 3/27/2020 11:34:11'!
 endIt
 	
 	model 
 		statsItem: nil;
-		enableAll: {'Stats'}.
+		enableAll: {'Holdings'}.
 	self delete! !
 
 !MonopStats methodsFor: 'accessing' stamp: 'dhn 3/1/2020 11:59:48'!
