@@ -1,6 +1,6 @@
-'From Cuis 5.0 [latest update: #4042] on 26 March 2020 at 8:23:45 pm'!
+'From Cuis 5.0 [latest update: #4042] on 26 March 2020 at 9:35:56 pm'!
 'Description Simulation of the board game "Monopoly".'!
-!provides: 'Monop' 1 158!
+!provides: 'Monop' 1 159!
 !requires: 'Game' 1 44 nil!
 SystemOrganization addCategory: #'Monop-View'!
 SystemOrganization addCategory: #'Monop-Model'!
@@ -106,6 +106,26 @@ BoardSpace subclass: #Square
 Square class
 	instanceVariableNames: ''!
 
+!classDefinition: #Chance category: #'Monop-Model'!
+Square subclass: #Chance
+	instanceVariableNames: ''
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'Monop-Model'!
+!classDefinition: 'Chance class' category: #'Monop-Model'!
+Chance class
+	instanceVariableNames: ''!
+
+!classDefinition: #Chest category: #'Monop-Model'!
+Square subclass: #Chest
+	instanceVariableNames: ''
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'Monop-Model'!
+!classDefinition: 'Chest class' category: #'Monop-Model'!
+Chest class
+	instanceVariableNames: ''!
+
 !classDefinition: #Go category: #'Monop-Model'!
 Square subclass: #Go
 	instanceVariableNames: ''
@@ -186,36 +206,6 @@ Property subclass: #Utility
 Utility class
 	instanceVariableNames: ''!
 
-!classDefinition: #Risk category: #'Monop-Model'!
-Square subclass: #Risk
-	instanceVariableNames: 'cards board'
-	classVariableNames: ''
-	poolDictionaries: ''
-	category: 'Monop-Model'!
-!classDefinition: 'Risk class' category: #'Monop-Model'!
-Risk class
-	instanceVariableNames: ''!
-
-!classDefinition: #Chance category: #'Monop-Model'!
-Risk subclass: #Chance
-	instanceVariableNames: ''
-	classVariableNames: ''
-	poolDictionaries: ''
-	category: 'Monop-Model'!
-!classDefinition: 'Chance class' category: #'Monop-Model'!
-Chance class
-	instanceVariableNames: ''!
-
-!classDefinition: #Chest category: #'Monop-Model'!
-Risk subclass: #Chest
-	instanceVariableNames: ''
-	classVariableNames: ''
-	poolDictionaries: ''
-	category: 'Monop-Model'!
-!classDefinition: 'Chest class' category: #'Monop-Model'!
-Chest class
-	instanceVariableNames: ''!
-
 !classDefinition: #Tax category: #'Monop-Model'!
 Square subclass: #Tax
 	instanceVariableNames: 'type'
@@ -289,6 +279,12 @@ A window for notifying players.!
 !Square commentStamp: '<historical>' prior: 0!
 A square on the board.!
 
+!Chance commentStamp: '<historical>' prior: 0!
+A square for drawing a Chance card.!
+
+!Chest commentStamp: '<historical>' prior: 0!
+A square for drawing a Community Chest card.!
+
 !Go commentStamp: '<historical>' prior: 0!
 The beginning square.!
 
@@ -312,15 +308,6 @@ A railroad property.!
 
 !Utility commentStamp: '<historical>' prior: 0!
 A utility property.!
-
-!Risk commentStamp: '<historical>' prior: 0!
-A square which can specify a risk or a reward.!
-
-!Chance commentStamp: '<historical>' prior: 0!
-A square for drawing a Chance card.!
-
-!Chest commentStamp: '<historical>' prior: 0!
-A square for drawing a Community Chest card.!
 
 !Tax commentStamp: '<historical>' prior: 0!
 A square which demands payment of tax.!
@@ -2871,23 +2858,23 @@ for: aPosition title: aString
         position: aPosition;
         title: aString! !
 
+!Chance methodsFor: 'initialization' stamp: 'dhn 2/23/2020 13:43:55'!
+initialize
+
+	super initialize.
+	routine _ #drawChance! !
+
+!Chest methodsFor: 'initialization' stamp: 'dhn 2/23/2020 13:43:45'!
+initialize
+
+	super initialize.
+	routine _ #drawChest! !
+
 !Go methodsFor: 'initialization' stamp: 'dhn 2/23/2020 13:39:30'!
 initialize
 
 	super initialize.
 	routine _ #salary! !
-
-!Hazard methodsFor: 'operating' stamp: 'dhn 5/14/2019 12:00:45'!
-result: aPlayer
-        "Effect the result of aPlayer landing on 'Go to Jail'."
-
-    aPlayer toJail.
-    GamePopUp 
-		inform: aPlayer name,
-            ' has been sent directly to jail, without passing GO and without collecting $200. Doubles = ',
-            aPlayer doubles printString,
-            '; cash = $', aPlayer cash printString, '.'.
-    aPlayer special: false.! !
 
 !Hazard methodsFor: 'initialization' stamp: 'dhn 2/23/2020 13:49:06'!
 initialize
@@ -2913,22 +2900,6 @@ development
         for income tax purposes). To be overridden by subclasses
         capable of development."
     ^0! !
-
-!Property methodsFor: 'as yet unclassified' stamp: 'dhn 5/14/2019 14:53:11'!
-rentedBy: aPlayer
-	"Cause aPlayer to pay the rent to the owner of this property."
-	| pmt |
-	
-	pmt := self rent: aPlayer.
-	GamePopUp 
-		inform: 
-			aPlayer name, ' owes ',
-			self owner name, ' $', pmt printString,
-			'. Doubles = ', aPlayer doubles printString,
-			'; cash = $', aPlayer cash printString, '.' 
-		title: self title.
-	aPlayer assess: pmt.
-	self owner cash: self owner cash + pmt! !
 
 !Property methodsFor: 'as yet unclassified' stamp: 'dhn 5/14/2019 15:28:02'!
 sellTo: aPlayer
@@ -3110,11 +3081,6 @@ developable
 
 	^ self ownedByMe = (set size)! !
 
-!Lot methodsFor: 'operating'!
-development
-        "Answer the value of development on the lot."
-    ^self houses * 50 * ( 1 + self position // 10 )! !
-
 !Lot methodsFor: 'operating' stamp: 'dhn 3/26/2020 14:24:42'!
 houseReport
 	"Answer the status of development on this lot."
@@ -3128,18 +3094,6 @@ houseReport
 			nextPutAll: 'Rent is $', self rentAmount asString; nextPut: $.; newLine.
 		mortgaged ifTrue: [
 			str nextPutAll: 'Mortgaged for $', (price / 2) asString; nextPut: $.; newLine]]! !
-
-!Lot methodsFor: 'operating'!
-rent: aPlayer
-        "Answer the rent for this property in its current state.
-        The parameter aPlayer is unused for Lot, but retained
-        for consistency with other subclasses of Property which
-        are implementers."
-    self owner isNil ifTrue: [ ^nil ].
-    self mortgaged ifTrue: [ ^0 ].
-    ( self complete and: [ self houses = 0 ] )
-        ifTrue: [ ^2 * ( rents at: 1) ].
-    ^rents at: ( self houses + 1 )! !
 
 !Lot methodsFor: 'operating' stamp: 'dhn 3/26/2020 19:30:30'!
 rentAmount
@@ -3211,18 +3165,6 @@ title: aTitle price: aPrice rents: anArray house: aCost set: aSet
 		houseCost: aCost;
 		set: aSet.
 	^ lot! !
-
-!Railroad methodsFor: 'operating'!
-rent: aPlayer
-        "Answer the rent for this property in its current state."
-    | amt |
-    self mortgaged ifTrue: [^0].
-    self numberOwned notNil
-        ifTrue: [amt := rents at: self numberOwned].
-    aPlayer special
-        ifTrue: [ aPlayer special: false.
-            amt := 2 * amt ].
-    ^amt! !
 
 !Railroad methodsFor: 'operating' stamp: 'dhn 3/24/2020 14:02:50'!
 rentAmount
@@ -3396,47 +3338,6 @@ title: aTitle price: aPrice set: aSet
 		rents: #(10 20 30 40 50 60);
 		set: aSet.
 	^ ut! !
-
-!Risk methodsFor: 'as yet unclassified'!
-board
-        "Answer the board on which this risk resides."
-    ^board! !
-
-!Risk methodsFor: 'as yet unclassified'!
-board: aMonopoly
-        "Set the board on which this risk resides."
-    board := aMonopoly.! !
-
-!Risk methodsFor: 'as yet unclassified'!
-initialize: aCollection
-        "Establish the initial state by setting the instance variables."
-    cards := aCollection.! !
-
-!Chance methodsFor: 'initialization' stamp: 'dhn 2/23/2020 13:43:55'!
-initialize
-
-	super initialize.
-	routine _ #drawChance! !
-
-!Chest methodsFor: 'initialization' stamp: 'dhn 2/23/2020 13:43:45'!
-initialize
-
-	super initialize.
-	routine _ #drawChest! !
-
-!Tax methodsFor: 'as yet unclassified' stamp: 'dhn 5/14/2019 15:39:28'!
-income: aPlayer
-	"Assess income tax on aPlayer."
-	| amt |
-	
-	amt := aPlayer cash.
-	aPlayer property do: [ :p |
-		amt := amt + p price.
-		amt := amt + p development ].
-	aPlayer assess: (amt := ( amt / 10 ) rounded).
-	GamePopUp 
-		inform: aPlayer name, ' has been assessed $', amt printString, '.'
-		title: self title! !
 
 !Tax methodsFor: 'as yet unclassified' stamp: 'dhn 5/14/2019 15:41:37'!
 luxury: aPlayer
