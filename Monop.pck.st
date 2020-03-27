@@ -1,6 +1,6 @@
-'From Cuis 5.0 [latest update: #4042] on 26 March 2020 at 2:26:56 pm'!
+'From Cuis 5.0 [latest update: #4042] on 26 March 2020 at 8:23:45 pm'!
 'Description Simulation of the board game "Monopoly".'!
-!provides: 'Monop' 1 157!
+!provides: 'Monop' 1 158!
 !requires: 'Game' 1 44 nil!
 SystemOrganization addCategory: #'Monop-View'!
 SystemOrganization addCategory: #'Monop-Model'!
@@ -68,7 +68,7 @@ BuyView class
 
 !classDefinition: #MonopHouse category: #'Monop-View'!
 GameView subclass: #MonopHouse
-	instanceVariableNames: 'textPane listPane'
+	instanceVariableNames: 'textPane listPane buttonArea buyButton sellButton'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Monop-View'!
@@ -422,17 +422,27 @@ devList
 			ifTrue: [col add: ea title]].
 	^ col! !
 
-!Estate methodsFor: 'development' stamp: 'dhn 3/26/2020 13:10:35'!
+!Estate methodsFor: 'development' stamp: 'dhn 3/26/2020 20:01:09'!
 devReport
-	"Answer the development report for the asset listed at devItem"
-	| nam |
+	"Answer the development report and buttons for the asset listed at devItem"
+	| nam prop others arr |
 
 	devItem > 0
 		ifTrue: [
 			nam _ self devList at: devItem.
-			^ self devReport: (currentPlayer assets 
-				detect: [:a | a title = nam] ifNone: [])]
-		ifFalse: [^ '']
+			prop _ currentPlayer assets 
+				detect: [:a | a title = nam] ifNone: [].
+			others _ prop othersInSet.
+			arr _ {
+				others allSatisfy: [:ea |
+					((prop houses + 1) - (ea houses) <= 1) and: [prop houses < 5]].
+				others allSatisfy: [:ea |
+					((ea houses) - (prop houses - 1) <= 1) and: [(prop houses - 1) >= 0]]}.
+			self triggerEvent: #addButtons: with: arr.
+			^ self devReport: prop]
+		ifFalse: [
+			self triggerEvent: #removeButtons.
+			^ '']
 ! !
 
 !Estate methodsFor: 'development' stamp: 'dhn 3/26/2020 14:20:09'!
@@ -2526,11 +2536,28 @@ details
 	listPane updateList.
 	textPane model actualContents: model devReport! !
 
-!MonopHouse methodsFor: 'initialization' stamp: 'dhn 3/26/2020 11:16:36'!
+!MonopHouse methodsFor: 'initialization' stamp: 'dhn 3/26/2020 17:21:51'!
 buildMorphicWindow
-	"Lay out the window for statistics"
+	"Lay out the window for development"
+	| body |
 	
-	self layoutMorph beRow.
+	self layoutMorph beColumn.
+	buttonArea _ (LayoutMorph newRow)
+		layoutSpec: (LayoutSpec new
+			proportionalWidth: 1.0;
+			proportionalHeight: 0.3;
+			minorDirectionPadding: #center).
+	buttonArea
+		name: #buttons;
+		padding: #center.
+	
+	body _ (LayoutMorph newRow)
+		layoutSpec: (LayoutSpec 
+			proportionalWidth: 1.0
+			proportionalHeight: 0.7
+			minorDirectionPadding: #center);
+		name: #body;
+		padding: #center.
 	listPane _ (PluggableListMorph
 		model: model
 		listGetter: #devList
@@ -2544,10 +2571,62 @@ buildMorphicWindow
 		withModel: (TextModel withText: ''))
 			askBeforeDiscardingEdits: false;
 			name: 'property description'.
-
-	self layoutMorph
+	body 
 		addMorph: listPane layoutSpec: (LayoutSpec fixedWidth: 250);
-		addAdjusterAndMorph: textPane layoutSpec: (LayoutSpec useAll)! !
+		addAdjusterAndMorph: textPane layoutSpec: (LayoutSpec useAll).
+		
+	self layoutMorph
+		addMorph: buttonArea;
+		addAdjusterAndMorph: body layoutSpec: (LayoutSpec useAll).
+		
+	model when: #removeButtons send: #removeButtons to: self.
+	model when: #addButtons: send: #addButtons: to: self with: #array.
+	! !
+
+!MonopHouse methodsFor: 'operating' stamp: 'dhn 3/26/2020 17:41:14'!
+addButtons: anArray
+	"Add buttons appropriately enabled to buy or sell houses"
+	
+	buyButton _ GameButtonMorph label: 'Buy' action: #buyHouse state: anArray first model: self.
+	buyButton 
+		morphExtent: 70@30;
+		setBalloonText: 'Buy a house'.
+	sellButton _ GameButtonMorph label: 'Sell' action: #sellHouse state: anArray second model: self.
+	sellButton 
+		morphExtent: 70@30;
+		setBalloonText: 'Sell a house'.
+	buttonArea
+		removeAllMorphs;
+		addMorph: buyButton;
+		addMorph: sellButton
+! !
+
+!MonopHouse methodsFor: 'operating' stamp: 'dhn 3/26/2020 18:13:53'!
+buyHouse
+	"Buy a house"
+	| nam prop |
+
+	nam _ model devList at: model devItem.
+	prop _ model currentPlayer assets detect: [:a | a title = nam] ifNone: [].
+	prop houses: prop houses + 1.
+	model currentPlayer tally: prop houseCost negated.
+	model triggerEvent: #itemChange! !
+
+!MonopHouse methodsFor: 'operating' stamp: 'dhn 3/26/2020 17:17:29'!
+removeButtons
+
+	buttonArea removeAllMorphs ! !
+
+!MonopHouse methodsFor: 'operating' stamp: 'dhn 3/26/2020 18:15:54'!
+sellHouse
+	"Sell a house"
+	| nam prop |
+
+	nam _ model devList at: model devItem.
+	prop _ model currentPlayer assets detect: [:a | a title = nam] ifNone: [].
+	prop houses: prop houses - 1.
+	model currentPlayer tally: prop houseCost / 2.
+	model triggerEvent: #itemChange! !
 
 !MonopStats methodsFor: 'termination' stamp: 'dhn 2/23/2020 20:44:15'!
 closeBoxHit
@@ -2953,6 +3032,17 @@ othersBeside: aPlayer
 			ifFalse: [arr add: {where owner identity. where title}]].
 	^ arr! !
 
+!Property methodsFor: 'operating' stamp: 'dhn 3/26/2020 15:40:37'!
+othersInSet
+	"Answer the other assets in the set."
+	| others |
+	
+	others _ OrderedCollection new.
+	set do: [:ea | 
+		(mgr spaces at: ea) boardPosition = boardPosition 
+			ifFalse: [others add: (mgr spaces at: ea)]].
+	^ others! !
+
 !Property methodsFor: 'operating' stamp: 'dhn 3/5/2020 15:59:53'!
 ownedByMe
 	"Answer how many of the set are owned by the current player."
@@ -3051,13 +3141,14 @@ rent: aPlayer
         ifTrue: [ ^2 * ( rents at: 1) ].
     ^rents at: ( self houses + 1 )! !
 
-!Lot methodsFor: 'operating' stamp: 'dhn 2/29/2020 20:12:07'!
+!Lot methodsFor: 'operating' stamp: 'dhn 3/26/2020 19:30:30'!
 rentAmount
 	"Answer the rent for this lot considering sets, houses, and mortgage state."
 	
-	^ mortgaged 
+	mortgaged 
 		ifTrue: [^ 0]
-		ifFalse: [(rents at: houses + 1) * self complete]! !
+		ifFalse: [houses ifNotZero: [^ rents at: houses + 1]].
+	^ rents first * self complete! !
 
 !Lot methodsFor: 'operating' stamp: 'dhn 3/5/2020 14:54:46'!
 report
