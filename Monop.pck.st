@@ -1,6 +1,6 @@
-'From Cuis 5.0 [latest update: #4042] on 27 March 2020 at 4:55:34 pm'!
+'From Cuis 5.0 [latest update: #4042] on 27 March 2020 at 10:17:00 pm'!
 'Description Simulation of the board game "Monopoly".'!
-!provides: 'Monop' 1 163!
+!provides: 'Monop' 1 164!
 !requires: 'Game' 1 44 nil!
 SystemOrganization addCategory: #'Monop-View'!
 SystemOrganization addCategory: #'Monop-Model'!
@@ -8,7 +8,7 @@ SystemOrganization addCategory: #'Monop-Model'!
 
 !classDefinition: #Estate category: #'Monop-Model'!
 Game subclass: #Estate
-	instanceVariableNames: 'demo windowCount chances chests moveButton statsItem propertyAuctionBid note devItem'
+	instanceVariableNames: 'demo windowCount chances chests moveButton statsItem propertyAuctionBid note devItem morItem'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Monop-Model'!
@@ -84,6 +84,16 @@ GameView subclass: #MonopStats
 	category: 'Monop-View'!
 !classDefinition: 'MonopStats class' category: #'Monop-View'!
 MonopStats class
+	instanceVariableNames: ''!
+
+!classDefinition: #Mortgage category: #'Monop-View'!
+GameView subclass: #Mortgage
+	instanceVariableNames: 'textPane listPane buttonArea morButton unmButton'
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'Monop-View'!
+!classDefinition: 'Mortgage class' category: #'Monop-View'!
+Mortgage class
 	instanceVariableNames: ''!
 
 !classDefinition: #Notifier category: #'Monop-View'!
@@ -273,6 +283,9 @@ A Monopoly window for managing lot development.!
 !MonopStats commentStamp: '<historical>' prior: 0!
 A Monopoly window which shows statistics about the player's assets.!
 
+!Mortgage commentStamp: '<historical>' prior: 0!
+A Monopoly window for mortgaging and unmortgaging property.!
+
 !Notifier commentStamp: '<historical>' prior: 0!
 A window for notifying players.!
 
@@ -383,6 +396,55 @@ setupPlayer: aName color: aColor
 		mgr: self;
 		identity: aName).
 	currentPlayer _ pl! !
+
+!Estate methodsFor: 'mortgage' stamp: 'dhn 3/27/2020 20:07:17'!
+morItem
+	"Answer the value of morItem"
+
+	^ morItem ifNil: [morItem _ 0]! !
+
+!Estate methodsFor: 'mortgage' stamp: 'dhn 3/27/2020 20:08:31'!
+morItem: anObject
+	"Set the value of morItem"
+	
+	(morItem _ anObject) ifNotNil: [
+		self triggerEvent: #itemChange.
+		self changed: #morItem]! !
+
+!Estate methodsFor: 'mortgage' stamp: 'dhn 3/27/2020 21:16:46'!
+morList
+	"Answer a list for the mortgage window"
+	| col |
+	
+	col _ OrderedCollection new.
+	currentPlayer assets do: [:ea |
+		ea class = Lot
+			ifTrue: [
+				ea allInSet
+					ifTrue: [
+						(ea set allSatisfy: [:a | (spaces at: a) houses = 0])
+							ifTrue: [col add: ea title]]
+					ifFalse: [col add: ea title]]
+			ifFalse: [col add: ea title]].
+	^ col! !
+
+!Estate methodsFor: 'mortgage' stamp: 'dhn 3/27/2020 20:53:20'!
+morReport:  anAsset
+	"Answer the mortgage state of anAsset"
+	| prop val arr |
+	
+	self morItem > 0
+		ifTrue: [
+			prop _ anAsset title.
+			val _ (anAsset price / 2) asString, '.'.
+			arr _ {anAsset mortgaged not. anAsset mortgaged}.
+			self triggerEvent: #addButtons: with: arr.
+			^ anAsset mortgaged
+				ifTrue: [prop, ' is mortgaged for $', val] 
+				ifFalse: [prop, ' is not mortgaged. Mortgage value $', val]]
+		ifFalse: [
+			self triggerEvent: #removeButtons.
+			^ '']! !
 
 !Estate methodsFor: 'development' stamp: 'dhn 3/26/2020 11:19:42'!
 devItem
@@ -1763,6 +1825,14 @@ makeHouseButton
 		layoutSpec: self class buttonLayoutSpec;
 		setBalloonText: 'Houses and hotels'! !
 
+!Monopoly methodsFor: 'initialization' stamp: 'dhn 3/27/2020 20:34:45'!
+makeMortgageButton
+	"Answer the 'Mortgage' button"
+	
+	^ (GameButtonMorph label: 'Mortgage' action: #showMortgage state: true model: self)
+		layoutSpec: self class buttonLayoutSpec;
+		setBalloonText: 'Mortgage and unmortgage property'! !
+
 !Monopoly methodsFor: 'initialization' stamp: 'dhn 5/16/2019 15:57:25'!
 makeMoveButton
 	"Answer the 'Move' button"
@@ -1833,7 +1903,7 @@ makeShowStatsButton
 		layoutSpec: self class buttonLayoutSpec;
 		setBalloonText: 'List of owned property'! !
 
-!Monopoly methodsFor: 'initialization' stamp: 'dhn 3/26/2020 11:41:58'!
+!Monopoly methodsFor: 'initialization' stamp: 'dhn 3/27/2020 20:36:05'!
 playButtonSet
 	"Answer the buttons used to play the game"
 
@@ -1843,7 +1913,7 @@ playButtonSet
 		addMorph: self makeEndTurnButton;
 		addMorph: self makeShowStatsButton;
 		addMorph: self makeHouseButton;
-		addMorph: self makeAuctionButton;
+		addMorph: self makeMortgageButton;
 		addMorph: self makePurchasesButton;
 		addMorph: self makeHistoryButton! !
 
@@ -2020,6 +2090,22 @@ showLuxuryTax
 		morphExtent: 315 @ 215.
 	win buttonArea color: win textPanel color
 ! !
+
+!Monopoly methodsFor: 'windows' stamp: 'dhn 3/27/2020 20:31:56'!
+showMortgage
+	"Open a window for changing the mortgage state of property"
+	| pl win |
+		
+	pl _ model currentPlayer.
+	win _ Mortgage openOn: model.
+	win openInWorld: pasteup.
+	win
+		removeWindowMenu;
+		setLabel: pl identity, '''s Undeveloped Property';
+		setWindowColor: pl color;
+		morphPosition: self windowPosition;
+		morphExtent: 500 @ 260.
+	model disableAll: {'Mortgage'}! !
 
 !Monopoly methodsFor: 'windows' stamp: 'dhn 3/22/2020 20:50:37'!
 showPropertyAuction
@@ -2660,6 +2746,123 @@ buildMorphicWindow
 		addMorph: listPane layoutSpec: (LayoutSpec fixedWidth: 250);
 		addAdjusterAndMorph: textPane layoutSpec: (LayoutSpec useAll)! !
 
+!Mortgage methodsFor: 'termination' stamp: 'dhn 3/27/2020 20:47:58'!
+closeBoxHit
+
+	model 
+		morItem: nil;
+		enableAll: {'Mortgage'}.
+	super closeBoxHit! !
+
+!Mortgage methodsFor: 'termination' stamp: 'dhn 3/27/2020 20:48:47'!
+endIt
+	
+	model 
+		morItem: nil;
+		enableAll: {'Mortgage'}.
+	self delete! !
+
+!Mortgage methodsFor: 'initialization' stamp: 'dhn 3/27/2020 19:34:11'!
+buildMorphicWindow
+	"Lay out the window for mortgaging"
+	| body |
+	
+	self layoutMorph beColumn.
+	buttonArea _ (LayoutMorph newRow)
+		layoutSpec: (LayoutSpec new
+			proportionalWidth: 1.0;
+			proportionalHeight: 0.3;
+			minorDirectionPadding: #center).
+	buttonArea
+		name: #buttons;
+		padding: #center.
+	
+	body _ (LayoutMorph newRow)
+		layoutSpec: (LayoutSpec 
+			proportionalWidth: 1.0
+			proportionalHeight: 0.7
+			minorDirectionPadding: #center);
+		name: #body;
+		padding: #center.
+	listPane _ (PluggableListMorph
+		model: model
+		listGetter: #morList
+		indexGetter: #morItem
+		indexSetter: #morItem:
+		mainView: self
+		menuGetter: nil
+		keystrokeAction: nil)
+			name: 'property list'.
+	textPane _ (TextModelMorph
+		withModel: (TextModel withText: ''))
+			askBeforeDiscardingEdits: false;
+			name: 'property state'.
+	body 
+		addMorph: listPane layoutSpec: (LayoutSpec fixedWidth: 250);
+		addAdjusterAndMorph: textPane layoutSpec: (LayoutSpec useAll).
+		
+	self layoutMorph
+		addMorph: buttonArea;
+		addAdjusterAndMorph: body layoutSpec: (LayoutSpec useAll).
+		
+	model when: #removeButtons send: #removeButtons to: self.
+	model when: #addButtons: send: #addButtons: to: self with: #array.
+	! !
+
+!Mortgage methodsFor: 'operating' stamp: 'dhn 3/27/2020 20:40:06'!
+addButtons: anArray
+	"Add buttons appropriately enabled to mortgage or unmortgage property"
+	
+	morButton _ GameButtonMorph label: 'Mortgage' action: #mortgage state: anArray first model: self.
+	morButton morphExtent: 100@30.
+	unmButton _ GameButtonMorph label: 'Unmortgage' action: #unmortgage state: anArray second model: self.
+	unmButton morphExtent: 100@30.
+	buttonArea
+		removeAllMorphs;
+		addMorph: morButton;
+		addMorph: unmButton
+! !
+
+!Mortgage methodsFor: 'operating' stamp: 'dhn 3/27/2020 20:59:38'!
+details
+	| x nam |
+
+	listPane updateList.
+	model morItem > 0
+		ifTrue: [
+			nam _ model morList at: model morItem.
+			x _ model currentPlayer assets 
+						detect: [:a | a title = nam] ifNone: [].
+			textPane model actualContents: (model morReport: x)]
+		ifFalse: [textPane model actualContents: '']! !
+
+!Mortgage methodsFor: 'operating' stamp: 'dhn 3/27/2020 20:54:22'!
+mortgage
+	"Mortgage a property"
+	| nam prop |
+
+	nam _ model morList at: model morItem.
+	prop _ model currentPlayer assets detect: [:a | a title = nam] ifNone: [].
+	prop mortgaged: true.
+	model currentPlayer tally: prop price / 2.
+	model triggerEvent: #itemChange! !
+
+!Mortgage methodsFor: 'operating' stamp: 'dhn 3/27/2020 19:24:07'!
+removeButtons
+
+	buttonArea removeAllMorphs ! !
+
+!Mortgage methodsFor: 'operating' stamp: 'dhn 3/27/2020 20:45:09'!
+unmortgage
+	"Unmortgage a property"
+	| nam prop |
+
+	nam _ model morList at: model morItem.
+	prop _ model currentPlayer assets detect: [:a | a title = nam] ifNone: [].
+	prop mortgaged: false.
+	model currentPlayer tally: (prop price / 2) * 1.1 negated.
+	model triggerEvent: #itemChange! !
+
 !Notifier methodsFor: 'operating' stamp: 'dhn 3/25/2020 15:46:17'!
 finish
 	"Perform methods in response to the OK button"
@@ -2896,25 +3099,6 @@ initialize
 	super initialize.
 	routine _ #parkFree! !
 
-!Property methodsFor: 'as yet unclassified' stamp: 'dhn 3/27/2020 14:13:04'!
-development
-        "Answer the default value of development"
-
-    ^ ''! !
-
-!Property methodsFor: 'as yet unclassified' stamp: 'dhn 5/14/2019 15:28:02'!
-sellTo: aPlayer
-	"Try to sell this property to aPlayer."
-	
-	(PopUpMenu  
-		confirm: self title, 'is for sale for only $', self price printString
-		trueChoice: aPlayer name, ' wants to buy it.'
-		falseChoice: 'No, thanks.' icons: #(acceptIcon cancelIcon))
-            ifTrue: [
-                aPlayer assess: self price;
-                    propertyAdd: self.
-                self owner: aPlayer ].! !
-
 !Property methodsFor: 'accessing' stamp: 'dhn 2/29/2020 19:45:00'!
 mgr
 	"Answer the value of mgr"
@@ -2927,15 +3111,17 @@ mgr: anObject
 
 	mgr _ anObject! !
 
-!Property methodsFor: 'accessing'!
+!Property methodsFor: 'accessing' stamp: 'dhn 3/27/2020 18:16:30'!
 mortgaged
         "Answer the value of the mortgaged variable."
-    ^mortgaged! !
 
-!Property methodsFor: 'accessing'!
+    ^ mortgaged ifNil: [mortgaged _ false]! !
+
+!Property methodsFor: 'accessing' stamp: 'dhn 3/27/2020 18:16:56'!
 mortgaged: aBoolean
         "Set the Boolean value of the mortgaged variable."
-    mortgaged := aBoolean.! !
+
+    mortgaged _ aBoolean.! !
 
 !Property methodsFor: 'accessing' stamp: 'dhn 2/28/2020 15:03:10'!
 owner
@@ -2983,6 +3169,12 @@ price: anObject
         "Set the value of the price variable."
 
 	    price _ anObject! !
+
+!Property methodsFor: 'operating' stamp: 'dhn 3/27/2020 14:13:04'!
+development
+        "Answer the default value of development"
+
+    ^ ''! !
 
 !Property methodsFor: 'operating' stamp: 'dhn 3/12/2020 13:43:51'!
 numberOwned
