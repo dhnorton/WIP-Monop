@@ -1,6 +1,6 @@
-'From Cuis 5.0 [latest update: #4042] on 28 March 2020 at 11:55:26 am'!
+'From Cuis 5.0 [latest update: #4042] on 28 March 2020 at 5:58:47 pm'!
 'Description Simulation of the board game "Monopoly".'!
-!provides: 'Monop' 1 165!
+!provides: 'Monop' 1 166!
 !requires: 'Game' 1 44 nil!
 SystemOrganization addCategory: #'Monop-View'!
 SystemOrganization addCategory: #'Monop-Model'!
@@ -428,7 +428,7 @@ morList
 			ifFalse: [col add: ea title]].
 	^ col! !
 
-!Estate methodsFor: 'mortgage' stamp: 'dhn 3/27/2020 20:53:20'!
+!Estate methodsFor: 'mortgage' stamp: 'dhn 3/28/2020 12:20:27'!
 morReport:  anAsset
 	"Answer the mortgage state of anAsset"
 	| prop val arr |
@@ -438,12 +438,12 @@ morReport:  anAsset
 			prop _ anAsset title.
 			val _ (anAsset price / 2) asString, '.'.
 			arr _ {anAsset mortgaged not. anAsset mortgaged}.
-			self triggerEvent: #addButtons: with: arr.
+			self triggerEvent: #morButtons: with: arr.
 			^ anAsset mortgaged
 				ifTrue: [prop, ' is mortgaged for $', val] 
 				ifFalse: [prop, ' is not mortgaged. Mortgage value $', val]]
 		ifFalse: [
-			self triggerEvent: #removeButtons.
+			self triggerEvent: #delButtons.
 			^ '']! !
 
 !Estate methodsFor: 'development' stamp: 'dhn 3/26/2020 11:19:42'!
@@ -460,7 +460,7 @@ devItem: anObject
 		self triggerEvent: #itemChange.
 		self changed: #devItem]! !
 
-!Estate methodsFor: 'development' stamp: 'dhn 3/26/2020 12:34:23'!
+!Estate methodsFor: 'development' stamp: 'dhn 3/28/2020 17:53:53'!
 devList
 	"Answer a list for the develop window"
 	| col |
@@ -468,7 +468,9 @@ devList
 	col _ OrderedCollection new.
 	currentPlayer assets do: [:ea |
 		((ea class = Lot) and: [ea developable])
-			ifTrue: [col add: ea title]].
+			ifTrue: [
+				(ea set allSatisfy: [:a | (spaces at: a) mortgaged = false])
+					ifTrue: [col add: ea title]]].
 	^ col! !
 
 !Estate methodsFor: 'development' stamp: 'dhn 3/26/2020 20:01:09'!
@@ -2762,7 +2764,7 @@ endIt
 		enableAll: {'Mortgage'}.
 	self delete! !
 
-!Mortgage methodsFor: 'initialization' stamp: 'dhn 3/27/2020 19:34:11'!
+!Mortgage methodsFor: 'initialization' stamp: 'dhn 3/28/2020 12:20:51'!
 buildMorphicWindow
 	"Lay out the window for mortgaging"
 	| body |
@@ -2805,12 +2807,27 @@ buildMorphicWindow
 		addMorph: buttonArea;
 		addAdjusterAndMorph: body layoutSpec: (LayoutSpec useAll).
 		
-	model when: #removeButtons send: #removeButtons to: self.
-	model when: #addButtons: send: #addButtons: to: self with: #array.
+	model when: #delButtons send: #removeButtons to: self.
+	model when: #morButtons: send: #morButtons: to: self with: #array.
 	! !
 
-!Mortgage methodsFor: 'operating' stamp: 'dhn 3/27/2020 20:40:06'!
-addButtons: anArray
+!Mortgage methodsFor: 'operating' stamp: 'dhn 3/28/2020 17:03:51'!
+details
+	| x nam |
+
+	listPane updateList.
+	model morItem > 0
+		ifTrue: [
+			nam _ model morList at: model morItem.
+			x _ model currentPlayer assets 
+						detect: [:a | a title = nam] ifNone: [].
+			textPane model actualContents: (model morReport: x)]
+		ifFalse: [
+			self removeButtons.
+			textPane model actualContents: '']! !
+
+!Mortgage methodsFor: 'operating' stamp: 'dhn 3/28/2020 12:15:37'!
+morButtons: anArray
 	"Add buttons appropriately enabled to mortgage or unmortgage property"
 	
 	morButton _ GameButtonMorph label: 'Mortgage' action: #mortgage state: anArray first model: self.
@@ -2822,19 +2839,6 @@ addButtons: anArray
 		addMorph: morButton;
 		addMorph: unmButton
 ! !
-
-!Mortgage methodsFor: 'operating' stamp: 'dhn 3/27/2020 20:59:38'!
-details
-	| x nam |
-
-	listPane updateList.
-	model morItem > 0
-		ifTrue: [
-			nam _ model morList at: model morItem.
-			x _ model currentPlayer assets 
-						detect: [:a | a title = nam] ifNone: [].
-			textPane model actualContents: (model morReport: x)]
-		ifFalse: [textPane model actualContents: '']! !
 
 !Mortgage methodsFor: 'operating' stamp: 'dhn 3/27/2020 20:54:22'!
 mortgage
