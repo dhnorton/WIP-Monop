@@ -1,6 +1,6 @@
-'From Cuis 5.0 [latest update: #4042] on 27 March 2020 at 10:17:00 pm'!
+'From Cuis 5.0 [latest update: #4042] on 28 March 2020 at 11:55:26 am'!
 'Description Simulation of the board game "Monopoly".'!
-!provides: 'Monop' 1 164!
+!provides: 'Monop' 1 165!
 !requires: 'Game' 1 44 nil!
 SystemOrganization addCategory: #'Monop-View'!
 SystemOrganization addCategory: #'Monop-Model'!
@@ -66,6 +66,16 @@ GameView subclass: #BuyView
 BuyView class
 	instanceVariableNames: ''!
 
+!classDefinition: #MonopHoldings category: #'Monop-View'!
+GameView subclass: #MonopHoldings
+	instanceVariableNames: 'textPane listPane'
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'Monop-View'!
+!classDefinition: 'MonopHoldings class' category: #'Monop-View'!
+MonopHoldings class
+	instanceVariableNames: ''!
+
 !classDefinition: #MonopHouse category: #'Monop-View'!
 GameView subclass: #MonopHouse
 	instanceVariableNames: 'textPane listPane buttonArea buyButton sellButton'
@@ -74,16 +84,6 @@ GameView subclass: #MonopHouse
 	category: 'Monop-View'!
 !classDefinition: 'MonopHouse class' category: #'Monop-View'!
 MonopHouse class
-	instanceVariableNames: ''!
-
-!classDefinition: #MonopStats category: #'Monop-View'!
-GameView subclass: #MonopStats
-	instanceVariableNames: 'textPane listPane'
-	classVariableNames: ''
-	poolDictionaries: ''
-	category: 'Monop-View'!
-!classDefinition: 'MonopStats class' category: #'Monop-View'!
-MonopStats class
 	instanceVariableNames: ''!
 
 !classDefinition: #Mortgage category: #'Monop-View'!
@@ -277,11 +277,11 @@ A Monopoly window which makes it possible for players to bid on property.!
 !BuyView commentStamp: '<historical>' prior: 0!
 A window where players must either buy or auction a property.!
 
+!MonopHoldings commentStamp: '<historical>' prior: 0!
+A Monopoly window which shows statistics about the player's assets.!
+
 !MonopHouse commentStamp: '<historical>' prior: 0!
 A Monopoly window for managing lot development.!
-
-!MonopStats commentStamp: '<historical>' prior: 0!
-A Monopoly window which shows statistics about the player's assets.!
 
 !Mortgage commentStamp: '<historical>' prior: 0!
 A Monopoly window for mortgaging and unmortgaging property.!
@@ -2154,17 +2154,17 @@ showRentDue
 	win buttonArea color: win textPanel color
 ! !
 
-!Monopoly methodsFor: 'windows' stamp: 'dhn 3/27/2020 11:33:10'!
+!Monopoly methodsFor: 'windows' stamp: 'dhn 3/28/2020 11:53:29'!
 showStats
 	"Open a window on a player's statistics"
 	| pl win |
 		
 	pl _ model currentPlayer.
-	win _ MonopStats openOn: model.
+	win _ MonopHoldings openOn: model.
 	win openInWorld: pasteup.
 	win
 		cleanTitleBar;
-		setLabel: pl identity, '''s Statistics';
+		setLabel: pl identity, '''s Properties';
 		setWindowColor: pl color;
 		morphPosition: self windowPosition;
 		morphExtent: 500 @ 260.
@@ -2587,6 +2587,51 @@ endIt
 	
 	self delete! !
 
+!MonopHoldings methodsFor: 'termination' stamp: 'dhn 3/27/2020 11:34:35'!
+closeBoxHit
+
+	model 
+		statsItem: nil;
+		enableAll: {'Holdings'}.
+	super closeBoxHit! !
+
+!MonopHoldings methodsFor: 'termination' stamp: 'dhn 3/27/2020 11:34:11'!
+endIt
+	
+	model 
+		statsItem: nil;
+		enableAll: {'Holdings'}.
+	self delete! !
+
+!MonopHoldings methodsFor: 'accessing' stamp: 'dhn 3/1/2020 11:59:48'!
+details
+
+	listPane updateList.
+	textPane model actualContents: model statsReport 	"note that the textPane model differs from the model for this view"! !
+
+!MonopHoldings methodsFor: 'initialization' stamp: 'dhn 3/1/2020 15:48:13'!
+buildMorphicWindow
+	"Lay out the window for statistics"
+	
+	self layoutMorph beRow.
+	listPane _ (PluggableListMorph
+		model: model
+		listGetter: #statsList
+		indexGetter: #statsItem
+		indexSetter: #statsItem:
+		mainView: self
+		menuGetter: nil
+		keystrokeAction: nil)
+			name: 'stats list'.
+	textPane _ (TextModelMorph
+		withModel: (TextModel withText: '')) 	"note the different model specification"
+			askBeforeDiscardingEdits: false;	"discard changes to the text"
+			name: 'stat description'. 	"give the TextModelMorph a name which will appear in the halos"
+
+	self layoutMorph
+		addMorph: listPane layoutSpec: (LayoutSpec fixedWidth: 250);
+		addAdjusterAndMorph: textPane layoutSpec: (LayoutSpec useAll)! !
+
 !MonopHouse methodsFor: 'termination' stamp: 'dhn 3/26/2020 11:12:58'!
 closeBoxHit
 
@@ -2700,51 +2745,6 @@ sellHouse
 	prop houses: prop houses - 1.
 	model currentPlayer tally: prop houseCost / 2.
 	model triggerEvent: #itemChange! !
-
-!MonopStats methodsFor: 'termination' stamp: 'dhn 3/27/2020 11:34:35'!
-closeBoxHit
-
-	model 
-		statsItem: nil;
-		enableAll: {'Holdings'}.
-	super closeBoxHit! !
-
-!MonopStats methodsFor: 'termination' stamp: 'dhn 3/27/2020 11:34:11'!
-endIt
-	
-	model 
-		statsItem: nil;
-		enableAll: {'Holdings'}.
-	self delete! !
-
-!MonopStats methodsFor: 'accessing' stamp: 'dhn 3/1/2020 11:59:48'!
-details
-
-	listPane updateList.
-	textPane model actualContents: model statsReport 	"note that the textPane model differs from the model for this view"! !
-
-!MonopStats methodsFor: 'initialization' stamp: 'dhn 3/1/2020 15:48:13'!
-buildMorphicWindow
-	"Lay out the window for statistics"
-	
-	self layoutMorph beRow.
-	listPane _ (PluggableListMorph
-		model: model
-		listGetter: #statsList
-		indexGetter: #statsItem
-		indexSetter: #statsItem:
-		mainView: self
-		menuGetter: nil
-		keystrokeAction: nil)
-			name: 'stats list'.
-	textPane _ (TextModelMorph
-		withModel: (TextModel withText: '')) 	"note the different model specification"
-			askBeforeDiscardingEdits: false;	"discard changes to the text"
-			name: 'stat description'. 	"give the TextModelMorph a name which will appear in the halos"
-
-	self layoutMorph
-		addMorph: listPane layoutSpec: (LayoutSpec fixedWidth: 250);
-		addAdjusterAndMorph: textPane layoutSpec: (LayoutSpec useAll)! !
 
 !Mortgage methodsFor: 'termination' stamp: 'dhn 3/27/2020 20:47:58'!
 closeBoxHit
