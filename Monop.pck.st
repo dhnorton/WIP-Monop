@@ -1,6 +1,6 @@
-'From Cuis 5.0 [latest update: #4042] on 28 March 2020 at 5:58:47 pm'!
+'From Cuis 5.0 [latest update: #4042] on 29 March 2020 at 2:25:00 pm'!
 'Description Simulation of the board game "Monopoly".'!
-!provides: 'Monop' 1 166!
+!provides: 'Monop' 1 168!
 !requires: 'Game' 1 44 nil!
 SystemOrganization addCategory: #'Monop-View'!
 SystemOrganization addCategory: #'Monop-Model'!
@@ -8,7 +8,7 @@ SystemOrganization addCategory: #'Monop-Model'!
 
 !classDefinition: #Estate category: #'Monop-Model'!
 Game subclass: #Estate
-	instanceVariableNames: 'demo windowCount chances chests moveButton statsItem propertyAuctionBid note devItem morItem'
+	instanceVariableNames: 'demo windowCount chances chests moveButton statsItem propertyAuctionBid note devItem morItem takeItem'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Monop-Model'!
@@ -104,6 +104,16 @@ GameView subclass: #Notifier
 	category: 'Monop-View'!
 !classDefinition: 'Notifier class' category: #'Monop-View'!
 Notifier class
+	instanceVariableNames: ''!
+
+!classDefinition: #TakeOver category: #'Monop-View'!
+GameView subclass: #TakeOver
+	instanceVariableNames: 'textPane listPane buttonArea unmButton intButton'
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'Monop-View'!
+!classDefinition: 'TakeOver class' category: #'Monop-View'!
+TakeOver class
 	instanceVariableNames: ''!
 
 !classDefinition: #Square category: #'Monop-Model'!
@@ -248,7 +258,7 @@ Luxury class
 
 !classDefinition: #Developer category: #'Monop-Model'!
 Gamer subclass: #Developer
-	instanceVariableNames: 'cards doubles jail goAgain doubledString'
+	instanceVariableNames: 'cards doubles jail goAgain doubledString debtor'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Monop-Model'!
@@ -288,6 +298,9 @@ A Monopoly window for mortgaging and unmortgaging property.!
 
 !Notifier commentStamp: '<historical>' prior: 0!
 A window for notifying players.!
+
+!TakeOver commentStamp: '<historical>' prior: 0!
+A Monopoly window for taking over assets. A debtor must either unmortgage or pay interest on assets received from a bankrupt player.!
 
 !Square commentStamp: '<historical>' prior: 0!
 A square on the board.!
@@ -396,6 +409,49 @@ setupPlayer: aName color: aColor
 		mgr: self;
 		identity: aName).
 	currentPlayer _ pl! !
+
+!Estate methodsFor: 'takeover' stamp: 'dhn 3/29/2020 12:32:45'!
+takeItem
+	"Answer the value of takeItem"
+
+	^ takeItem ifNil: [takeItem _ 0]! !
+
+!Estate methodsFor: 'takeover' stamp: 'dhn 3/29/2020 12:33:23'!
+takeItem: anObject
+	"Set the value of takeItem"
+	
+	(takeItem _ anObject) ifNotNil: [
+		self triggerEvent: #itemChange.
+		self changed: #takeItem]! !
+
+!Estate methodsFor: 'takeover' stamp: 'dhn 3/29/2020 13:26:09'!
+takeList
+	"Answer a list for the takeover window"
+	| ans |
+	
+	(currentPlayer debtor = 'Bank')
+		ifTrue: [
+			currentPlayer assets do: [:ea |
+				ea
+					owner: nil; 
+					mortgaged: false.].
+			ans _ '']
+		ifFalse: [ans _ currentPlayer assets].
+	^ ans! !
+
+!Estate methodsFor: 'takeover' stamp: 'dhn 3/29/2020 12:42:31'!
+takeReport:  anAsset
+	"Answer the mortgage state of anAsset being taken over"
+	| prop val |
+	
+	self takeItem > 0
+		ifTrue: [
+			prop _ anAsset title.
+			val _ (anAsset price / 2) asString, '.'.
+			prop, ' is mortgaged for $', val]
+		ifFalse: [
+			self triggerEvent: #rmTakeButtons.
+			^ '']! !
 
 !Estate methodsFor: 'mortgage' stamp: 'dhn 3/27/2020 20:07:17'!
 morItem
@@ -568,6 +624,15 @@ broker
 	self token moving: false
 ! !
 
+!Estate methodsFor: 'operating' stamp: 'dhn 3/28/2020 20:34:47'!
+declareBroke: aString
+	"Inform that the player named aString is out of cash"
+	
+	GamePopUp 
+		inform: aString , ' is out of cash and must sell houses 
+and mortgage until cash is no longer negative.'
+		title: 'Out of Cash'! !
+
 !Estate methodsFor: 'operating' stamp: 'dhn 3/20/2020 15:00:21'!
 doSpace
 	"Perform the method associated with the space where the player is"
@@ -613,7 +678,7 @@ enable: aButton
 	self triggerEvent: #itemChange.
 	self enableAll: {aButton}! !
 
-!Estate methodsFor: 'operating' stamp: 'dhn 3/24/2020 20:28:33'!
+!Estate methodsFor: 'operating' stamp: 'dhn 3/29/2020 13:53:34'!
 endTurn
 	"End a player's turn"
 	
@@ -622,17 +687,18 @@ endTurn
 	currentPlayer cash < 0
 		ifTrue: [self disableAll: {'Move'}.
 			currentPlayer outOfAssets
-				ifTrue: [self removeFromGame]
+				ifTrue: [self removePlayer: currentPlayer]
 				ifFalse: [
 					self declareBroke: currentPlayer identity.
 					self disableAll: {'End Turn'}]]
 		ifFalse: [
+			currentPlayer debtor: nil.
 			self triggerEvent: #deleteOpenWindows.
 			windowCount _ 0.
 			self nextPlayer.
 			self won
 				ifTrue: [self wonButtonsState]
-				ifFalse: [self enableAll: {'Move'. 'Stats'}.
+				ifFalse: [self enableAll: {'Move'}.
 					self disableAll: {'End Turn'}]]! !
 
 !Estate methodsFor: 'operating' stamp: 'dhn 5/14/2019 21:43:28'!
@@ -708,17 +774,23 @@ justVisit
 			self disableAll: {'Move'}]."
 	self enableAll: {'End Turn'}! !
 
-!Estate methodsFor: 'operating' stamp: 'dhn 3/19/2020 16:26:47'!
+!Estate methodsFor: 'operating' stamp: 'dhn 3/29/2020 13:47:03'!
 level11: anArray
 	"Cases for Chance and Community Chest"
 	| switch |
 	
 	switch _ Dictionary new
 		at: #fromEach put: [{{#fromEach:. anArray third}. #(#enable: 'End Turn')}];
-		at: #toEach put: [{{#toEach:. anArray third}. #(#enable: 'End Turn')}];
+		at: #toEach put: [{
+			{#setDebtor:. 'Bank'}.
+			{#toEach:. anArray third}. 
+			#(#enable: 'End Turn')}];
 		yourself.
 	^ (switch at: anArray second
-		ifAbsent:[{{#tally:. anArray third negated}. #(#enable: 'End Turn')}]) value! !
+		ifAbsent:[{
+			{#setDebtor:. 'Bank'}.
+			{#tally:. anArray third negated}. 
+			#(#enable: 'End Turn')}]) value! !
 
 !Estate methodsFor: 'operating' stamp: 'dhn 3/19/2020 16:42:15'!
 level123: anArray
@@ -849,12 +921,14 @@ nearestUtility
 	
 	^ self nearest: self class positionUtility to: currentPlayer position! !
 
-!Estate methodsFor: 'operating' stamp: 'dhn 5/16/2019 18:15:44'!
+!Estate methodsFor: 'operating' stamp: 'dhn 3/28/2020 20:54:33'!
 nextPlayer
 	"Begin the next player's turn"
 	| x |
 	
 	currentPlayer _ (players atWrap: (playerIndex _ playerIndex + 1)).
+	players size > 1
+		ifTrue: [  
 	self 
 		triggerEvent: #deleteOpenWindows; 	"close any open views of the current player"
 		triggerEvent: #itemChange; 	"update board view"
@@ -868,7 +942,10 @@ nextPlayer
 	token setBalloonText: 'token for ', currentPlayer identity.
 	self testMode ifTrue: [
 	x _ (FillInTheBlankMorph request: 'How many spaces' initialAnswer: '6' onCancel: ['0']) asNumber.
-	self hardRoll: ((1 to: 6) asArray atWrap: x)]! !
+	self hardRoll: ((1 to: 6) asArray atWrap: x)]]
+		ifFalse: [
+			PopUpMenu inform: currentPlayer identity, ' is the WINNER!!'.
+			self disableAll: {'Move'. 'End Turn'}]! !
 
 !Estate methodsFor: 'operating' stamp: 'dhn 3/19/2020 15:56:32'!
 null: unused
@@ -930,10 +1007,28 @@ relative: anAmount
 
 	token slideLeft: currentPlayer position to: currentPlayer position + anAmount! !
 
-!Estate methodsFor: 'operating' stamp: 'dhn 3/2/2020 20:31:46'!
-repair: anObject
+!Estate methodsFor: 'operating' stamp: 'dhn 3/28/2020 20:47:56'!
+removePlayer: aPlayer
+	"Remove aPlayer from the game"
+	
+	players _ players select: [:a | a ~= aPlayer].
+	playerIndex _ 0 max: playerIndex - 1.
+	self nextPlayer! !
 
-	self enableAll: {'End Turn'}! !
+!Estate methodsFor: 'operating' stamp: 'dhn 3/29/2020 14:15:57'!
+repair: anArray
+	"Pay for street repairs"
+	| houses hotels |
+	
+	houses _ 0.
+	hotels _ 0.
+	currentPlayer assets do: [:ea |
+		ea class = Lot
+			ifTrue: [
+				ea houses = 5
+					ifTrue: [hotels _ hotels + 1] 
+					ifFalse: [houses _ houses + ea houses]]].
+	self tally: (houses * anArray first) + hotels * anArray second! !
 
 !Estate methodsFor: 'operating' stamp: 'dhn 3/19/2020 19:08:29'!
 salary
@@ -967,7 +1062,14 @@ seasonsFrom: anIndex
 		col addLast: (self class season at: n)].	
 	^ col! !
 
-!Estate methodsFor: 'operating' stamp: 'dhn 3/19/2020 16:18:38'!
+!Estate methodsFor: 'operating' stamp: 'dhn 3/29/2020 13:50:46'!
+setDebtor: aDebtor
+	"Set the current player's debtor"
+
+	currentPlayer debtor: aDebtor.
+	self triggerEvent: #itemChange! !
+
+!Estate methodsFor: 'operating' stamp: 'dhn 3/29/2020 13:58:24'!
 setNext: anArray
 	"Cases for Chance and Community Chest"
 	| level1 |
@@ -976,7 +1078,10 @@ setNext: anArray
 		at: #moveMoney: put: [self level11: anArray];
 		at: #movePlayer: put: [self level12: anArray];
 		at: #getOut: put: [{#(#null: nil). #(#enable: 'End Turn')}];
-		at: #repair: put: [{{#repair:. anArray second}. #(#enable: 'End Turn')}];
+		at: #repair: put: [{
+			{#setDebtor:. 'Bank'}.
+			{#repair:. anArray second}. 
+			#(#enable: 'End Turn')}];
 		yourself.
 	^ (level1 at: anArray first) value! !
 
@@ -1030,13 +1135,15 @@ toEach: anAmount
 				currentPlayer tally: anAmount negated]].
 	self triggerEvent: #itemChange! !
 
-!Estate methodsFor: 'operating' stamp: 'dhn 3/23/2020 20:05:26'!
+!Estate methodsFor: 'operating' stamp: 'dhn 3/29/2020 13:39:21'!
 toOwner: anArray
 	"Transfer money from the current player to the property owner for rent"
 	| rent |
 	
 	rent _ anArray second.
-	currentPlayer tally: rent negated.
+	currentPlayer 
+		debtor: anArray first;
+		tally: rent negated.
 	anArray first tally: rent.
 	self triggerEvent: #itemChange.
 	self enableAll: {'End Turn'}
@@ -2172,6 +2279,22 @@ showStats
 		morphExtent: 500 @ 260.
 	model disableAll: {'Holdings'}! !
 
+!Monopoly methodsFor: 'windows' stamp: 'dhn 3/29/2020 12:12:05'!
+showTakeOver
+	"Open a window for receiving a debtor's assets"
+	| pl win |
+		
+	pl _ model currentPlayer.
+	win _ TakeOver openOn: model.
+	win openInWorld: pasteup.
+	win
+		removeWindowMenu;
+		setLabel: 'Receiving ', pl identity, '''s Assets';
+		setWindowColor: pl color;
+		morphPosition: self windowPosition;
+		morphExtent: 500 @ 260.
+	model disableAll: {'End Turn'}! !
+
 !Monopoly methodsFor: 'windows' stamp: 'dhn 2/23/2020 21:15:08'!
 windowPosition
 	"Answer the position for a window"
@@ -2867,10 +2990,10 @@ unmortgage
 	model currentPlayer tally: (prop price / 2) * 1.1 negated.
 	model triggerEvent: #itemChange! !
 
-!Notifier methodsFor: 'operating' stamp: 'dhn 3/25/2020 15:46:17'!
+!Notifier methodsFor: 'operating' stamp: 'dhn 3/28/2020 22:02:25'!
 finish
 	"Perform methods in response to the OK button"
-
+self halt.
 	self nextDo do: [:ea |
 		model perform: ea first with: ea second].
 	model enable: 'End Turn'.
@@ -3016,6 +3139,133 @@ openOn: aModel
 	
 	^ win
 ! !
+
+!TakeOver methodsFor: 'termination' stamp: 'dhn 3/29/2020 13:12:24'!
+closeBoxHit
+
+	model takeItem: nil.
+	super closeBoxHit! !
+
+!TakeOver methodsFor: 'termination' stamp: 'dhn 3/29/2020 13:13:00'!
+endIt
+	
+	model devItem: nil.
+	self delete! !
+
+!TakeOver methodsFor: 'initialization' stamp: 'dhn 3/29/2020 12:52:47'!
+buildMorphicWindow
+	"Lay out the window for taking over assets"
+	| body |
+	
+	self layoutMorph beColumn.
+	buttonArea _ (LayoutMorph newRow)
+		layoutSpec: (LayoutSpec new
+			proportionalWidth: 1.0;
+			proportionalHeight: 0.3;
+			minorDirectionPadding: #center).
+	buttonArea
+		name: #buttons;
+		padding: #center.
+	
+	body _ (LayoutMorph newRow)
+		layoutSpec: (LayoutSpec 
+			proportionalWidth: 1.0
+			proportionalHeight: 0.7
+			minorDirectionPadding: #center);
+		name: #body;
+		padding: #center.
+	listPane _ (PluggableListMorph
+		model: model
+		listGetter: #takeList
+		indexGetter: #takeItem
+		indexSetter: #takeItem:
+		mainView: self
+		menuGetter: nil
+		keystrokeAction: nil)
+			name: 'asset list'.
+	textPane _ (TextModelMorph
+		withModel: (TextModel withText: ''))
+			askBeforeDiscardingEdits: false;
+			name: 'property description'.
+	body 
+		addMorph: listPane layoutSpec: (LayoutSpec fixedWidth: 250);
+		addAdjusterAndMorph: textPane layoutSpec: (LayoutSpec useAll).
+		
+	self layoutMorph
+		addMorph: buttonArea;
+		addAdjusterAndMorph: body layoutSpec: (LayoutSpec useAll).
+		
+	model when: #rmTakeButtons send: #removeButtons to: self.
+	model when: #addButtons send: #addButtons to: self.
+	! !
+
+!TakeOver methodsFor: 'operating' stamp: 'dhn 3/29/2020 12:22:26'!
+addButtons
+	"Add buttons to unmortgage or pay interest on assets"
+	
+	unmButton _ GameButtonMorph label: 'Unmortgage' action: #unmortgage state: true model: self.
+	unmButton 
+		morphExtent: 140@30.
+	intButton _ GameButtonMorph label: 'Interest' action: #interest state: true model: self.
+	intButton 
+		morphExtent: 140@30.
+	buttonArea
+		removeAllMorphs;
+		addMorph: unmButton;
+		addMorph: intButton
+! !
+
+!TakeOver methodsFor: 'operating' stamp: 'dhn 3/29/2020 13:11:04'!
+details
+	| x nam |
+
+	listPane updateList.
+	model takeItem > 0
+		ifTrue: [
+			nam _ model takeList at: model takeItem.
+			x _ model currentPlayer assets 
+						detect: [:a | a title = nam] ifNone: [].
+			textPane model actualContents: (model takeReport: x)]
+		ifFalse: [
+			self removeButtons.
+			textPane model actualContents: '']! !
+
+!TakeOver methodsFor: 'operating' stamp: 'dhn 3/29/2020 13:03:25'!
+interest
+	"Pay interest on a property which is being taken over"
+	| nam prop rcvr |
+
+	nam _ model takeList at: model takeItem.
+	prop _ model currentPlayer assets detect: [:a | a title = nam] ifNone: [].
+	prop mortgaged: false.
+	rcvr _ (model currentPlayer debtor) = 'Bank'
+		ifTrue: [nil] ifFalse: [model currentPlayer debtor].
+	rcvr ifNotNil: [
+		model currentPlayer debtor tally: (prop price / 2) * 0.1 negated.
+		model currentPlayer debtor assets add: prop].
+	prop owner: rcvr.
+	model triggerEvent: #itemChange! !
+
+!TakeOver methodsFor: 'operating' stamp: 'dhn 3/29/2020 12:11:44'!
+removeButtons
+
+	buttonArea removeAllMorphs ! !
+
+!TakeOver methodsFor: 'operating' stamp: 'dhn 3/29/2020 13:01:13'!
+unmortgage
+	"Unmortgage a property which is being taken over"
+	| nam prop rcvr |
+
+	nam _ model takeList at: model takeItem.
+	prop _ model currentPlayer assets detect: [:a | a title = nam] ifNone: [].
+	prop mortgaged: false.
+	rcvr _ (model currentPlayer debtor) = 'Bank'
+		ifTrue: [nil] ifFalse: [model currentPlayer debtor].
+	rcvr ifNotNil: [
+		model currentPlayer debtor tally: (prop price / 2) * 1.1 negated.
+		model currentPlayer debtor assets add: prop].
+	prop owner: rcvr.
+	model triggerEvent: #itemChange! !
 
 !Square methodsFor: 'accessing' stamp: 'dhn 3/1/2020 13:02:50'!
 boardPosition
@@ -3739,7 +3989,13 @@ netWorth
 		values _ values + (ea mortgaged ifTrue: [0] ifFalse: [ea price])].
 	^ cash + values + development! !
 
-!Developer methodsFor: 'operating' stamp: 'dhn 3/24/2020 20:05:39'!
+!Developer methodsFor: 'operating' stamp: 'dhn 3/28/2020 20:30:58'!
+outOfAssets
+	"Answer whether the receiver is out of assets"
+	
+	^ assets allSatisfy: [:a | a mortgaged]! !
+
+!Developer methodsFor: 'operating' stamp: 'dhn 3/28/2020 20:25:25'!
 tally: anAmount
 	"Answer anAmount after accounting for it"
 	
@@ -3749,7 +4005,12 @@ tally: anAmount
 		ifFalse: [self outFlow: anAmount + self outFlow].
 	0 > self cash 
 		ifTrue: [
-		self halt: 'need to mortgage'].
+			(assets allSatisfy: [:a | a mortgaged])
+				ifTrue: [
+					"transfer assets to the debtor"
+					mgr removePlayer: self] 
+				ifFalse: [ 
+					PopUpMenu inform: identity, ' needs to raise more cash.'.]].
 	^ anAmount
 ! !
 
@@ -3766,11 +4027,29 @@ taxWorth
 		prices _ prices + ea price].
 	^ cash + prices + development! !
 
+!Developer methodsFor: 'accessing' stamp: 'dhn 3/29/2020 12:49:33'!
+debtor
+	"Answer the value of debtor"
+
+	^ debtor! !
+
+!Developer methodsFor: 'accessing' stamp: 'dhn 3/29/2020 12:49:33'!
+debtor: anObject
+	"Set the value of debtor"
+
+	debtor _ anObject! !
+
 !Developer methodsFor: 'accessing' stamp: 'dhn 2/25/2020 20:08:21'!
 doubledString
 	"Answer the value of doubledString."
 	
 	doubledString _ ''! !
+
+!Developer methodsFor: 'accessing' stamp: 'dhn 3/29/2020 12:49:33'!
+doubledString: anObject
+	"Set the value of doubledString"
+
+	doubledString _ anObject! !
 
 !Developer methodsFor: 'accessing' stamp: 'dhn 5/17/2019 12:29:19'!
 doubles
@@ -3792,6 +4071,18 @@ goAgain
 goAgain: aBoolean
         "Set the 'go again' indicator to aBoolean."
     goAgain := aBoolean.! !
+
+!Developer methodsFor: 'accessing' stamp: 'dhn 3/29/2020 12:49:33'!
+jail
+	"Answer the value of jail"
+
+	^ jail! !
+
+!Developer methodsFor: 'accessing' stamp: 'dhn 3/29/2020 12:49:33'!
+jail: anObject
+	"Set the value of jail"
+
+	jail _ anObject! !
 
 !Developer methodsFor: 'accessing' stamp: 'dhn 5/17/2019 12:29:19'!
 roll
