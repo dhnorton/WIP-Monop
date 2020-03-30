@@ -1,6 +1,6 @@
-'From Cuis 5.0 [latest update: #4042] on 29 March 2020 at 11:15:00 pm'!
+'From Cuis 5.0 [latest update: #4042] on 30 March 2020 at 11:46:55 am'!
 'Description Simulation of the board game "Monopoly".'!
-!provides: 'Monop' 1 170!
+!provides: 'Monop' 1 171!
 !requires: 'Game' 1 44 nil!
 SystemOrganization addCategory: #'Monop-View'!
 SystemOrganization addCategory: #'Monop-Model'!
@@ -2237,7 +2237,7 @@ showPropertyAuction
 	win showChant.
 	win beat: #announceSold! !
 
-!Monopoly methodsFor: 'windows' stamp: 'dhn 3/29/2020 23:10:59'!
+!Monopoly methodsFor: 'windows' stamp: 'dhn 3/30/2020 11:44:55'!
 showRentDue
 	"Tell the player about the rent"
 	| win lot rent story |
@@ -2249,7 +2249,10 @@ showRentDue
 			nextPutAll: model currentPlayer identity, ' has landed on ';
 			nextPutAll: lot title.
 			lot mortgaged 
-				ifTrue: [str nextPutAll: ', which is mortgaged.'] 
+				ifTrue: [
+					str 
+						nextPutAll: ', which is mortgaged by ';
+						nextPutAll: lot owner identity, '.'] 
 				ifFalse: [
 					str
 						nextPutAll: lot development, ' and must pay ';
