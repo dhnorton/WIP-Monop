@@ -1,6 +1,6 @@
-'From Cuis 5.0 [latest update: #4042] on 30 March 2020 at 11:46:55 am'!
+'From Cuis 5.0 [latest update: #4042] on 30 March 2020 at 4:29:19 pm'!
 'Description Simulation of the board game "Monopoly".'!
-!provides: 'Monop' 1 171!
+!provides: 'Monop' 1 172!
 !requires: 'Game' 1 44 nil!
 SystemOrganization addCategory: #'Monop-View'!
 SystemOrganization addCategory: #'Monop-Model'!
@@ -108,7 +108,7 @@ Notifier class
 
 !classDefinition: #TakeOver category: #'Monop-View'!
 GameView subclass: #TakeOver
-	instanceVariableNames: 'textPane listPane buttonArea unmButton intButton'
+	instanceVariableNames: 'textPane listPane buttonArea unmButton intButton takeList'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Monop-View'!
@@ -441,7 +441,7 @@ takeList
 			currentPlayer assets do: [:a | ans add: a title]].
 	^ ans! !
 
-!Estate methodsFor: 'takeover' stamp: 'dhn 3/29/2020 12:42:31'!
+!Estate methodsFor: 'takeover' stamp: 'dhn 3/30/2020 12:19:52'!
 takeReport:  anAsset
 	"Answer the mortgage state of anAsset being taken over"
 	| prop val |
@@ -450,7 +450,8 @@ takeReport:  anAsset
 		ifTrue: [
 			prop _ anAsset title.
 			val _ (anAsset price / 2) asString, '.'.
-			prop, ' is mortgaged for $', val]
+			self triggerEvent: #addButtons.
+			^ prop, ' is mortgaged for $', val]
 		ifFalse: [
 			self triggerEvent: #rmTakeButtons.
 			^ '']! !
@@ -3163,7 +3164,7 @@ endIt
 	model devItem: nil.
 	self delete! !
 
-!TakeOver methodsFor: 'initialization' stamp: 'dhn 3/29/2020 12:52:47'!
+!TakeOver methodsFor: 'initialization' stamp: 'dhn 3/30/2020 12:51:51'!
 buildMorphicWindow
 	"Lay out the window for taking over assets"
 	| body |
@@ -3208,6 +3209,7 @@ buildMorphicWindow
 		
 	model when: #rmTakeButtons send: #removeButtons to: self.
 	model when: #addButtons send: #addButtons to: self.
+	model when: #itemChange send: #details to: self.
 	! !
 
 !TakeOver methodsFor: 'operating' stamp: 'dhn 3/29/2020 12:22:26'!
@@ -3226,7 +3228,7 @@ addButtons
 		addMorph: intButton
 ! !
 
-!TakeOver methodsFor: 'operating' stamp: 'dhn 3/29/2020 13:11:04'!
+!TakeOver methodsFor: 'operating' stamp: 'dhn 3/30/2020 12:11:08'!
 details
 	| x nam |
 
@@ -3241,42 +3243,46 @@ details
 			self removeButtons.
 			textPane model actualContents: '']! !
 
-!TakeOver methodsFor: 'operating' stamp: 'dhn 3/29/2020 13:03:25'!
+!TakeOver methodsFor: 'operating' stamp: 'dhn 3/30/2020 15:06:23'!
 interest
-	"Pay interest on a property which is being taken over"
-	| nam prop rcvr |
+	"Only pay interest a property which is being taken over"
+	| nam prop |
 
 	nam _ model takeList at: model takeItem.
 	prop _ model currentPlayer assets detect: [:a | a title = nam] ifNone: [].
 	prop mortgaged: false.
-	rcvr _ (model currentPlayer debtor) = 'Bank'
-		ifTrue: [nil] ifFalse: [model currentPlayer debtor].
-	rcvr ifNotNil: [
-		model currentPlayer debtor tally: (prop price / 2) * 0.1 negated.
-		model currentPlayer debtor assets add: prop].
-	prop owner: rcvr.
-	model triggerEvent: #itemChange! !
+	self settle: prop at: 0.1! !
 
 !TakeOver methodsFor: 'operating' stamp: 'dhn 3/29/2020 12:11:44'!
 removeButtons
 
 	buttonArea removeAllMorphs ! !
 
-!TakeOver methodsFor: 'operating' stamp: 'dhn 3/29/2020 13:01:13'!
-unmortgage
-	"Unmortgage a property which is being taken over"
-	| nam prop rcvr |
+!TakeOver methodsFor: 'operating' stamp: 'dhn 3/30/2020 15:04:48'!
+settle: anAsset at: aRate
+	"Complete the transfer of anAsset to the debtor"
+	| rcvr |
 
-	nam _ model takeList at: model takeItem.
-	prop _ model currentPlayer assets detect: [:a | a title = nam] ifNone: [].
-	prop mortgaged: false.
 	rcvr _ (model currentPlayer debtor) = 'Bank'
 		ifTrue: [nil] ifFalse: [model currentPlayer debtor].
 	rcvr ifNotNil: [
-		model currentPlayer debtor tally: (prop price / 2) * 1.1 negated.
-		model currentPlayer debtor assets add: prop].
-	prop owner: rcvr.
+		rcvr tally: (anAsset price / 2) * aRate negated.
+		rcvr assets add: anAsset].
+	anAsset owner: rcvr.
+	model currentPlayer assets remove: anAsset.
+	listPane getList.
+	model takeItem: 0.
 	model triggerEvent: #itemChange! !
+
+!TakeOver methodsFor: 'operating' stamp: 'dhn 3/30/2020 15:08:49'!
+unmortgage
+	"Unmortgage a property which is being taken over"
+	| nam prop |
+
+	nam _ model takeList at: model takeItem.
+	prop _ model currentPlayer assets detect: [:a | a title = nam] ifNone: [].
+	prop mortgaged: true.
+	self settle: prop at: 1.1! !
 
 !Square methodsFor: 'accessing' stamp: 'dhn 3/1/2020 13:02:50'!
 boardPosition
@@ -4008,7 +4014,7 @@ outOfAssets
 	
 	^ assets allSatisfy: [:a | a mortgaged]! !
 
-!Developer methodsFor: 'operating' stamp: 'dhn 3/29/2020 20:01:48'!
+!Developer methodsFor: 'operating' stamp: 'dhn 3/30/2020 15:26:50'!
 tally: anAmount
 	"Answer anAmount after accounting for it"
 	
@@ -4020,8 +4026,7 @@ tally: anAmount
 		ifTrue: [
 			(assets allSatisfy: [:a | a mortgaged])
 				ifTrue: [
-					mgr triggerEvent: #showTakeOver.
-					PopUpMenu inform: 'Assets being taken over.'] 
+					mgr triggerEvent: #showTakeOver] 
 				ifFalse: [ 
 					PopUpMenu inform: identity, ' needs to raise more cash.'.]].
 	^ anAmount
