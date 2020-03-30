@@ -1,6 +1,6 @@
-'From Cuis 5.0 [latest update: #4042] on 29 March 2020 at 2:25:00 pm'!
+'From Cuis 5.0 [latest update: #4042] on 29 March 2020 at 10:23:34 pm'!
 'Description Simulation of the board game "Monopoly".'!
-!provides: 'Monop' 1 168!
+!provides: 'Monop' 1 169!
 !requires: 'Game' 1 44 nil!
 SystemOrganization addCategory: #'Monop-View'!
 SystemOrganization addCategory: #'Monop-Model'!
@@ -424,7 +424,7 @@ takeItem: anObject
 		self triggerEvent: #itemChange.
 		self changed: #takeItem]! !
 
-!Estate methodsFor: 'takeover' stamp: 'dhn 3/29/2020 13:26:09'!
+!Estate methodsFor: 'takeover' stamp: 'dhn 3/29/2020 22:19:25'!
 takeList
 	"Answer a list for the takeover window"
 	| ans |
@@ -436,7 +436,9 @@ takeList
 					owner: nil; 
 					mortgaged: false.].
 			ans _ '']
-		ifFalse: [ans _ currentPlayer assets].
+		ifFalse: [
+			ans _ OrderedCollection new.
+			currentPlayer assets do: [:a | ans add: a title]].
 	^ ans! !
 
 !Estate methodsFor: 'takeover' stamp: 'dhn 3/29/2020 12:42:31'!
@@ -529,12 +531,12 @@ devList
 					ifTrue: [col add: ea title]]].
 	^ col! !
 
-!Estate methodsFor: 'development' stamp: 'dhn 3/26/2020 20:01:09'!
+!Estate methodsFor: 'development' stamp: 'dhn 3/29/2020 15:50:05'!
 devReport
 	"Answer the development report and buttons for the asset listed at devItem"
 	| nam prop others arr |
 
-	devItem > 0
+	((devItem > 0) and: [self devList isEmpty not])
 		ifTrue: [
 			nam _ self devList at: devItem.
 			prop _ currentPlayer assets 
@@ -1015,7 +1017,7 @@ removePlayer: aPlayer
 	playerIndex _ 0 max: playerIndex - 1.
 	self nextPlayer! !
 
-!Estate methodsFor: 'operating' stamp: 'dhn 3/29/2020 14:15:57'!
+!Estate methodsFor: 'operating' stamp: 'dhn 3/29/2020 22:22:28'!
 repair: anArray
 	"Pay for street repairs"
 	| houses hotels |
@@ -1028,7 +1030,7 @@ repair: anArray
 				ea houses = 5
 					ifTrue: [hotels _ hotels + 1] 
 					ifFalse: [houses _ houses + ea houses]]].
-	self tally: (houses * anArray first) + hotels * anArray second! !
+	self tally: ((houses * anArray first) + (hotels * anArray second)) negated! !
 
 !Estate methodsFor: 'operating' stamp: 'dhn 3/19/2020 19:08:29'!
 salary
@@ -1761,7 +1763,7 @@ tourAt: anInterval
 	self startSteppingStepTime: anInterval. 	"time of each increment of the hop"
 ! !
 
-!Monopoly methodsFor: 'initialization' stamp: 'dhn 3/23/2020 19:53:01'!
+!Monopoly methodsFor: 'initialization' stamp: 'dhn 3/29/2020 19:56:08'!
 buildMorphicWindow
 
 	pasteup _ GamePasteUp new
@@ -1787,6 +1789,7 @@ buildMorphicWindow
 	model when: #showIncomeTax send: #showIncomeTax to: self.
 	model when: #showLuxuryTax send: #showLuxuryTax to: self.
 	model when: #showRentDue send: #showRentDue to: self.
+	model when: #showTakeOver send: #showTakeOver to: self.
 	"when:send:to:"
 	"when:send:to:with:"
 	"when:send:to:withArguments:"
@@ -2990,10 +2993,10 @@ unmortgage
 	model currentPlayer tally: (prop price / 2) * 1.1 negated.
 	model triggerEvent: #itemChange! !
 
-!Notifier methodsFor: 'operating' stamp: 'dhn 3/28/2020 22:02:25'!
+!Notifier methodsFor: 'operating' stamp: 'dhn 3/29/2020 14:31:18'!
 finish
 	"Perform methods in response to the OK button"
-self halt.
+
 	self nextDo do: [:ea |
 		model perform: ea first with: ea second].
 	model enable: 'End Turn'.
@@ -3555,14 +3558,16 @@ houseReport
 		mortgaged ifTrue: [
 			str nextPutAll: 'Mortgaged for $', (price / 2) asString; nextPut: $.; newLine]]! !
 
-!Lot methodsFor: 'operating' stamp: 'dhn 3/26/2020 19:30:30'!
+!Lot methodsFor: 'operating' stamp: 'dhn 3/29/2020 21:13:27'!
 rentAmount
 	"Answer the rent for this lot considering sets, houses, and mortgage state."
 	
 	mortgaged 
 		ifTrue: [^ 0]
 		ifFalse: [houses ifNotZero: [^ rents at: houses + 1]].
-	^ rents first * self complete! !
+	^ rents first * (owner = nil
+		ifTrue: [1] 
+		ifFalse: [self complete])! !
 
 !Lot methodsFor: 'operating' stamp: 'dhn 3/5/2020 14:54:46'!
 report
@@ -3995,7 +4000,7 @@ outOfAssets
 	
 	^ assets allSatisfy: [:a | a mortgaged]! !
 
-!Developer methodsFor: 'operating' stamp: 'dhn 3/28/2020 20:25:25'!
+!Developer methodsFor: 'operating' stamp: 'dhn 3/29/2020 20:01:48'!
 tally: anAmount
 	"Answer anAmount after accounting for it"
 	
@@ -4007,8 +4012,8 @@ tally: anAmount
 		ifTrue: [
 			(assets allSatisfy: [:a | a mortgaged])
 				ifTrue: [
-					"transfer assets to the debtor"
-					mgr removePlayer: self] 
+					mgr triggerEvent: #showTakeOver.
+					PopUpMenu inform: 'Assets being taken over.'] 
 				ifFalse: [ 
 					PopUpMenu inform: identity, ' needs to raise more cash.'.]].
 	^ anAmount
