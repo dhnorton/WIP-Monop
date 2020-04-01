@@ -1,6 +1,6 @@
-'From Cuis 5.0 [latest update: #4042] on 30 March 2020 at 4:29:19 pm'!
+'From Cuis 5.0 [latest update: #4042] on 1 April 2020 at 2:22:44 pm'!
 'Description Simulation of the board game "Monopoly".'!
-!provides: 'Monop' 1 172!
+!provides: 'Monop' 1 175!
 !requires: 'Game' 1 44 nil!
 SystemOrganization addCategory: #'Monop-View'!
 SystemOrganization addCategory: #'Monop-Model'!
@@ -759,10 +759,11 @@ hammerDown: aBid for: aProperty by: aBidder
 	self triggerEvent: #itemChange
 ! !
 
-!Estate methodsFor: 'operating' stamp: 'dhn 3/16/2020 12:50:37'!
+!Estate methodsFor: 'operating' stamp: 'dhn 3/30/2020 21:28:18'!
 incomeTax
 	"Notify player of income tax"
 
+	currentPlayer debtor: 'Bank'.
 	self triggerEvent: #showIncomeTax! !
 
 !Estate methodsFor: 'operating' stamp: 'dhn 3/20/2020 15:17:13'!
@@ -819,13 +820,14 @@ level12: anArray
 		yourself.
 	^ (switch at: anArray second) value! !
 
-!Estate methodsFor: 'operating' stamp: 'dhn 3/16/2020 12:51:00'!
+!Estate methodsFor: 'operating' stamp: 'dhn 3/30/2020 21:28:04'!
 luxuryTax
 	"Charge a flat $75."
 
+	currentPlayer debtor: 'Bank'.
 	self triggerEvent: #showLuxuryTax! !
 
-!Estate methodsFor: 'operating' stamp: 'dhn 2/26/2020 20:20:44'!
+!Estate methodsFor: 'operating' stamp: 'dhn 3/30/2020 20:25:11'!
 move
 	"Roll the dice"
 	| die1 die2 s |
@@ -836,19 +838,19 @@ move
 			self disableAll: {'Move'}.
 			die1 _ DieMorph new openInWorld: world.
 			die1 model: self.
-			die2 _ DieMorph new openInWorld: world.
-			die2 model: self.
+			"die2 _ DieMorph new openInWorld: world.
+			die2 model: self."
 			currentPlayer die: die1.
 
-			s _ token morphExtent x * 50 / 132.
+			s _ token morphExtent x * 60 / 132.
 			die1 
 				morphExtent: s@s;
 				setDots;
 				referencePosition: token referencePosition - (0@1.5 * token morphHeight).
-			die2 
+			"die2 
 				morphExtent: s@s;
 				setDots;
-				referencePosition: token referencePosition - (0@2.5 * token morphHeight).
+				referencePosition: token referencePosition - (0@2.5 * token morphHeight)."
 
 			die1 show: die1 class faces shuffled.
 			"die2 show: die2 class faces shuffled."].! !
@@ -924,7 +926,7 @@ nearestUtility
 	
 	^ self nearest: self class positionUtility to: currentPlayer position! !
 
-!Estate methodsFor: 'operating' stamp: 'dhn 3/28/2020 20:54:33'!
+!Estate methodsFor: 'operating' stamp: 'dhn 4/1/2020 11:30:11'!
 nextPlayer
 	"Begin the next player's turn"
 	| x |
@@ -933,10 +935,11 @@ nextPlayer
 	players size > 1
 		ifTrue: [  
 	self 
-		triggerEvent: #deleteOpenWindows; 	"close any open views of the current player"
-		triggerEvent: #itemChange; 	"update board view"
+		triggerEvent: #deleteOpenWindows;
+		triggerEvent: #itemChange;
 		triggerEvent: #titleChange with: currentPlayer;
-		positionBoardTo: currentPlayer position; 	"position board,"
+		positionBoardTo: currentPlayer position;
+		enableAll: {'Holdings'. 'Develop'. 'Mortgage'};
 		removeMarkers.
 	token openInWorld: world.
 	token morphPosition: tokenPos.
@@ -947,7 +950,7 @@ nextPlayer
 	x _ (FillInTheBlankMorph request: 'How many spaces' initialAnswer: '6' onCancel: ['0']) asNumber.
 	self hardRoll: ((1 to: 6) asArray atWrap: x)]]
 		ifFalse: [
-			PopUpMenu inform: currentPlayer identity, ' is the WINNER!!'.
+			self triggerEvent: #showWinner.
 			self disableAll: {'Move'. 'End Turn'}]! !
 
 !Estate methodsFor: 'operating' stamp: 'dhn 3/19/2020 15:56:32'!
@@ -1010,12 +1013,16 @@ relative: anAmount
 
 	token slideLeft: currentPlayer position to: currentPlayer position + anAmount! !
 
-!Estate methodsFor: 'operating' stamp: 'dhn 3/28/2020 20:47:56'!
+!Estate methodsFor: 'operating' stamp: 'dhn 3/30/2020 17:50:56'!
 removePlayer: aPlayer
 	"Remove aPlayer from the game"
+	| ix |
 	
+	ix _ players indexOf: aPlayer ifAbsent: [0].
 	players _ players select: [:a | a ~= aPlayer].
-	playerIndex _ 0 max: playerIndex - 1.
+	playerIndex _ ix - 1.
+	self disableAll: {'End Turn'}.
+	self enableAll: {'Move'}.
 	self nextPlayer! !
 
 !Estate methodsFor: 'operating' stamp: 'dhn 3/29/2020 22:22:28'!
@@ -1764,7 +1771,7 @@ tourAt: anInterval
 	self startSteppingStepTime: anInterval. 	"time of each increment of the hop"
 ! !
 
-!Monopoly methodsFor: 'initialization' stamp: 'dhn 3/29/2020 19:56:08'!
+!Monopoly methodsFor: 'initialization' stamp: 'dhn 4/1/2020 11:28:13'!
 buildMorphicWindow
 
 	pasteup _ GamePasteUp new
@@ -1791,6 +1798,7 @@ buildMorphicWindow
 	model when: #showLuxuryTax send: #showLuxuryTax to: self.
 	model when: #showRentDue send: #showRentDue to: self.
 	model when: #showTakeOver send: #showTakeOver to: self.
+	model when: #showWinner send: #showWinner to: self.
 	"when:send:to:"
 	"when:send:to:with:"
 	"when:send:to:withArguments:"
@@ -2165,7 +2173,7 @@ showHouse
 		morphExtent: 500 @ 260.
 	model disableAll: {'Develop'}! !
 
-!Monopoly methodsFor: 'windows' stamp: 'dhn 3/25/2020 16:42:57'!
+!Monopoly methodsFor: 'windows' stamp: 'dhn 3/31/2020 15:10:47'!
 showIncomeTax
 	"Tell the player about his income tax"
 	| win |
@@ -2174,7 +2182,6 @@ showIncomeTax
 	win openInWorld: pasteup.
 	win textPanel model actualContents: 'You will pay income tax of the larger of either $200 or 10% of assets. It''s your choice.'.
 	win textPanel color: Color lightRed.
-	win nextDo addFirst: #(#enable: 'End Turn').
 	win nextDo addFirst: #(#tax: -200).
 	win
 		cleanTitleBar;
@@ -2185,7 +2192,7 @@ showIncomeTax
 	win buttonArea color: win textPanel color
 ! !
 
-!Monopoly methodsFor: 'windows' stamp: 'dhn 3/16/2020 21:49:32'!
+!Monopoly methodsFor: 'windows' stamp: 'dhn 3/31/2020 15:10:32'!
 showLuxuryTax
 	"Tell the player about his luxury tax"
 	| win |
@@ -2194,7 +2201,6 @@ showLuxuryTax
 	win openInWorld: pasteup.
 	win textPanel model actualContents: 'You will pay $75 luxury tax.'.
 	win textPanel color: Color lightRed.
-	win nextDo addFirst: #(#enable: 'End Turn').
 	win nextDo addFirst: #(#tax: -75).
 	win
 		setWindowColor: win textPanel color;
@@ -2291,12 +2297,15 @@ showStats
 		morphExtent: 500 @ 260.
 	model disableAll: {'Holdings'}! !
 
-!Monopoly methodsFor: 'windows' stamp: 'dhn 3/29/2020 12:12:05'!
+!Monopoly methodsFor: 'windows' stamp: 'dhn 3/31/2020 14:56:48'!
 showTakeOver
 	"Open a window for receiving a debtor's assets"
 	| pl win |
 		
 	pl _ model currentPlayer.
+	pasteup submorphsDo: [:ea | 
+		((ea class = Notifier) and: [ea label ~= 'Pay Rent']) ifTrue: [ea delete].
+		(self class bannedTakeOver includes: ea class) ifTrue: [ea delete]].
 	win _ TakeOver openOn: model.
 	win openInWorld: pasteup.
 	win
@@ -2306,6 +2315,25 @@ showTakeOver
 		morphPosition: self windowPosition;
 		morphExtent: 500 @ 260.
 	model disableAll: {'End Turn'}! !
+
+!Monopoly methodsFor: 'windows' stamp: 'dhn 4/1/2020 13:42:09'!
+showWinner
+	"Announce the winner"
+	| win |
+		
+	win _ Notifier openOn: model.
+	win openInWorld: pasteup.
+	win textPanel model actualContents: model currentPlayer identity, ', having bankrupted all challengers, is the WINNER of MONOPOLY!!'.
+	win textPanel color: model currentPlayer color.
+	win
+		cleanTitleBar;
+		setLabel: 'WE HAVE A WINNER';
+		setWindowColor: win textPanel color;
+		morphPosition: self windowPosition;
+		winButton;
+		morphExtent: 450.0@240.
+	win buttonArea color: win textPanel color
+! !
 
 !Monopoly methodsFor: 'windows' stamp: 'dhn 2/23/2020 21:15:08'!
 windowPosition
@@ -2375,6 +2403,18 @@ start
 	
 	^ win
 ! !
+
+!Monopoly class methodsFor: 'operating' stamp: 'dhn 3/31/2020 14:33:54'!
+bannedTakeOver
+	"Answer the classes which must be deleted from pasteup prior to a takeover"
+	
+	^ OrderedCollection new
+		add: AuctionProperty;
+		add: BuyView;
+		add: MonopHoldings;
+		add: MonopHouse;
+		add: Mortgage;
+		yourself! !
 
 !AuctionProperty methodsFor: 'initialization' stamp: 'dhn 3/21/2020 10:59:25'!
 buildMorphicWindow
@@ -3002,6 +3042,14 @@ unmortgage
 	model currentPlayer tally: (prop price / 2) * 1.1 negated.
 	model triggerEvent: #itemChange! !
 
+!Notifier methodsFor: 'operating' stamp: 'dhn 4/1/2020 14:09:22'!
+endGame
+	"Close everything after the winner is announced"
+	| gam |
+
+	gam _ owner world submorphs detect: [:a | a class = Monopoly] ifNone: [].
+	gam closeBoxHit ! !
+
 !Notifier methodsFor: 'operating' stamp: 'dhn 3/29/2020 14:31:18'!
 finish
 	"Perform methods in response to the OK button"
@@ -3088,6 +3136,18 @@ twoButton
 	buttonArea
 		addMorph: okButton;
 		addMorph: pctButton;
+		padding: #center
+! !
+
+!Notifier methodsFor: 'initialization' stamp: 'dhn 4/1/2020 14:10:36'!
+winButton
+	"Set the button for ending the game"
+	
+	okButton _ GameButtonMorph label: 'End Game' action: #endGame state: true model: self.
+	okButton morphExtent: 150@30.
+
+	buttonArea
+		addMorph: okButton;
 		padding: #center
 ! !
 
@@ -3243,14 +3303,14 @@ details
 			self removeButtons.
 			textPane model actualContents: '']! !
 
-!TakeOver methodsFor: 'operating' stamp: 'dhn 3/30/2020 15:06:23'!
+!TakeOver methodsFor: 'operating' stamp: 'dhn 3/31/2020 11:18:25'!
 interest
 	"Only pay interest a property which is being taken over"
 	| nam prop |
 
 	nam _ model takeList at: model takeItem.
 	prop _ model currentPlayer assets detect: [:a | a title = nam] ifNone: [].
-	prop mortgaged: false.
+	prop mortgaged: true.
 	self settle: prop at: 0.1! !
 
 !TakeOver methodsFor: 'operating' stamp: 'dhn 3/29/2020 12:11:44'!
@@ -3258,7 +3318,7 @@ removeButtons
 
 	buttonArea removeAllMorphs ! !
 
-!TakeOver methodsFor: 'operating' stamp: 'dhn 3/30/2020 15:04:48'!
+!TakeOver methodsFor: 'operating' stamp: 'dhn 3/31/2020 11:21:47'!
 settle: anAsset at: aRate
 	"Complete the transfer of anAsset to the debtor"
 	| rcvr |
@@ -3270,18 +3330,18 @@ settle: anAsset at: aRate
 		rcvr assets add: anAsset].
 	anAsset owner: rcvr.
 	model currentPlayer assets remove: anAsset.
-	listPane getList.
 	model takeItem: 0.
+	listPane getList.
 	model triggerEvent: #itemChange! !
 
-!TakeOver methodsFor: 'operating' stamp: 'dhn 3/30/2020 15:08:49'!
+!TakeOver methodsFor: 'operating' stamp: 'dhn 3/31/2020 11:18:07'!
 unmortgage
 	"Unmortgage a property which is being taken over"
 	| nam prop |
 
 	nam _ model takeList at: model takeItem.
 	prop _ model currentPlayer assets detect: [:a | a title = nam] ifNone: [].
-	prop mortgaged: true.
+	prop mortgaged: false.
 	self settle: prop at: 1.1! !
 
 !Square methodsFor: 'accessing' stamp: 'dhn 3/1/2020 13:02:50'!
@@ -3645,7 +3705,7 @@ title: aTitle price: aPrice rents: anArray house: aCost set: aSet
 		set: aSet.
 	^ lot! !
 
-!Railroad methodsFor: 'operating' stamp: 'dhn 3/27/2020 16:24:20'!
+!Railroad methodsFor: 'operating' stamp: 'dhn 4/1/2020 14:22:29'!
 rentAmount
 	"Answer the rent based on the number of railroads owned and whether it is doubled."
 	| amt |
@@ -3653,7 +3713,11 @@ rentAmount
 	self owner isNil ifTrue: [ ^nil ].
 	self mortgaged ifTrue: [ ^0 ].
 	self ownedByOwner > 0
-		ifTrue: [amt _ (rents at: self ownedByOwner) * factor]
+		ifTrue: [
+			factor > 1 
+				ifTrue: [
+					{'===='}print. thisContext printStack: 10].
+					amt _ (rents at: self ownedByOwner) * factor]
 		ifFalse: [amt _ 0].
 	factor _ 1.
 	^ amt! !
