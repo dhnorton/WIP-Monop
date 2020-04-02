@@ -1,6 +1,6 @@
-'From Cuis 5.0 [latest update: #4042] on 1 April 2020 at 2:22:44 pm'!
+'From Cuis 5.0 [latest update: #4042] on 2 April 2020 at 4:36:53 pm'!
 'Description Simulation of the board game "Monopoly".'!
-!provides: 'Monop' 1 175!
+!provides: 'Monop' 1 176!
 !requires: 'Game' 1 44 nil!
 SystemOrganization addCategory: #'Monop-View'!
 SystemOrganization addCategory: #'Monop-Model'!
@@ -8,7 +8,7 @@ SystemOrganization addCategory: #'Monop-Model'!
 
 !classDefinition: #Estate category: #'Monop-Model'!
 Game subclass: #Estate
-	instanceVariableNames: 'demo windowCount chances chests moveButton statsItem propertyAuctionBid note devItem morItem takeItem'
+	instanceVariableNames: 'demo hops windowCount chances chests moveButton statsItem propertyAuctionBid note devItem morItem takeItem'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Monop-Model'!
@@ -114,6 +114,16 @@ GameView subclass: #TakeOver
 	category: 'Monop-View'!
 !classDefinition: 'TakeOver class' category: #'Monop-View'!
 TakeOver class
+	instanceVariableNames: ''!
+
+!classDefinition: #Die2 category: #'Monop-View'!
+DieMorph subclass: #Die2
+	instanceVariableNames: ''
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'Monop-View'!
+!classDefinition: 'Die2 class' category: #'Monop-View'!
+Die2 class
 	instanceVariableNames: ''!
 
 !classDefinition: #Square category: #'Monop-Model'!
@@ -302,6 +312,9 @@ A window for notifying players.!
 !TakeOver commentStamp: '<historical>' prior: 0!
 A Monopoly window for taking over assets. A debtor must either unmortgage or pay interest on assets received from a bankrupt player.!
 
+!Die2 commentStamp: '<historical>' prior: 0!
+A class for using two of super.!
+
 !Square commentStamp: '<historical>' prior: 0!
 A square on the board.!
 
@@ -354,13 +367,14 @@ initialButtonState
 	self enableAll: {'Move'. 'History'. 'Stats'}.
 	self disableAll: {'End Turn'. 'Purchase'. 'Auction'}! !
 
-!Estate methodsFor: 'initialization' stamp: 'dhn 3/1/2020 13:05:46'!
+!Estate methodsFor: 'initialization' stamp: 'dhn 4/2/2020 16:22:19'!
 initialize
 	"Set up self as the board model."
 	| pos |
 
 	players _ OrderedCollection new.
 	cells _ OrderedCollection new.
+	hops _ OrderedCollection new.
 	spaces _ self class spaceAttributes.
 	pos _ 0.
 	spaces do: [:ea | 
@@ -827,7 +841,7 @@ luxuryTax
 	currentPlayer debtor: 'Bank'.
 	self triggerEvent: #showLuxuryTax! !
 
-!Estate methodsFor: 'operating' stamp: 'dhn 3/30/2020 20:25:11'!
+!Estate methodsFor: 'operating' stamp: 'dhn 4/2/2020 16:18:48'!
 move
 	"Roll the dice"
 	| die1 die2 s |
@@ -836,24 +850,24 @@ move
 		ifTrue: [self perform: (spaces atWrap: self currentPlayer position) routine]
 		ifFalse: [
 			self disableAll: {'Move'}.
-			die1 _ DieMorph new openInWorld: world.
+			die1 _ Die2 new openInWorld: world.
 			die1 model: self.
-			"die2 _ DieMorph new openInWorld: world.
-			die2 model: self."
-			currentPlayer die: die1.
+			die2 _ Die2 new openInWorld: world.
+			die2 model: self.
+			"currentPlayer die: {die1. die2}."
 
 			s _ token morphExtent x * 60 / 132.
 			die1 
 				morphExtent: s@s;
 				setDots;
 				referencePosition: token referencePosition - (0@1.5 * token morphHeight).
-			"die2 
+			die2 
 				morphExtent: s@s;
 				setDots;
-				referencePosition: token referencePosition - (0@2.5 * token morphHeight)."
+				referencePosition: token referencePosition - (0@2.5 * token morphHeight).
 
-			die1 show: die1 class faces shuffled.
-			"die2 show: die2 class faces shuffled."].! !
+			die1 showRoll: die1 class faces shuffled.
+			die2 showRoll: die2 class faces shuffled].! !
 
 !Estate methodsFor: 'operating' stamp: 'dhn 3/17/2020 20:51:31'!
 moveAheadTo: aSpace
@@ -1225,6 +1239,18 @@ demo: anObject
 	"Set the value of demo"
 
 	demo _ anObject! !
+
+!Estate methodsFor: 'accessing' stamp: 'dhn 4/2/2020 16:11:00'!
+hops
+	"Answer the value of hops"
+
+	^ hops! !
+
+!Estate methodsFor: 'accessing' stamp: 'dhn 4/2/2020 16:11:00'!
+hops: anObject
+	"Set the value of hops"
+
+	hops _ anObject! !
 
 !Estate methodsFor: 'accessing' stamp: 'dhn 2/28/2020 13:15:57'!
 moveButton
@@ -3343,6 +3369,34 @@ unmortgage
 	prop _ model currentPlayer assets detect: [:a | a title = nam] ifNone: [].
 	prop mortgaged: false.
 	self settle: prop at: 1.1! !
+
+!Die2 methodsFor: 'operation' stamp: 'dhn 4/2/2020 16:21:24'!
+showRoll: aCollection
+	"Display the succession of faces in aCollection on the die, then hop the token"
+	| limit linger t i x |
+	
+	limit _ 1600 + (500 atRandom).
+	linger _ limit + 700. 	"to pause before vanishing"
+	t _ 0.
+	i _ 0.
+	self when: #morphicStep evaluate: [ :delta |
+		i _ i + 1.
+		t _ t + delta.
+		t < limit 	"limit on the total time of activity"
+			ifTrue: [x _ self perform: (aCollection atWrap: i)]
+			ifFalse: [
+				model testMode ifTrue: [self perform: (self class faces at: (model hardRoll * 2))].
+				t > linger ifTrue: [
+					self stopStepping.
+					model hops add: x.
+					model hops size > 1 
+						ifTrue: [
+							model hopFor: model hops first + model hops second.
+							model hops: OrderedCollection new].
+					self removeActionsForEvent: #morphicStep.
+					owner removeMorph: self]]].
+	self startSteppingStepTime: 85. 	"time of each step in the activity"
+! !
 
 !Square methodsFor: 'accessing' stamp: 'dhn 3/1/2020 13:02:50'!
 boardPosition
