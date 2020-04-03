@@ -1,6 +1,6 @@
-'From Cuis 5.0 [latest update: #4042] on 2 April 2020 at 4:36:53 pm'!
+'From Cuis 5.0 [latest update: #4042] on 2 April 2020 at 10:58:58 pm'!
 'Description Simulation of the board game "Monopoly".'!
-!provides: 'Monop' 1 176!
+!provides: 'Monop' 1 177!
 !requires: 'Game' 1 44 nil!
 SystemOrganization addCategory: #'Monop-View'!
 SystemOrganization addCategory: #'Monop-Model'!
@@ -650,6 +650,19 @@ declareBroke: aString
 and mortgage until cash is no longer negative.'
 		title: 'Out of Cash'! !
 
+!Estate methodsFor: 'operating' stamp: 'dhn 4/2/2020 22:07:19'!
+doMove
+	"Move the player, account for doubles"
+	
+	self hopFor: hops first + hops second.
+	currentPlayer doubles: ((hops first = hops second)
+		ifTrue: [currentPlayer doubles add: {hops}] 
+		ifFalse: [OrderedCollection new]).
+	currentPlayer doubles size > 2 
+		ifTrue: [self halt: 'Three Doubles. Go to Jail'].
+	hops _ OrderedCollection new.
+! !
+
 !Estate methodsFor: 'operating' stamp: 'dhn 3/20/2020 15:00:21'!
 doSpace
 	"Perform the method associated with the space where the player is"
@@ -1008,7 +1021,7 @@ propertyAuctionBid: anObject
 	(propertyAuctionBid _ anObject) 
 		ifNotNil: [self triggerEvent: #itemChange]! !
 
-!Estate methodsFor: 'operating' stamp: 'dhn 3/24/2020 20:20:52'!
+!Estate methodsFor: 'operating' stamp: 'dhn 4/2/2020 22:51:49'!
 propertyBuy
 	"Finalize the sale"
 	| lot |
@@ -1018,6 +1031,7 @@ propertyBuy
 	currentPlayer assets add: lot.
 	currentPlayer assets reSort.
 	lot owner: currentPlayer.
+	lot class = Railroad ifTrue: [lot factor: 1].
 	self triggerEvent: #itemChange
 ! !
 
@@ -3370,7 +3384,7 @@ unmortgage
 	prop mortgaged: false.
 	self settle: prop at: 1.1! !
 
-!Die2 methodsFor: 'operation' stamp: 'dhn 4/2/2020 16:21:24'!
+!Die2 methodsFor: 'operation' stamp: 'dhn 4/2/2020 21:49:41'!
 showRoll: aCollection
 	"Display the succession of faces in aCollection on the die, then hop the token"
 	| limit linger t i x |
@@ -3390,9 +3404,7 @@ showRoll: aCollection
 					self stopStepping.
 					model hops add: x.
 					model hops size > 1 
-						ifTrue: [
-							model hopFor: model hops first + model hops second.
-							model hops: OrderedCollection new].
+						ifTrue: [model doMove].
 					self removeActionsForEvent: #morphicStep.
 					owner removeMorph: self]]].
 	self startSteppingStepTime: 85. 	"time of each step in the activity"
@@ -3759,7 +3771,7 @@ title: aTitle price: aPrice rents: anArray house: aCost set: aSet
 		set: aSet.
 	^ lot! !
 
-!Railroad methodsFor: 'operating' stamp: 'dhn 4/1/2020 14:22:29'!
+!Railroad methodsFor: 'operating' stamp: 'dhn 4/2/2020 22:56:35'!
 rentAmount
 	"Answer the rent based on the number of railroads owned and whether it is doubled."
 	| amt |
@@ -3769,9 +3781,7 @@ rentAmount
 	self ownedByOwner > 0
 		ifTrue: [
 			factor > 1 
-				ifTrue: [
-					{'===='}print. thisContext printStack: 10].
-					amt _ (rents at: self ownedByOwner) * factor]
+				ifTrue: [amt _ (rents at: self ownedByOwner) * factor]]
 		ifFalse: [amt _ 0].
 	factor _ 1.
 	^ amt! !
@@ -3954,17 +3964,16 @@ initialize
 	super initialize.
 	routine _ #luxuryTax! !
 
-!Developer methodsFor: 'initialization' stamp: 'dhn 3/24/2020 20:00:54'!
+!Developer methodsFor: 'initialization' stamp: 'dhn 4/2/2020 22:12:44'!
 initialize
 
 	cash _ 1500.
 	debt _ 0.
 	assets _ SortedCollection sortBlock: [:a :c | a boardPosition > c boardPosition].
 	history _ OrderedCollection with: cash.
-	cards := OrderedCollection new.
-	self
-		jail: false with: 0;
-		doubles: 0! !
+	cards _ OrderedCollection new.
+	doubles _ OrderedCollection new.
+	self jail: false with: 0! !
 
 !Developer methodsFor: 'as yet unclassified' stamp: 'dhn 5/17/2019 12:29:19'!
 assess: anInteger
