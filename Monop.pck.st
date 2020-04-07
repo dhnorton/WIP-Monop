@@ -1,6 +1,6 @@
 'From Cuis 5.0 [latest update: #4042] on 6 April 2020 at 10:49:50 pm'!
 'Description Simulation of the board game "Monopoly".'!
-!provides: 'Monop' 1 182!
+!provides: 'Monop' 1 180!
 !requires: 'Game' 1 44 nil!
 SystemOrganization addCategory: #'Monop-View'!
 SystemOrganization addCategory: #'Monop-Model'!
@@ -8,7 +8,7 @@ SystemOrganization addCategory: #'Monop-Model'!
 
 !classDefinition: #Estate category: #'Monop-Model'!
 Game subclass: #Estate
-	instanceVariableNames: 'demo hops windowCount chances chests moveButton statsItem propertyAuctionBid note devItem morItem takeItem'
+	instanceVariableNames: 'demo hops windowCount enableCount chances chests moveButton statsItem propertyAuctionBid note devItem morItem takeItem'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Monop-Model'!
@@ -641,6 +641,16 @@ broker
 	self token moving: false
 ! !
 
+!Estate methodsFor: 'operating' stamp: 'dhn 4/6/2020 15:39:49'!
+changeEnable: anAmount
+	"Adjust the enableCount by anAmount"
+	
+	{'++++++ '. anAmount}print.
+	thisContext printStack: 10.
+	enableCount _ self enableCount + anAmount.
+	{'====== '. enableCount }print.
+! !
+
 !Estate methodsFor: 'operating' stamp: 'dhn 3/28/2020 20:34:47'!
 declareBroke: aString
 	"Inform that the player named aString is out of cash"
@@ -700,13 +710,17 @@ drawChest
 			self triggerEvent: #showChest: with: ches] 
 		ifFalse: [self triggerEvent: #showChest: with: ches]! !
 
-!Estate methodsFor: 'operating' stamp: 'dhn 3/24/2020 20:43:57'!
+!Estate methodsFor: 'operating' stamp: 'dhn 4/5/2020 13:55:24'!
 enable: aButton
 	"Update histories and enable the button named aButton"
 	
 	players do: [:ea | ea history addLast: ea netWorth].
 	self triggerEvent: #itemChange.
-	self enableAll: {aButton}! !
+	aButton = 'End Turn'
+		ifTrue: [
+			self enableCount < 1 ifTrue: [self enableAll: {aButton}]] 
+		ifFalse: [self enableAll: {aButton}]
+	! !
 
 !Estate methodsFor: 'operating' stamp: 'dhn 3/29/2020 13:53:34'!
 endTurn
@@ -1125,7 +1139,7 @@ setNext: anArray
 		yourself.
 	^ (level1 at: anArray first) value! !
 
-!Estate methodsFor: 'operating' stamp: 'dhn 3/19/2020 19:20:53'!
+!Estate methodsFor: 'operating' stamp: 'dhn 4/5/2020 21:17:47'!
 tally: anAmount
 	"Adjust player's cash by anAmount."
 	
@@ -1255,6 +1269,18 @@ demo: anObject
 	"Set the value of demo"
 
 	demo _ anObject! !
+
+!Estate methodsFor: 'accessing' stamp: 'dhn 4/5/2020 13:56:23'!
+enableCount
+	"Answer the value of enableCount"
+
+	^ enableCount ifNil: [enableCount _ 0]! !
+
+!Estate methodsFor: 'accessing' stamp: 'dhn 4/5/2020 13:48:06'!
+enableCount: anObject
+	"Set the value of enableCount"
+
+	enableCount _ anObject! !
 
 !Estate methodsFor: 'accessing' stamp: 'dhn 4/2/2020 16:11:00'!
 hops
@@ -2122,13 +2148,14 @@ startGame
 		nextPlayer.
 	model initialButtonState! !
 
-!Monopoly methodsFor: 'windows' stamp: 'dhn 3/23/2020 15:59:22'!
+!Monopoly methodsFor: 'windows' stamp: 'dhn 4/5/2020 14:49:51'!
 showBuyView
 	"Open a window on a property held by the bank"
 	| win |
 		
 	win _ BuyView openOn: model.
 	win openInWorld: pasteup.
+	model changeEnable: 1.
 	win
 		cleanTitleBar;
 		setLabel: ' ';
@@ -2139,13 +2166,14 @@ showBuyView
 		details.
 	win heading contents: (model spaces at: model currentPlayer position) title! !
 
-!Monopoly methodsFor: 'windows' stamp: 'dhn 3/23/2020 14:55:55'!
+!Monopoly methodsFor: 'windows' stamp: 'dhn 4/5/2020 14:54:27'!
 showChance: anArray
 	"Tell the player about the Chance card"
 	| win |
 		
 	win _ Notifier openOn: model.
 	win openInWorld: pasteup.
+	model changeEnable: 1.
 	win textPanel model actualContents: anArray last.
 	win textPanel color: Color lightOrange.
 	win nextDo: (model setNext: anArray).
@@ -2159,13 +2187,14 @@ showChance: anArray
 	win buttonArea color: win textPanel color
 ! !
 
-!Monopoly methodsFor: 'windows' stamp: 'dhn 3/23/2020 14:55:44'!
+!Monopoly methodsFor: 'windows' stamp: 'dhn 4/5/2020 14:56:33'!
 showChest: anArray
 	"Tell the player about the Community Chest card"
 	| win |
 		
 	win _ Notifier openOn: model.
 	win openInWorld: pasteup.
+	model changeEnable: 1.
 	win textPanel model actualContents: anArray last.
 	win textPanel color: Color lightYellow.
 	win nextDo: (model setNext: anArray).
@@ -2179,7 +2208,7 @@ showChest: anArray
 	win buttonArea color: win textPanel color
 ! !
 
-!Monopoly methodsFor: 'windows' stamp: 'dhn 3/25/2020 16:06:13'!
+!Monopoly methodsFor: 'windows' stamp: 'dhn 4/5/2020 21:29:22'!
 showGo
 	"Tell the player about his salary"
 	| win |
@@ -2187,7 +2216,10 @@ showGo
 	win _ Notifier openOn: model.
 	win openInWorld: pasteup.
 	win textPanel model actualContents: model note.
-	win nextDo: (OrderedCollection with: {#tally:. 200} with: {#enable:. 'End Turn'}).
+	model changeEnable: 1.
+	win nextDo: (OrderedCollection 
+		with: {#tally:. 200} 
+		with: {#enable:. 'End Turn'}).
 	win textPanel color: model currentPlayer color.
 	win
 		cleanTitleBar;
@@ -2215,13 +2247,14 @@ showHouse
 		morphExtent: 500 @ 260.
 	model disableAll: {'Develop'}! !
 
-!Monopoly methodsFor: 'windows' stamp: 'dhn 3/31/2020 15:10:47'!
+!Monopoly methodsFor: 'windows' stamp: 'dhn 4/5/2020 14:57:42'!
 showIncomeTax
 	"Tell the player about his income tax"
 	| win |
 		
 	win _ Notifier open: model label: 'Income Tax'.
 	win openInWorld: pasteup.
+	model changeEnable: 1.
 	win textPanel model actualContents: 'You will pay income tax of the larger of either $200 or 10% of assets. It''s your choice.'.
 	win textPanel color: Color lightRed.
 	win nextDo addFirst: #(#tax: -200).
@@ -2234,13 +2267,14 @@ showIncomeTax
 	win buttonArea color: win textPanel color
 ! !
 
-!Monopoly methodsFor: 'windows' stamp: 'dhn 3/31/2020 15:10:32'!
+!Monopoly methodsFor: 'windows' stamp: 'dhn 4/5/2020 14:57:56'!
 showLuxuryTax
 	"Tell the player about his luxury tax"
 	| win |
 		
 	win _ Notifier open: model label: 'Luxury Tax'.
 	win openInWorld: pasteup.
+	model changeEnable: 1.
 	win textPanel model actualContents: 'You will pay $75 luxury tax.'.
 	win textPanel color: Color lightRed.
 	win nextDo addFirst: #(#tax: -75).
@@ -2286,7 +2320,7 @@ showPropertyAuction
 	win showChant.
 	win beat: #announceSold! !
 
-!Monopoly methodsFor: 'windows' stamp: 'dhn 3/30/2020 11:44:55'!
+!Monopoly methodsFor: 'windows' stamp: 'dhn 4/5/2020 14:58:43'!
 showRentDue
 	"Tell the player about the rent"
 	| win lot rent story |
@@ -2310,6 +2344,7 @@ showRentDue
 						nextPutAll: ' rent.']].
 	win _ Notifier openOn: model.
 	win openInWorld: pasteup.
+	model changeEnable: 1.
 	win textPanel model actualContents: story.
 	win textPanel color: lot owner color.
 	win nextDo add: {#toOwner:. {lot owner. rent}}.
@@ -2601,13 +2636,14 @@ offer: anObject by: aName
 	(buyers findDeepSubmorphThat: [:mm | mm label = aName] ifAbsent: []) disableButton
 ! !
 
-!AuctionProperty methodsFor: 'operation' stamp: 'dhn 3/24/2020 20:32:44'!
+!AuctionProperty methodsFor: 'operation' stamp: 'dhn 4/5/2020 14:53:29'!
 propertySold
 	"Finalize the sale"
 	| prop |
 	
 	prop _ model spaces at: model currentPlayer position.
 	model hammerDown: currentBid for: prop by: currentBidder.
+	model changeEnable: -1.
 	model enable: 'End Turn'.
 	self delete
 ! !
@@ -2699,13 +2735,14 @@ auction
 	buyButton disableButton.
 	model propertyAuction! !
 
-!BuyView methodsFor: 'operating' stamp: 'dhn 3/24/2020 20:33:15'!
+!BuyView methodsFor: 'operating' stamp: 'dhn 4/5/2020 14:52:04'!
 buy
 	"Buy the property, record the result"
 	
 	buyButton disableButton.
 	auctionButton disableButton.
 	model propertyBuy.
+	model changeEnable: -1.
 	model enable: 'End Turn'.
 	self delete! !
 
@@ -3092,16 +3129,17 @@ endGame
 	gam _ owner world submorphs detect: [:a | a class = Monopoly] ifNone: [].
 	gam closeBoxHit ! !
 
-!Notifier methodsFor: 'operating' stamp: 'dhn 3/29/2020 14:31:18'!
+!Notifier methodsFor: 'operating' stamp: 'dhn 4/5/2020 14:55:45'!
 finish
 	"Perform methods in response to the OK button"
 
 	self nextDo do: [:ea |
 		model perform: ea first with: ea second].
+	model changeEnable: -1.
 	model enable: 'End Turn'.
 	buttonArea removeAllMorphs! !
 
-!Notifier methodsFor: 'operating' stamp: 'dhn 3/27/2020 12:50:28'!
+!Notifier methodsFor: 'operating' stamp: 'dhn 4/5/2020 21:19:08'!
 finish2
 	"Perform methods in response to the 10% button"
 	| col amt |
@@ -3112,6 +3150,7 @@ finish2
 		model perform: ea first with: ea second].
 	textPanel model actualContents: 
 		textPanel model actualContents, ' You paid $', amt negated rounded printStringWithCommas.
+	model changeEnable: -1.
 	model enable: 'End Turn'.
 	buttonArea removeAllMorphs! !
 
