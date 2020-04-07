@@ -1,6 +1,6 @@
-'From Cuis 5.0 [latest update: #4042] on 6 April 2020 at 10:43:22 pm'!
+'From Cuis 5.0 [latest update: #4042] on 6 April 2020 at 10:45:28 pm'!
 'Description Simulation of the board game "Monopoly".'!
-!provides: 'Monop' 1 179!
+!provides: 'Monop' 1 180!
 !requires: 'Game' 1 44 nil!
 SystemOrganization addCategory: #'Monop-View'!
 SystemOrganization addCategory: #'Monop-Model'!
@@ -1994,13 +1994,13 @@ makeMortgageButton
 		layoutSpec: self class buttonLayoutSpec;
 		setBalloonText: 'Mortgage and unmortgage property'! !
 
-!Monopoly methodsFor: 'initialization' stamp: 'dhn 5/16/2019 15:57:25'!
+!Monopoly methodsFor: 'initialization' stamp: 'dhn 4/6/2020 22:18:06'!
 makeMoveButton
 	"Answer the 'Move' button"
 	
 	^ (GameButtonMorph label: 'Move' action: #move state: true model: model)
 		layoutSpec: self class buttonLayoutSpec;
-		setBalloonText: 'Move the player from one to twelve spaces, based on the "roll" of the dice.'! !
+		setBalloonText: 'Move the player from two to twelve spaces, based on the "roll" of the dice.'! !
 
 !Monopoly methodsFor: 'initialization' stamp: 'dhn 5/15/2019 12:34:19'!
 makeNumbersArea
