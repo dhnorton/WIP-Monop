@@ -1,6 +1,6 @@
-'From Cuis 5.0 [latest update: #4042] on 6 April 2020 at 10:47:31 pm'!
+'From Cuis 5.0 [latest update: #4042] on 6 April 2020 at 10:49:50 pm'!
 'Description Simulation of the board game "Monopoly".'!
-!provides: 'Monop' 1 181!
+!provides: 'Monop' 1 182!
 !requires: 'Game' 1 44 nil!
 SystemOrganization addCategory: #'Monop-View'!
 SystemOrganization addCategory: #'Monop-Model'!
@@ -1107,14 +1107,16 @@ setDebtor: aDebtor
 	currentPlayer debtor: aDebtor.
 	self triggerEvent: #itemChange! !
 
-!Estate methodsFor: 'operating' stamp: 'dhn 3/29/2020 13:58:24'!
+!Estate methodsFor: 'operating' stamp: 'dhn 4/6/2020 15:19:42'!
 setNext: anArray
 	"Cases for Chance and Community Chest"
 	| level1 |
 	
 	level1 _ Dictionary new
 		at: #moveMoney: put: [self level11: anArray];
-		at: #movePlayer: put: [self level12: anArray];
+		at: #movePlayer: put: [OrderedCollection 
+			with: #(#changeEnable: 1)
+			with: (self level12: anArray) first];
 		at: #getOut: put: [{#(#null: nil). #(#enable: 'End Turn')}];
 		at: #repair: put: [{
 			{#setDebtor:. 'Bank'}.
