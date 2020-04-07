@@ -1,6 +1,6 @@
-'From Cuis 5.0 [latest update: #4042] on 6 April 2020 at 10:49:50 pm'!
+'From Cuis 5.0 [latest update: #4042] on 7 April 2020 at 4:58:31 pm'!
 'Description Simulation of the board game "Monopoly".'!
-!provides: 'Monop' 1 180!
+!provides: 'Monop' 1 181!
 !requires: 'Game' 1 44 nil!
 SystemOrganization addCategory: #'Monop-View'!
 SystemOrganization addCategory: #'Monop-Model'!
@@ -660,17 +660,18 @@ declareBroke: aString
 and mortgage until cash is no longer negative.'
 		title: 'Out of Cash'! !
 
-!Estate methodsFor: 'operating' stamp: 'dhn 4/6/2020 12:24:34'!
+!Estate methodsFor: 'operating' stamp: 'dhn 4/7/2020 16:28:15'!
 doMove
 	"Move the player, account for doubles"
 	
 	hops first = hops second
 		ifTrue: [currentPlayer doubles add: hops asArray] 
-		ifFalse: [OrderedCollection new].
+		ifFalse: [currentPlayer doubles: OrderedCollection new].
 	currentPlayer doubles size > 2 
-		ifTrue: [self halt: 'Three Doubles. Go to Jail']
-		ifFalse: [self hopFor: hops first + hops second].
-	hops _ OrderedCollection new.
+		ifTrue: [self triggerEvent: #showDoubles]
+		ifFalse: [
+			self hopFor: hops first + hops second.
+			hops _ OrderedCollection new]
 ! !
 
 !Estate methodsFor: 'operating' stamp: 'dhn 3/20/2020 15:00:21'!
@@ -1839,7 +1840,7 @@ tourAt: anInterval
 	self startSteppingStepTime: anInterval. 	"time of each increment of the hop"
 ! !
 
-!Monopoly methodsFor: 'initialization' stamp: 'dhn 4/1/2020 11:28:13'!
+!Monopoly methodsFor: 'initialization' stamp: 'dhn 4/7/2020 15:03:20'!
 buildMorphicWindow
 
 	pasteup _ GamePasteUp new
@@ -1867,6 +1868,7 @@ buildMorphicWindow
 	model when: #showRentDue send: #showRentDue to: self.
 	model when: #showTakeOver send: #showTakeOver to: self.
 	model when: #showWinner send: #showWinner to: self.
+	model when: #showDoubles send: #showDoubles to: self.
 	"when:send:to:"
 	"when:send:to:with:"
 	"when:send:to:withArguments:"
@@ -2205,6 +2207,30 @@ showChest: anArray
 		morphPosition: self windowPosition;
 		setButton;
 		morphExtent: 360 @ 170.
+	win buttonArea color: win textPanel color
+! !
+
+!Monopoly methodsFor: 'windows' stamp: 'dhn 4/7/2020 16:56:27'!
+showDoubles
+	"Tell the player about rolling doubles 3 times consecutively"
+	| win blurb |
+		
+	win _ Notifier open: model label: 'Three Doubles'.
+	win openInWorld: pasteup.
+	model changeEnable: 1.
+	blurb _ String streamContents: [:str |
+		str nextPutAll: model currentPlayer identity, ' rolled '.
+		model currentPlayer doubles do: [:a |
+			str nextPutAll: a first asString, '-', a second asString, ', '].
+		str nextPutAll: 'and must go to Jail.'].
+	win textPanel model actualContents: blurb.
+	win nextDo add: {#moveBackTo:. 11}.
+	win textPanel color: Color lightRed.
+	win
+		setWindowColor: win textPanel color;
+		morphPosition: self windowPosition;
+		setButton;
+		morphExtent: 315 @ 215.
 	win buttonArea color: win textPanel color
 ! !
 
@@ -4057,22 +4083,6 @@ cardOut: aRoll
 			self payOut: aRoll]! !
 
 !Developer methodsFor: 'as yet unclassified' stamp: 'dhn 5/17/2019 12:29:19'!
-normalWith: theDice
-        "Move while in the normal state (not in jail) by using theDice."
-    | posn move ivories |
-    ivories := theDice repeat: 2 from: 1 to: 6.
-    ( ivories at: 1 ) = ( ivories at: 2 ) ifTrue: [
-        self doubles: self doubles + 1.
-        self doubles < 3
-            ifFalse: [ self toJail; threeDoubles ] ].
-    move := ( ivories at: 1 ) + ( ivories at: 2 ).
-    self roll: move.
-    posn := ( move + self position ) rem: 40.
-    posn = 0 ifTrue: [posn := 40].
-    self position: posn.
-"    self result: ( squares at: self position )."! !
-
-!Developer methodsFor: 'as yet unclassified' stamp: 'dhn 5/17/2019 12:29:19'!
 payOut: aRoll
 	"Pay to get out of jail, then move using aRoll."
 	
@@ -4118,15 +4128,6 @@ rollOut: aRoll
 				title: 'Successful Roll Out!!'.
 			reply := true ].
 	^ reply! !
-
-!Developer methodsFor: 'as yet unclassified' stamp: 'dhn 5/17/2019 12:29:19'!
-threeDoubles
-	"Notify player of the result of rolling too many doubles."
-
-	GamePopUp 
-		inform: self name,' has rolled doubles three times in a row. ' 
-		title: 'Too Many Doubles'
-! !
 
 !Developer methodsFor: 'as yet unclassified' stamp: 'dhn 2/27/2020 20:27:50'!
 toJail
