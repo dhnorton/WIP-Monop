@@ -1,6 +1,6 @@
-'From Cuis 5.0 [latest update: #4042] on 2 April 2020 at 11:15:23 pm'!
+'From Cuis 5.0 [latest update: #4042] on 6 April 2020 at 10:43:22 pm'!
 'Description Simulation of the board game "Monopoly".'!
-!provides: 'Monop' 1 178!
+!provides: 'Monop' 1 179!
 !requires: 'Game' 1 44 nil!
 SystemOrganization addCategory: #'Monop-View'!
 SystemOrganization addCategory: #'Monop-Model'!
@@ -3771,7 +3771,7 @@ title: aTitle price: aPrice rents: anArray house: aCost set: aSet
 		set: aSet.
 	^ lot! !
 
-!Railroad methodsFor: 'operating' stamp: 'dhn 4/2/2020 22:56:35'!
+!Railroad methodsFor: 'operating' stamp: 'dhn 4/6/2020 11:49:05'!
 rentAmount
 	"Answer the rent based on the number of railroads owned and whether it is doubled."
 	| amt |
@@ -3779,9 +3779,7 @@ rentAmount
 	self owner isNil ifTrue: [ ^nil ].
 	self mortgaged ifTrue: [ ^0 ].
 	self ownedByOwner > 0
-		ifTrue: [
-			factor > 1 
-				ifTrue: [amt _ (rents at: self ownedByOwner) * factor]]
+		ifTrue: [amt _ (rents at: self ownedByOwner) * factor]
 		ifFalse: [amt _ 0].
 	factor _ 1.
 	^ amt! !
