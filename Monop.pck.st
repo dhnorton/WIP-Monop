@@ -1,6 +1,6 @@
-'From Cuis 5.0 [latest update: #4042] on 6 April 2020 at 10:45:28 pm'!
+'From Cuis 5.0 [latest update: #4042] on 6 April 2020 at 10:47:31 pm'!
 'Description Simulation of the board game "Monopoly".'!
-!provides: 'Monop' 1 180!
+!provides: 'Monop' 1 181!
 !requires: 'Game' 1 44 nil!
 SystemOrganization addCategory: #'Monop-View'!
 SystemOrganization addCategory: #'Monop-Model'!
@@ -650,16 +650,16 @@ declareBroke: aString
 and mortgage until cash is no longer negative.'
 		title: 'Out of Cash'! !
 
-!Estate methodsFor: 'operating' stamp: 'dhn 4/2/2020 23:12:25'!
+!Estate methodsFor: 'operating' stamp: 'dhn 4/6/2020 12:24:34'!
 doMove
 	"Move the player, account for doubles"
 	
-	self hopFor: hops first + hops second.
-	currentPlayer doubles: ((hops first = hops second)
+	hops first = hops second
 		ifTrue: [currentPlayer doubles add: hops asArray] 
-		ifFalse: [OrderedCollection new]).
+		ifFalse: [OrderedCollection new].
 	currentPlayer doubles size > 2 
-		ifTrue: [self halt: 'Three Doubles. Go to Jail'].
+		ifTrue: [self halt: 'Three Doubles. Go to Jail']
+		ifFalse: [self hopFor: hops first + hops second].
 	hops _ OrderedCollection new.
 ! !
 
