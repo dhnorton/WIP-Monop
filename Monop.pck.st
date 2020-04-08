@@ -1,6 +1,6 @@
-'From Cuis 5.0 [latest update: #4042] on 7 April 2020 at 4:58:31 pm'!
+'From Cuis 5.0 [latest update: #4042] on 7 April 2020 at 9:07:20 pm'!
 'Description Simulation of the board game "Monopoly".'!
-!provides: 'Monop' 1 181!
+!provides: 'Monop' 1 182!
 !requires: 'Game' 1 44 nil!
 SystemOrganization addCategory: #'Monop-View'!
 SystemOrganization addCategory: #'Monop-Model'!
@@ -360,6 +360,14 @@ Charge the player luxury tax.!
 !Developer commentStamp: '<historical>' prior: 0!
 A player in Monopoly.!
 
+!Estate methodsFor: 'initialization' stamp: 'dhn 4/7/2020 20:53:54'!
+doSettings
+	"Provide a facility for changing settings"
+	| ans |
+	
+	ans _ (PopUpMenu withCaption: 'Settings' chooseFrom: 'Change auctioneer''s beat\Change test mode').
+	ans > 0 ifTrue: [self perform: (#(#setBeat #setTestMode) at: ans)]! !
+
 !Estate methodsFor: 'initialization' stamp: 'dhn 5/16/2019 18:26:09'!
 initialButtonState
 	"Establish the button state at the start of the game"
@@ -395,6 +403,17 @@ moveButton: anObject
 	
 	^ moveButton _ anObject! !
 
+!Estate methodsFor: 'initialization' stamp: 'dhn 4/7/2020 20:55:52'!
+setTestMode
+	"Optionally toggle test mode"
+	| trans ans |
+	
+	trans _ self testMode
+		ifTrue: ['true to false']
+		ifFalse: ['false to true'].
+	ans _ nil confirm: 'Change Test Mode (', trans, ')'.
+	ans ifTrue: [self testMode: self testMode not]! !
+
 !Estate methodsFor: 'initialization' stamp: 'dhn 5/16/2019 21:38:03'!
 setUpToken
 	"Answer a token, used throughout the game, for the current player."
@@ -423,6 +442,19 @@ setupPlayer: aName color: aColor
 		mgr: self;
 		identity: aName).
 	currentPlayer _ pl! !
+
+!Estate methodsFor: 'initialization' stamp: 'dhn 4/7/2020 21:01:05'!
+testMode
+	"Answer the value of TestMode"
+	
+	TestMode ifNil: [TestMode _ false].
+	^ TestMode! !
+
+!Estate methodsFor: 'initialization' stamp: 'dhn 4/7/2020 21:01:45'!
+testMode: aBool
+	"Set the value of TestMode"
+	
+	TestMode _ aBool! !
 
 !Estate methodsFor: 'takeover' stamp: 'dhn 3/29/2020 12:32:45'!
 takeItem
@@ -1153,11 +1185,6 @@ tax: anAmount
 	
 	currentPlayer tally: anAmount.
 	self triggerEvent: #itemChange! !
-
-!Estate methodsFor: 'operating' stamp: 'dhn 5/15/2019 13:48:21'!
-testMode
-
-	^ false! !
 
 !Estate methodsFor: 'operating' stamp: 'dhn 2/28/2020 10:51:29'!
 testReport
