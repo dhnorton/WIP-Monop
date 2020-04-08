@@ -1,6 +1,6 @@
-'From Cuis 5.0 [latest update: #4042] on 8 April 2020 at 2:18:14 pm'!
+'From Cuis 5.0 [latest update: #4042] on 8 April 2020 at 2:25:21 pm'!
 'Description Simulation of the board game "Monopoly".'!
-!provides: 'Monop' 1 183!
+!provides: 'Monop' 1 184!
 !requires: 'Game' 1 44 nil!
 SystemOrganization addCategory: #'Monop-View'!
 SystemOrganization addCategory: #'Monop-Model'!
@@ -2556,12 +2556,13 @@ buildMorphicWindow
 		addAdjusterAndMorph: textPane layoutSpec: (LayoutSpec useAll);
 		addMorph: (buyers _ self setUpBuyers)! !
 
-!AuctionProperty methodsFor: 'initialization' stamp: 'dhn 3/22/2020 15:43:04'!
+!AuctionProperty methodsFor: 'initialization' stamp: 'dhn 4/8/2020 14:24:50'!
 initialize
 
 	super initialize.
 	currentBid _ 0.
-	currentBump _ 10! !
+	currentBump _ 10.
+	acknowledged _ false! !
 
 !AuctionProperty methodsFor: 'buttons' stamp: 'dhn 3/21/2020 11:00:47'!
 buyerButtons
@@ -2851,6 +2852,12 @@ buildMorphicWindow
 
 	model when: #buyButton: send: #buyButton: to: self with: #state.
 ! !
+
+!BuyView methodsFor: 'initialization' stamp: 'dhn 4/8/2020 14:22:58'!
+initialize
+
+	super initialize.
+	acknowledged _ false! !
 
 !BuyView methodsFor: 'accessing' stamp: 'dhn 4/8/2020 14:07:44'!
 acknowledged
@@ -3283,6 +3290,12 @@ buildMorphicWindow
 		
 	model when: #deleteOpenWindows send: #endIt to: self.
 ! !
+
+!Notifier methodsFor: 'initialization' stamp: 'dhn 4/8/2020 14:21:18'!
+initialize
+
+	super initialize.
+	acknowledged _ false! !
 
 !Notifier methodsFor: 'initialization' stamp: 'dhn 3/18/2020 12:46:10'!
 setButton
