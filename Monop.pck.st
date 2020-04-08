@@ -1,6 +1,6 @@
-'From Cuis 5.0 [latest update: #4042] on 7 April 2020 at 9:07:20 pm'!
+'From Cuis 5.0 [latest update: #4042] on 8 April 2020 at 2:18:14 pm'!
 'Description Simulation of the board game "Monopoly".'!
-!provides: 'Monop' 1 182!
+!provides: 'Monop' 1 183!
 !requires: 'Game' 1 44 nil!
 SystemOrganization addCategory: #'Monop-View'!
 SystemOrganization addCategory: #'Monop-Model'!
@@ -48,7 +48,7 @@ Monopoly class
 
 !classDefinition: #AuctionProperty category: #'Monop-View'!
 AuctionView subclass: #AuctionProperty
-	instanceVariableNames: 'currentBump'
+	instanceVariableNames: 'acknowledged currentBump'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Monop-View'!
@@ -58,7 +58,7 @@ AuctionProperty class
 
 !classDefinition: #BuyView category: #'Monop-View'!
 GameView subclass: #BuyView
-	instanceVariableNames: 'textPane buttonArea buyButton auctionButton heading'
+	instanceVariableNames: 'acknowledged textPane buttonArea buyButton auctionButton heading'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Monop-View'!
@@ -98,7 +98,7 @@ Mortgage class
 
 !classDefinition: #Notifier category: #'Monop-View'!
 GameView subclass: #Notifier
-	instanceVariableNames: 'textPanel buttonArea okButton nextDo pctButton'
+	instanceVariableNames: 'acknowledged textPanel buttonArea okButton nextDo pctButton'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Monop-View'!
@@ -673,16 +673,6 @@ broker
 	self token moving: false
 ! !
 
-!Estate methodsFor: 'operating' stamp: 'dhn 4/6/2020 15:39:49'!
-changeEnable: anAmount
-	"Adjust the enableCount by anAmount"
-	
-	{'++++++ '. anAmount}print.
-	thisContext printStack: 10.
-	enableCount _ self enableCount + anAmount.
-	{'====== '. enableCount }print.
-! !
-
 !Estate methodsFor: 'operating' stamp: 'dhn 3/28/2020 20:34:47'!
 declareBroke: aString
 	"Inform that the player named aString is out of cash"
@@ -1154,7 +1144,7 @@ setDebtor: aDebtor
 	currentPlayer debtor: aDebtor.
 	self triggerEvent: #itemChange! !
 
-!Estate methodsFor: 'operating' stamp: 'dhn 4/6/2020 15:19:42'!
+!Estate methodsFor: 'operating' stamp: 'dhn 4/8/2020 14:13:58'!
 setNext: anArray
 	"Cases for Chance and Community Chest"
 	| level1 |
@@ -1162,7 +1152,6 @@ setNext: anArray
 	level1 _ Dictionary new
 		at: #moveMoney: put: [self level11: anArray];
 		at: #movePlayer: put: [OrderedCollection 
-			with: #(#changeEnable: 1)
 			with: (self level12: anArray) first];
 		at: #getOut: put: [{#(#null: nil). #(#enable: 'End Turn')}];
 		at: #repair: put: [{
@@ -2177,14 +2166,13 @@ startGame
 		nextPlayer.
 	model initialButtonState! !
 
-!Monopoly methodsFor: 'windows' stamp: 'dhn 4/5/2020 14:49:51'!
+!Monopoly methodsFor: 'windows' stamp: 'dhn 4/8/2020 14:13:24'!
 showBuyView
 	"Open a window on a property held by the bank"
 	| win |
 		
 	win _ BuyView openOn: model.
 	win openInWorld: pasteup.
-	model changeEnable: 1.
 	win
 		cleanTitleBar;
 		setLabel: ' ';
@@ -2195,14 +2183,13 @@ showBuyView
 		details.
 	win heading contents: (model spaces at: model currentPlayer position) title! !
 
-!Monopoly methodsFor: 'windows' stamp: 'dhn 4/5/2020 14:54:27'!
+!Monopoly methodsFor: 'windows' stamp: 'dhn 4/8/2020 14:13:15'!
 showChance: anArray
 	"Tell the player about the Chance card"
 	| win |
 		
 	win _ Notifier openOn: model.
 	win openInWorld: pasteup.
-	model changeEnable: 1.
 	win textPanel model actualContents: anArray last.
 	win textPanel color: Color lightOrange.
 	win nextDo: (model setNext: anArray).
@@ -2216,14 +2203,13 @@ showChance: anArray
 	win buttonArea color: win textPanel color
 ! !
 
-!Monopoly methodsFor: 'windows' stamp: 'dhn 4/5/2020 14:56:33'!
+!Monopoly methodsFor: 'windows' stamp: 'dhn 4/8/2020 14:13:04'!
 showChest: anArray
 	"Tell the player about the Community Chest card"
 	| win |
 		
 	win _ Notifier openOn: model.
 	win openInWorld: pasteup.
-	model changeEnable: 1.
 	win textPanel model actualContents: anArray last.
 	win textPanel color: Color lightYellow.
 	win nextDo: (model setNext: anArray).
@@ -2237,14 +2223,13 @@ showChest: anArray
 	win buttonArea color: win textPanel color
 ! !
 
-!Monopoly methodsFor: 'windows' stamp: 'dhn 4/7/2020 16:56:27'!
+!Monopoly methodsFor: 'windows' stamp: 'dhn 4/8/2020 14:12:52'!
 showDoubles
 	"Tell the player about rolling doubles 3 times consecutively"
 	| win blurb |
 		
 	win _ Notifier open: model label: 'Three Doubles'.
 	win openInWorld: pasteup.
-	model changeEnable: 1.
 	blurb _ String streamContents: [:str |
 		str nextPutAll: model currentPlayer identity, ' rolled '.
 		model currentPlayer doubles do: [:a |
@@ -2261,7 +2246,7 @@ showDoubles
 	win buttonArea color: win textPanel color
 ! !
 
-!Monopoly methodsFor: 'windows' stamp: 'dhn 4/5/2020 21:29:22'!
+!Monopoly methodsFor: 'windows' stamp: 'dhn 4/8/2020 14:12:39'!
 showGo
 	"Tell the player about his salary"
 	| win |
@@ -2269,7 +2254,6 @@ showGo
 	win _ Notifier openOn: model.
 	win openInWorld: pasteup.
 	win textPanel model actualContents: model note.
-	model changeEnable: 1.
 	win nextDo: (OrderedCollection 
 		with: {#tally:. 200} 
 		with: {#enable:. 'End Turn'}).
@@ -2300,14 +2284,13 @@ showHouse
 		morphExtent: 500 @ 260.
 	model disableAll: {'Develop'}! !
 
-!Monopoly methodsFor: 'windows' stamp: 'dhn 4/5/2020 14:57:42'!
+!Monopoly methodsFor: 'windows' stamp: 'dhn 4/8/2020 14:12:27'!
 showIncomeTax
 	"Tell the player about his income tax"
 	| win |
 		
 	win _ Notifier open: model label: 'Income Tax'.
 	win openInWorld: pasteup.
-	model changeEnable: 1.
 	win textPanel model actualContents: 'You will pay income tax of the larger of either $200 or 10% of assets. It''s your choice.'.
 	win textPanel color: Color lightRed.
 	win nextDo addFirst: #(#tax: -200).
@@ -2320,14 +2303,13 @@ showIncomeTax
 	win buttonArea color: win textPanel color
 ! !
 
-!Monopoly methodsFor: 'windows' stamp: 'dhn 4/5/2020 14:57:56'!
+!Monopoly methodsFor: 'windows' stamp: 'dhn 4/8/2020 14:12:07'!
 showLuxuryTax
 	"Tell the player about his luxury tax"
 	| win |
 		
 	win _ Notifier open: model label: 'Luxury Tax'.
 	win openInWorld: pasteup.
-	model changeEnable: 1.
 	win textPanel model actualContents: 'You will pay $75 luxury tax.'.
 	win textPanel color: Color lightRed.
 	win nextDo addFirst: #(#tax: -75).
@@ -2373,7 +2355,7 @@ showPropertyAuction
 	win showChant.
 	win beat: #announceSold! !
 
-!Monopoly methodsFor: 'windows' stamp: 'dhn 4/5/2020 14:58:43'!
+!Monopoly methodsFor: 'windows' stamp: 'dhn 4/8/2020 14:11:55'!
 showRentDue
 	"Tell the player about the rent"
 	| win lot rent story |
@@ -2397,7 +2379,6 @@ showRentDue
 						nextPutAll: ' rent.']].
 	win _ Notifier openOn: model.
 	win openInWorld: pasteup.
-	model changeEnable: 1.
 	win textPanel model actualContents: story.
 	win textPanel color: lot owner color.
 	win nextDo add: {#toOwner:. {lot owner. rent}}.
@@ -2689,15 +2670,13 @@ offer: anObject by: aName
 	(buyers findDeepSubmorphThat: [:mm | mm label = aName] ifAbsent: []) disableButton
 ! !
 
-!AuctionProperty methodsFor: 'operation' stamp: 'dhn 4/5/2020 14:53:29'!
+!AuctionProperty methodsFor: 'operation' stamp: 'dhn 4/8/2020 14:14:23'!
 propertySold
 	"Finalize the sale"
 	| prop |
 	
 	prop _ model spaces at: model currentPlayer position.
 	model hammerDown: currentBid for: prop by: currentBidder.
-	model changeEnable: -1.
-	model enable: 'End Turn'.
 	self delete
 ! !
 
@@ -2718,6 +2697,18 @@ endIt
 		enableAll: {'End Turn'}.
 	self delete
 ! !
+
+!AuctionProperty methodsFor: 'accessing' stamp: 'dhn 4/8/2020 14:06:18'!
+acknowledged
+	"Answer the value of acknowledged"
+
+	^ acknowledged! !
+
+!AuctionProperty methodsFor: 'accessing' stamp: 'dhn 4/8/2020 14:06:18'!
+acknowledged: anObject
+	"Set the value of acknowledged"
+
+	acknowledged _ anObject! !
 
 !AuctionProperty methodsFor: 'accessing' stamp: 'dhn 3/22/2020 15:12:14'!
 currentBump
@@ -2788,15 +2779,13 @@ auction
 	buyButton disableButton.
 	model propertyAuction! !
 
-!BuyView methodsFor: 'operating' stamp: 'dhn 4/5/2020 14:52:04'!
+!BuyView methodsFor: 'operating' stamp: 'dhn 4/8/2020 14:14:12'!
 buy
 	"Buy the property, record the result"
 	
 	buyButton disableButton.
 	auctionButton disableButton.
 	model propertyBuy.
-	model changeEnable: -1.
-	model enable: 'End Turn'.
 	self delete! !
 
 !BuyView methodsFor: 'operating' stamp: 'dhn 3/23/2020 16:31:17'!
@@ -2863,6 +2852,48 @@ buildMorphicWindow
 	model when: #buyButton: send: #buyButton: to: self with: #state.
 ! !
 
+!BuyView methodsFor: 'accessing' stamp: 'dhn 4/8/2020 14:07:44'!
+acknowledged
+	"Answer the value of acknowledged"
+
+	^ acknowledged! !
+
+!BuyView methodsFor: 'accessing' stamp: 'dhn 4/8/2020 14:07:44'!
+acknowledged: anObject
+	"Set the value of acknowledged"
+
+	acknowledged _ anObject! !
+
+!BuyView methodsFor: 'accessing' stamp: 'dhn 4/8/2020 14:07:44'!
+auctionButton
+	"Answer the value of auctionButton"
+
+	^ auctionButton! !
+
+!BuyView methodsFor: 'accessing' stamp: 'dhn 4/8/2020 14:07:44'!
+auctionButton: anObject
+	"Set the value of auctionButton"
+
+	auctionButton _ anObject! !
+
+!BuyView methodsFor: 'accessing' stamp: 'dhn 4/8/2020 14:07:44'!
+buttonArea
+	"Answer the value of buttonArea"
+
+	^ buttonArea! !
+
+!BuyView methodsFor: 'accessing' stamp: 'dhn 4/8/2020 14:07:44'!
+buttonArea: anObject
+	"Set the value of buttonArea"
+
+	buttonArea _ anObject! !
+
+!BuyView methodsFor: 'accessing' stamp: 'dhn 4/8/2020 14:07:44'!
+buyButton
+	"Answer the value of buyButton"
+
+	^ buyButton! !
+
 !BuyView methodsFor: 'accessing' stamp: 'dhn 3/4/2020 20:00:03'!
 buyButton: aBool
 	"Change buy button state according to aBool"
@@ -2883,6 +2914,24 @@ heading
 	"Answer the value of heading"
 	
 	^ heading! !
+
+!BuyView methodsFor: 'accessing' stamp: 'dhn 4/8/2020 14:07:44'!
+heading: anObject
+	"Set the value of heading"
+
+	heading _ anObject! !
+
+!BuyView methodsFor: 'accessing' stamp: 'dhn 4/8/2020 14:07:44'!
+textPane
+	"Answer the value of textPane"
+
+	^ textPane! !
+
+!BuyView methodsFor: 'accessing' stamp: 'dhn 4/8/2020 14:07:44'!
+textPane: anObject
+	"Set the value of textPane"
+
+	textPane _ anObject! !
 
 !BuyView methodsFor: 'termination' stamp: 'dhn 3/4/2020 21:12:59'!
 closeBoxHit
@@ -3182,17 +3231,15 @@ endGame
 	gam _ owner world submorphs detect: [:a | a class = Monopoly] ifNone: [].
 	gam closeBoxHit ! !
 
-!Notifier methodsFor: 'operating' stamp: 'dhn 4/5/2020 14:55:45'!
+!Notifier methodsFor: 'operating' stamp: 'dhn 4/8/2020 14:11:36'!
 finish
 	"Perform methods in response to the OK button"
 
 	self nextDo do: [:ea |
 		model perform: ea first with: ea second].
-	model changeEnable: -1.
-	model enable: 'End Turn'.
 	buttonArea removeAllMorphs! !
 
-!Notifier methodsFor: 'operating' stamp: 'dhn 4/5/2020 21:19:08'!
+!Notifier methodsFor: 'operating' stamp: 'dhn 4/8/2020 14:11:17'!
 finish2
 	"Perform methods in response to the 10% button"
 	| col amt |
@@ -3203,8 +3250,6 @@ finish2
 		model perform: ea first with: ea second].
 	textPanel model actualContents: 
 		textPanel model actualContents, ' You paid $', amt negated rounded printStringWithCommas.
-	model changeEnable: -1.
-	model enable: 'End Turn'.
 	buttonArea removeAllMorphs! !
 
 !Notifier methodsFor: 'initialization' stamp: 'dhn 3/16/2020 21:54:01'!
@@ -3285,11 +3330,29 @@ winButton
 		padding: #center
 ! !
 
+!Notifier methodsFor: 'accessing' stamp: 'dhn 4/8/2020 14:09:37'!
+acknowledged
+	"Answer the value of acknowledged"
+
+	^ acknowledged! !
+
+!Notifier methodsFor: 'accessing' stamp: 'dhn 4/8/2020 14:09:37'!
+acknowledged: anObject
+	"Set the value of acknowledged"
+
+	acknowledged _ anObject! !
+
 !Notifier methodsFor: 'accessing' stamp: 'dhn 3/13/2020 21:11:02'!
 buttonArea
 	"Answer the value of buttonArea"
 
 	^ buttonArea! !
+
+!Notifier methodsFor: 'accessing' stamp: 'dhn 4/8/2020 14:09:37'!
+buttonArea: anObject
+	"Set the value of buttonArea"
+
+	buttonArea _ anObject! !
 
 !Notifier methodsFor: 'accessing' stamp: 'dhn 3/16/2020 13:12:24'!
 nextDo
@@ -3309,11 +3372,35 @@ okButton
 
 	^ okButton! !
 
+!Notifier methodsFor: 'accessing' stamp: 'dhn 4/8/2020 14:09:37'!
+okButton: anObject
+	"Set the value of okButton"
+
+	okButton _ anObject! !
+
+!Notifier methodsFor: 'accessing' stamp: 'dhn 4/8/2020 14:09:37'!
+pctButton
+	"Answer the value of pctButton"
+
+	^ pctButton! !
+
+!Notifier methodsFor: 'accessing' stamp: 'dhn 4/8/2020 14:09:37'!
+pctButton: anObject
+	"Set the value of pctButton"
+
+	pctButton _ anObject! !
+
 !Notifier methodsFor: 'accessing' stamp: 'dhn 3/16/2020 21:44:26'!
 textPanel
 	"Answer the value of textPanel"
 
 	^ textPanel! !
+
+!Notifier methodsFor: 'accessing' stamp: 'dhn 4/8/2020 14:09:37'!
+textPanel: anObject
+	"Set the value of textPanel"
+
+	textPanel _ anObject! !
 
 !Notifier methodsFor: 'termination' stamp: 'dhn 3/14/2020 12:19:29'!
 closeBoxHit
