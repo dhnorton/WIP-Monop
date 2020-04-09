@@ -1,6 +1,6 @@
-'From Cuis 5.0 [latest update: #4042] on 8 April 2020 at 2:25:21 pm'!
+'From Cuis 5.0 [latest update: #4042] on 9 April 2020 at 3:07:56 pm'!
 'Description Simulation of the board game "Monopoly".'!
-!provides: 'Monop' 1 184!
+!provides: 'Monop' 1 186!
 !requires: 'Game' 1 44 nil!
 SystemOrganization addCategory: #'Monop-View'!
 SystemOrganization addCategory: #'Monop-Model'!
@@ -8,7 +8,7 @@ SystemOrganization addCategory: #'Monop-Model'!
 
 !classDefinition: #Estate category: #'Monop-Model'!
 Game subclass: #Estate
-	instanceVariableNames: 'demo hops windowCount enableCount chances chests moveButton statsItem propertyAuctionBid note devItem morItem takeItem'
+	instanceVariableNames: 'demo hops windowCount chances chests moveButton statsItem propertyAuctionBid note devItem morItem takeItem'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Monop-Model'!
@@ -18,7 +18,7 @@ Estate class
 
 !classDefinition: #EstateToken category: #'Monop-View'!
 Token subclass: #EstateToken
-	instanceVariableNames: 'moving'
+	instanceVariableNames: 'moving view'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Monop-View'!
@@ -68,7 +68,7 @@ BuyView class
 
 !classDefinition: #MonopHoldings category: #'Monop-View'!
 GameView subclass: #MonopHoldings
-	instanceVariableNames: 'textPane listPane'
+	instanceVariableNames: 'textPane listPane acknowledged'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Monop-View'!
@@ -78,7 +78,7 @@ MonopHoldings class
 
 !classDefinition: #MonopHouse category: #'Monop-View'!
 GameView subclass: #MonopHouse
-	instanceVariableNames: 'textPane listPane buttonArea buyButton sellButton'
+	instanceVariableNames: 'textPane listPane buttonArea buyButton sellButton acknowledged'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Monop-View'!
@@ -88,7 +88,7 @@ MonopHouse class
 
 !classDefinition: #Mortgage category: #'Monop-View'!
 GameView subclass: #Mortgage
-	instanceVariableNames: 'textPane listPane buttonArea morButton unmButton'
+	instanceVariableNames: 'textPane listPane buttonArea morButton unmButton acknowledged'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Monop-View'!
@@ -656,7 +656,7 @@ statsReport: anAsset
 auction: aProperty
 	"Sell aProperty at auction."! !
 
-!Estate methodsFor: 'operating' stamp: 'dhn 3/23/2020 19:51:56'!
+!Estate methodsFor: 'operating' stamp: 'dhn 4/8/2020 19:13:40'!
 broker
 	"Represent the property"
 	"If unowned, the 'owner' is the bank and the property will be sold or auctioned."
@@ -669,7 +669,7 @@ broker
 		ifNotNil: [
 			property owner ~= currentPlayer 
 				ifTrue: [self triggerEvent: #showRentDue]
-				ifFalse: [self enableAll: {'End Turn'}]].
+				ifFalse: [self enable: 'x']].
 	self token moving: false
 ! !
 
@@ -733,17 +733,19 @@ drawChest
 			self triggerEvent: #showChest: with: ches] 
 		ifFalse: [self triggerEvent: #showChest: with: ches]! !
 
-!Estate methodsFor: 'operating' stamp: 'dhn 4/5/2020 13:55:24'!
+!Estate methodsFor: 'operating' stamp: 'dhn 4/8/2020 21:27:53'!
 enable: aButton
-	"Update histories and enable the button named aButton"
+	"Update histories and enable the 'End Turn' button if all are acknowledged"
+	| col subs |
 	
 	players do: [:ea | ea history addLast: ea netWorth].
 	self triggerEvent: #itemChange.
-	aButton = 'End Turn'
-		ifTrue: [
-			self enableCount < 1 ifTrue: [self enableAll: {aButton}]] 
-		ifFalse: [self enableAll: {aButton}]
-	! !
+	col _ OrderedCollection new.
+	subs _ self world submorphs.
+	1 to: (subs size - 2) do: [:a | 
+		(subs at: a) acknowledged = false
+			ifTrue: [col add: a]].
+	col ifEmpty: [self enableAll: {'End Turn'}]! !
 
 !Estate methodsFor: 'operating' stamp: 'dhn 3/29/2020 13:53:34'!
 endTurn
@@ -793,8 +795,10 @@ fromEach: anAmount
 				currentPlayer tally: anAmount negated]].
 	self triggerEvent: #itemChange! !
 
-!Estate methodsFor: 'operating' stamp: 'dhn 2/25/2020 14:58:42'!
-getOut: anObject! !
+!Estate methodsFor: 'operating' stamp: 'dhn 4/8/2020 22:09:26'!
+getOut: anObject
+
+	self enable: 'x'! !
 
 !Estate methodsFor: 'operating' stamp: 'dhn 3/2/2020 15:36:49'!
 goToJail
@@ -830,7 +834,7 @@ incomeTax
 	currentPlayer debtor: 'Bank'.
 	self triggerEvent: #showIncomeTax! !
 
-!Estate methodsFor: 'operating' stamp: 'dhn 3/20/2020 15:17:13'!
+!Estate methodsFor: 'operating' stamp: 'dhn 4/8/2020 19:03:12'!
 justVisit
 	"Just visiting jail."
 
@@ -840,25 +844,23 @@ justVisit
 				inform: currentPlayer identity, ' will be here a long time.' 
 				title: 'Life Sentence'.
 			self disableAll: {'Move'}]."
-	self enableAll: {'End Turn'}! !
+	self enable: 'x'! !
 
-!Estate methodsFor: 'operating' stamp: 'dhn 3/29/2020 13:47:03'!
+!Estate methodsFor: 'operating' stamp: 'dhn 4/8/2020 21:14:24'!
 level11: anArray
 	"Cases for Chance and Community Chest"
 	| switch |
 	
 	switch _ Dictionary new
-		at: #fromEach put: [{{#fromEach:. anArray third}. #(#enable: 'End Turn')}];
+		at: #fromEach put: [{{#fromEach:. anArray third}}];
 		at: #toEach put: [{
 			{#setDebtor:. 'Bank'}.
-			{#toEach:. anArray third}. 
-			#(#enable: 'End Turn')}];
+			{#toEach:. anArray third}}];
 		yourself.
 	^ (switch at: anArray second
 		ifAbsent:[{
 			{#setDebtor:. 'Bank'}.
-			{#tally:. anArray third negated}. 
-			#(#enable: 'End Turn')}]) value! !
+			{#tally:. anArray third negated}}]) value! !
 
 !Estate methodsFor: 'operating' stamp: 'dhn 3/19/2020 16:42:15'!
 level123: anArray
@@ -933,7 +935,7 @@ moveBackTo: aSpace
 	aSpace = 11
 		ifTrue: ["currentPlayer jail: true with: 0."]! !
 
-!Estate methodsFor: 'operating' stamp: 'dhn 3/24/2020 20:34:58'!
+!Estate methodsFor: 'operating' stamp: 'dhn 4/8/2020 14:34:03'!
 moveMoney: anArray
 	"Move cash per specs in anArray."
 	
@@ -942,8 +944,7 @@ moveMoney: anArray
 	anArray first = #fromEach
 		ifTrue: [self exceptCurrent: anArray second].
 	anArray first = #toEach
-		ifTrue: [self exceptCurrent: anArray second].
-	self enable: 'End Turn'! !
+		ifTrue: [self exceptCurrent: anArray second]! !
 
 !Estate methodsFor: 'operating' stamp: 'dhn 3/3/2020 17:19:03'!
 movePlayer: anArray
@@ -990,7 +991,7 @@ nearestUtility
 	
 	^ self nearest: self class positionUtility to: currentPlayer position! !
 
-!Estate methodsFor: 'operating' stamp: 'dhn 4/1/2020 11:30:11'!
+!Estate methodsFor: 'operating' stamp: 'dhn 4/9/2020 14:05:36'!
 nextPlayer
 	"Begin the next player's turn"
 	| x |
@@ -1006,6 +1007,7 @@ nextPlayer
 		enableAll: {'Holdings'. 'Develop'. 'Mortgage'};
 		removeMarkers.
 	token openInWorld: world.
+	token view: nil.
 	token morphPosition: tokenPos.
 	token id contents: currentPlayer identity.
 	token color: currentPlayer color.
@@ -1030,11 +1032,11 @@ numbersReport
 			nextPutAll: 'Cash: $';
 			nextPutAll: currentPlayer cash truncated printStringWithCommas]! !
 
-!Estate methodsFor: 'operating' stamp: 'dhn 3/18/2020 20:28:01'!
+!Estate methodsFor: 'operating' stamp: 'dhn 4/8/2020 19:03:46'!
 parkFree
 	"Cool it."
 
-	self enableAll: {'End Turn'}! !
+	self enable: 'x'! !
 
 !Estate methodsFor: 'operating' stamp: 'dhn 5/16/2019 15:21:32'!
 positionBoardTo: anIndex 
@@ -1144,7 +1146,7 @@ setDebtor: aDebtor
 	currentPlayer debtor: aDebtor.
 	self triggerEvent: #itemChange! !
 
-!Estate methodsFor: 'operating' stamp: 'dhn 4/8/2020 14:13:58'!
+!Estate methodsFor: 'operating' stamp: 'dhn 4/9/2020 11:17:59'!
 setNext: anArray
 	"Cases for Chance and Community Chest"
 	| level1 |
@@ -1152,14 +1154,20 @@ setNext: anArray
 	level1 _ Dictionary new
 		at: #moveMoney: put: [self level11: anArray];
 		at: #movePlayer: put: [OrderedCollection 
+			with: {#setView:. world submorphs first}
 			with: (self level12: anArray) first];
-		at: #getOut: put: [{#(#null: nil). #(#enable: 'End Turn')}];
+		at: #getOut: put: [{#(#getOut: nil)}];
 		at: #repair: put: [{
 			{#setDebtor:. 'Bank'}.
-			{#repair:. anArray second}. 
-			#(#enable: 'End Turn')}];
+			{#repair:. anArray second}}];
 		yourself.
 	^ (level1 at: anArray first) value! !
+
+!Estate methodsFor: 'operating' stamp: 'dhn 4/9/2020 11:20:03'!
+setView: anObject
+	"Set the view to be finished at the end of the move"
+	
+	token view: anObject! !
 
 !Estate methodsFor: 'operating' stamp: 'dhn 4/5/2020 21:17:47'!
 tally: anAmount
@@ -1175,7 +1183,7 @@ tax: anAmount
 	currentPlayer tally: anAmount.
 	self triggerEvent: #itemChange! !
 
-!Estate methodsFor: 'operating' stamp: 'dhn 2/28/2020 10:51:29'!
+!Estate methodsFor: 'operating' stamp: 'dhn 4/8/2020 19:05:06'!
 testReport
 	"Show space information in the Transcript."
 	| where what |
@@ -1183,9 +1191,9 @@ testReport
 	where _ spaces at: currentPlayer position.
 	what _ where label.
 	{what. where rents. where price. where routine} print.
-	self enableAll: {'End Turn'}.! !
+	self enable: 'x'! !
 
-!Estate methodsFor: 'operating' stamp: 'dhn 2/23/2020 15:03:37'!
+!Estate methodsFor: 'operating' stamp: 'dhn 4/8/2020 19:05:20'!
 testRoutine
 	"Debug."
 	| where what |
@@ -1193,7 +1201,7 @@ testRoutine
 	where _ self class spaceAttributes at: currentPlayer position.
 	what _ where label.
 	Transcript show: what; newLine.
-	self enableAll: {'End Turn'}.! !
+	self enable: 'x'! !
 
 !Estate methodsFor: 'operating' stamp: 'dhn 3/18/2020 21:46:57'!
 toEach: anAmount
@@ -1206,7 +1214,7 @@ toEach: anAmount
 				currentPlayer tally: anAmount negated]].
 	self triggerEvent: #itemChange! !
 
-!Estate methodsFor: 'operating' stamp: 'dhn 3/29/2020 13:39:21'!
+!Estate methodsFor: 'operating' stamp: 'dhn 4/8/2020 19:05:45'!
 toOwner: anArray
 	"Transfer money from the current player to the property owner for rent"
 	| rent |
@@ -1217,7 +1225,7 @@ toOwner: anArray
 		tally: rent negated.
 	anArray first tally: rent.
 	self triggerEvent: #itemChange.
-	self enableAll: {'End Turn'}
+	self enable: 'x'
 ! !
 
 !Estate methodsFor: 'operating' stamp: 'dhn 3/18/2020 21:14:36'!
@@ -1286,18 +1294,6 @@ demo: anObject
 	"Set the value of demo"
 
 	demo _ anObject! !
-
-!Estate methodsFor: 'accessing' stamp: 'dhn 4/5/2020 13:56:23'!
-enableCount
-	"Answer the value of enableCount"
-
-	^ enableCount ifNil: [enableCount _ 0]! !
-
-!Estate methodsFor: 'accessing' stamp: 'dhn 4/5/2020 13:48:06'!
-enableCount: anObject
-	"Set the value of enableCount"
-
-	enableCount _ anObject! !
 
 !Estate methodsFor: 'accessing' stamp: 'dhn 4/2/2020 16:11:00'!
 hops
@@ -1600,7 +1596,7 @@ position: aCell
 	horiz _ (model cells at: aCell) morphPosition x.
 	self morphPosition: (self morphPosition translatedBy: (horiz@0))! !
 
-!EstateToken methodsFor: 'operations' stamp: 'dhn 3/2/2020 16:29:34'!
+!EstateToken methodsFor: 'operations' stamp: 'dhn 4/9/2020 13:44:05'!
 slideLeft: from to: to
 	"Slide self when player must go BACK to 'to' from 'from' "
 	| oldPos newPos index n posns limit i final |
@@ -1630,11 +1626,13 @@ slideLeft: from to: to
 				self removeActionsForEvent: #morphicStep.
 				arrow delete.
 				model currentPlayer position: final.
+				view ifNotNil: [view complete].
 				"final = 11 ifTrue: [model currentPlayer jail: true with: 0]."
-				model doSpace]].
+				model doSpace.
+				moving _ false]].
 	self startSteppingStepTime: 500! !
 
-!EstateToken methodsFor: 'operations' stamp: 'dhn 3/2/2020 16:29:47'!
+!EstateToken methodsFor: 'operations' stamp: 'dhn 4/9/2020 13:44:51'!
 slideRight: from to: to
 	"Slide self when player moves ahead from 'from' to 'to' other than by the Move button"
 	| oldPos newPos index n posns limit i final |
@@ -1665,20 +1663,34 @@ slideRight: from to: to
 				arrow delete.
 				from > to ifTrue: [model currentPlayer passedGo: true].
 				model currentPlayer position: final.
-				model doSpace]].
+				view ifNotNil: [view complete].
+				model doSpace.
+				moving _ false]].
 	self startSteppingStepTime: 500! !
 
-!EstateToken methodsFor: 'accessing' stamp: 'dhn 3/2/2020 14:52:27'!
+!EstateToken methodsFor: 'accessing' stamp: 'dhn 4/8/2020 21:44:45'!
 moving
 	"Answer the value of moving"
 
-	^ moving! !
+	^ moving ifNil: [moving _ false]! !
 
 !EstateToken methodsFor: 'accessing' stamp: 'dhn 3/2/2020 14:52:27'!
 moving: anObject
 	"Set the value of moving"
 
 	moving _ anObject! !
+
+!EstateToken methodsFor: 'accessing' stamp: 'dhn 4/9/2020 10:59:18'!
+view
+	"Answer the value of view"
+
+	^ view! !
+
+!EstateToken methodsFor: 'accessing' stamp: 'dhn 4/9/2020 10:59:18'!
+view: anObject
+	"Set the value of view"
+
+	view _ anObject! !
 
 !AuctionButton methodsFor: 'event handling' stamp: 'dhn 3/22/2020 20:28:19'!
 mouseButton2Down: event localPosition: point 
@@ -2223,12 +2235,12 @@ showChest: anArray
 	win buttonArea color: win textPanel color
 ! !
 
-!Monopoly methodsFor: 'windows' stamp: 'dhn 4/8/2020 14:12:52'!
+!Monopoly methodsFor: 'windows' stamp: 'dhn 4/9/2020 13:15:30'!
 showDoubles
 	"Tell the player about rolling doubles 3 times consecutively"
 	| win blurb |
 		
-	win _ Notifier open: model label: 'Three Doubles'.
+	win _ Notifier open: model.
 	win openInWorld: pasteup.
 	blurb _ String streamContents: [:str |
 		str nextPutAll: model currentPlayer identity, ' rolled '.
@@ -2239,6 +2251,8 @@ showDoubles
 	win nextDo add: {#moveBackTo:. 11}.
 	win textPanel color: Color lightRed.
 	win
+		cleanTitleBar;
+		setLabel: 'Three Doubles';
 		setWindowColor: win textPanel color;
 		morphPosition: self windowPosition;
 		setButton;
@@ -2246,7 +2260,7 @@ showDoubles
 	win buttonArea color: win textPanel color
 ! !
 
-!Monopoly methodsFor: 'windows' stamp: 'dhn 4/8/2020 14:12:39'!
+!Monopoly methodsFor: 'windows' stamp: 'dhn 4/8/2020 14:35:12'!
 showGo
 	"Tell the player about his salary"
 	| win |
@@ -2254,9 +2268,7 @@ showGo
 	win _ Notifier openOn: model.
 	win openInWorld: pasteup.
 	win textPanel model actualContents: model note.
-	win nextDo: (OrderedCollection 
-		with: {#tally:. 200} 
-		with: {#enable:. 'End Turn'}).
+	win nextDo: (OrderedCollection with: {#tally:. 200}).
 	win textPanel color: model currentPlayer color.
 	win
 		cleanTitleBar;
@@ -2671,31 +2683,33 @@ offer: anObject by: aName
 	(buyers findDeepSubmorphThat: [:mm | mm label = aName] ifAbsent: []) disableButton
 ! !
 
-!AuctionProperty methodsFor: 'operation' stamp: 'dhn 4/8/2020 14:14:23'!
+!AuctionProperty methodsFor: 'operation' stamp: 'dhn 4/8/2020 15:05:25'!
 propertySold
 	"Finalize the sale"
 	| prop |
 	
 	prop _ model spaces at: model currentPlayer position.
 	model hammerDown: currentBid for: prop by: currentBidder.
+	acknowledged _ true.
+	model enable: 'x'.
 	self delete
 ! !
 
-!AuctionProperty methodsFor: 'termination' stamp: 'dhn 3/3/2020 21:57:33'!
+!AuctionProperty methodsFor: 'termination' stamp: 'dhn 4/8/2020 19:01:12'!
 closeBoxHit
 
 	model 
 		propertyAuctionBid: nil;
-		enableAll: {'End Turn'}.
+		enable: 'x'.
 	super closeBoxHit! !
 
-!AuctionProperty methodsFor: 'termination' stamp: 'dhn 3/3/2020 21:57:53'!
+!AuctionProperty methodsFor: 'termination' stamp: 'dhn 4/8/2020 19:01:55'!
 endIt
 	
 	model 
 		propertyAuctionBid: nil;
 		"jobWinner: currentBidder bid: currentBid;"
-		enableAll: {'End Turn'}.
+		enable: 'x'.
 	self delete
 ! !
 
@@ -2773,20 +2787,25 @@ bidIncrement
 
 	! !
 
-!BuyView methodsFor: 'operating' stamp: 'dhn 3/4/2020 21:40:52'!
+!BuyView methodsFor: 'operating' stamp: 'dhn 4/8/2020 17:49:06'!
 auction
 
 	auctionButton disableButton.
 	buyButton disableButton.
-	model propertyAuction! !
+	model propertyAuction.
+	acknowledged _ true.
+	model enable: 'x'.
+! !
 
-!BuyView methodsFor: 'operating' stamp: 'dhn 4/8/2020 14:14:12'!
+!BuyView methodsFor: 'operating' stamp: 'dhn 4/8/2020 15:04:09'!
 buy
 	"Buy the property, record the result"
 	
 	buyButton disableButton.
 	auctionButton disableButton.
 	model propertyBuy.
+	acknowledged _ true.
+	model enable: 'x'.
 	self delete! !
 
 !BuyView methodsFor: 'operating' stamp: 'dhn 3/23/2020 16:31:17'!
@@ -2968,11 +2987,47 @@ endIt
 		enableAll: {'Holdings'}.
 	self delete! !
 
+!MonopHoldings methodsFor: 'accessing' stamp: 'dhn 4/8/2020 21:18:57'!
+acknowledged
+	"Answer the value of acknowledged"
+
+	^ acknowledged! !
+
+!MonopHoldings methodsFor: 'accessing' stamp: 'dhn 4/8/2020 21:18:57'!
+acknowledged: anObject
+	"Set the value of acknowledged"
+
+	acknowledged _ anObject! !
+
 !MonopHoldings methodsFor: 'accessing' stamp: 'dhn 3/1/2020 11:59:48'!
 details
 
 	listPane updateList.
 	textPane model actualContents: model statsReport 	"note that the textPane model differs from the model for this view"! !
+
+!MonopHoldings methodsFor: 'accessing' stamp: 'dhn 4/8/2020 21:18:57'!
+listPane
+	"Answer the value of listPane"
+
+	^ listPane! !
+
+!MonopHoldings methodsFor: 'accessing' stamp: 'dhn 4/8/2020 21:18:57'!
+listPane: anObject
+	"Set the value of listPane"
+
+	listPane _ anObject! !
+
+!MonopHoldings methodsFor: 'accessing' stamp: 'dhn 4/8/2020 21:18:57'!
+textPane
+	"Answer the value of textPane"
+
+	^ textPane! !
+
+!MonopHoldings methodsFor: 'accessing' stamp: 'dhn 4/8/2020 21:18:57'!
+textPane: anObject
+	"Set the value of textPane"
+
+	textPane _ anObject! !
 
 !MonopHoldings methodsFor: 'initialization' stamp: 'dhn 3/1/2020 15:48:13'!
 buildMorphicWindow
@@ -2997,6 +3052,24 @@ buildMorphicWindow
 		addMorph: listPane layoutSpec: (LayoutSpec fixedWidth: 250);
 		addAdjusterAndMorph: textPane layoutSpec: (LayoutSpec useAll)! !
 
+!MonopHoldings methodsFor: 'initialization' stamp: 'dhn 4/8/2020 21:11:43'!
+initialize
+
+	super initialize.
+	acknowledged _ true! !
+
+!MonopHoldings class methodsFor: 'instance creation' stamp: 'dhn 4/8/2020 20:14:44'!
+openOn: aModel
+	"Answer an instance of this class on aModel"
+	| win |
+
+	win _ self open: aModel.
+			
+	aModel when: #deleteOpenWindows send: #endIt to: win.
+	
+	^ win
+! !
+
 !MonopHouse methodsFor: 'termination' stamp: 'dhn 3/26/2020 11:12:58'!
 closeBoxHit
 
@@ -3013,11 +3086,83 @@ endIt
 		enableAll: {'Develop'}.
 	self delete! !
 
+!MonopHouse methodsFor: 'accessing' stamp: 'dhn 4/8/2020 21:37:35'!
+acknowledged
+	"Answer the value of acknowledged"
+
+	^ acknowledged! !
+
+!MonopHouse methodsFor: 'accessing' stamp: 'dhn 4/8/2020 21:37:35'!
+acknowledged: anObject
+	"Set the value of acknowledged"
+
+	acknowledged _ anObject! !
+
+!MonopHouse methodsFor: 'accessing' stamp: 'dhn 4/8/2020 21:37:35'!
+buttonArea
+	"Answer the value of buttonArea"
+
+	^ buttonArea! !
+
+!MonopHouse methodsFor: 'accessing' stamp: 'dhn 4/8/2020 21:37:35'!
+buttonArea: anObject
+	"Set the value of buttonArea"
+
+	buttonArea _ anObject! !
+
+!MonopHouse methodsFor: 'accessing' stamp: 'dhn 4/8/2020 21:37:35'!
+buyButton
+	"Answer the value of buyButton"
+
+	^ buyButton! !
+
+!MonopHouse methodsFor: 'accessing' stamp: 'dhn 4/8/2020 21:37:35'!
+buyButton: anObject
+	"Set the value of buyButton"
+
+	buyButton _ anObject! !
+
 !MonopHouse methodsFor: 'accessing' stamp: 'dhn 3/26/2020 11:13:36'!
 details
 
 	listPane updateList.
 	textPane model actualContents: model devReport! !
+
+!MonopHouse methodsFor: 'accessing' stamp: 'dhn 4/8/2020 21:37:35'!
+listPane
+	"Answer the value of listPane"
+
+	^ listPane! !
+
+!MonopHouse methodsFor: 'accessing' stamp: 'dhn 4/8/2020 21:37:35'!
+listPane: anObject
+	"Set the value of listPane"
+
+	listPane _ anObject! !
+
+!MonopHouse methodsFor: 'accessing' stamp: 'dhn 4/8/2020 21:37:35'!
+sellButton
+	"Answer the value of sellButton"
+
+	^ sellButton! !
+
+!MonopHouse methodsFor: 'accessing' stamp: 'dhn 4/8/2020 21:37:35'!
+sellButton: anObject
+	"Set the value of sellButton"
+
+	sellButton _ anObject! !
+
+!MonopHouse methodsFor: 'accessing' stamp: 'dhn 4/8/2020 21:37:35'!
+textPane
+	"Answer the value of textPane"
+
+	^ textPane! !
+
+!MonopHouse methodsFor: 'accessing' stamp: 'dhn 4/8/2020 21:37:35'!
+textPane: anObject
+	"Set the value of textPane"
+
+	textPane _ anObject! !
 
 !MonopHouse methodsFor: 'initialization' stamp: 'dhn 3/26/2020 17:21:51'!
 buildMorphicWindow
@@ -3066,6 +3211,12 @@ buildMorphicWindow
 	model when: #addButtons: send: #addButtons: to: self with: #array.
 	! !
 
+!MonopHouse methodsFor: 'initialization' stamp: 'dhn 4/8/2020 21:32:17'!
+initialize
+
+	super initialize.
+	acknowledged _ true! !
+
 !MonopHouse methodsFor: 'operating' stamp: 'dhn 3/26/2020 17:41:14'!
 addButtons: anArray
 	"Add buttons appropriately enabled to buy or sell houses"
@@ -3110,6 +3261,18 @@ sellHouse
 	prop houses: prop houses - 1.
 	model currentPlayer tally: prop houseCost / 2.
 	model triggerEvent: #itemChange! !
+
+!MonopHouse class methodsFor: 'instance creation' stamp: 'dhn 4/8/2020 21:31:43'!
+openOn: aModel
+	"Answer an instance of this class on aModel"
+	| win |
+
+	win _ self open: aModel.
+			
+	aModel when: #deleteOpenWindows send: #endIt to: win.
+	
+	^ win
+! !
 
 !Mortgage methodsFor: 'termination' stamp: 'dhn 3/27/2020 20:47:58'!
 closeBoxHit
@@ -3174,6 +3337,12 @@ buildMorphicWindow
 	model when: #morButtons: send: #morButtons: to: self with: #array.
 	! !
 
+!Mortgage methodsFor: 'initialization' stamp: 'dhn 4/8/2020 21:33:46'!
+initialize
+
+	super initialize.
+	acknowledged _ true! !
+
 !Mortgage methodsFor: 'operating' stamp: 'dhn 3/28/2020 17:03:51'!
 details
 	| x nam |
@@ -3230,6 +3399,99 @@ unmortgage
 	model currentPlayer tally: (prop price / 2) * 1.1 negated.
 	model triggerEvent: #itemChange! !
 
+!Mortgage methodsFor: 'accessing' stamp: 'dhn 4/8/2020 21:54:29'!
+acknowledged
+	"Answer the value of acknowledged"
+
+	^ acknowledged! !
+
+!Mortgage methodsFor: 'accessing' stamp: 'dhn 4/8/2020 21:54:29'!
+acknowledged: anObject
+	"Set the value of acknowledged"
+
+	acknowledged _ anObject! !
+
+!Mortgage methodsFor: 'accessing' stamp: 'dhn 4/8/2020 21:54:29'!
+buttonArea
+	"Answer the value of buttonArea"
+
+	^ buttonArea! !
+
+!Mortgage methodsFor: 'accessing' stamp: 'dhn 4/8/2020 21:54:29'!
+buttonArea: anObject
+	"Set the value of buttonArea"
+
+	buttonArea _ anObject! !
+
+!Mortgage methodsFor: 'accessing' stamp: 'dhn 4/8/2020 21:54:29'!
+listPane
+	"Answer the value of listPane"
+
+	^ listPane! !
+
+!Mortgage methodsFor: 'accessing' stamp: 'dhn 4/8/2020 21:54:29'!
+listPane: anObject
+	"Set the value of listPane"
+
+	listPane _ anObject! !
+
+!Mortgage methodsFor: 'accessing' stamp: 'dhn 4/8/2020 21:54:29'!
+morButton
+	"Answer the value of morButton"
+
+	^ morButton! !
+
+!Mortgage methodsFor: 'accessing' stamp: 'dhn 4/8/2020 21:54:29'!
+morButton: anObject
+	"Set the value of morButton"
+
+	morButton _ anObject! !
+
+!Mortgage methodsFor: 'accessing' stamp: 'dhn 4/8/2020 21:54:29'!
+textPane
+	"Answer the value of textPane"
+
+	^ textPane! !
+
+!Mortgage methodsFor: 'accessing' stamp: 'dhn 4/8/2020 21:54:29'!
+textPane: anObject
+	"Set the value of textPane"
+
+	textPane _ anObject! !
+
+!Mortgage methodsFor: 'accessing' stamp: 'dhn 4/8/2020 21:54:29'!
+unmButton
+	"Answer the value of unmButton"
+
+	^ unmButton! !
+
+!Mortgage methodsFor: 'accessing' stamp: 'dhn 4/8/2020 21:54:29'!
+unmButton: anObject
+	"Set the value of unmButton"
+
+	unmButton _ anObject! !
+
+!Mortgage class methodsFor: 'instance creation' stamp: 'dhn 4/8/2020 21:33:06'!
+openOn: aModel
+	"Answer an instance of this class on aModel"
+	| win |
+
+	win _ self open: aModel.
+			
+	aModel when: #deleteOpenWindows send: #endIt to: win.
+	
+	^ win
+! !
+
+!Notifier methodsFor: 'operating' stamp: 'dhn 4/9/2020 13:06:17'!
+complete
+	"Possibly enable End Turn"
+
+	acknowledged _ true.
+	model token moving
+		ifFalse: [model enable: 'x'].
+	buttonArea removeAllMorphs! !
+
 !Notifier methodsFor: 'operating' stamp: 'dhn 4/1/2020 14:09:22'!
 endGame
 	"Close everything after the winner is announced"
@@ -3238,15 +3500,15 @@ endGame
 	gam _ owner world submorphs detect: [:a | a class = Monopoly] ifNone: [].
 	gam closeBoxHit ! !
 
-!Notifier methodsFor: 'operating' stamp: 'dhn 4/8/2020 14:11:36'!
+!Notifier methodsFor: 'operating' stamp: 'dhn 4/9/2020 11:59:27'!
 finish
 	"Perform methods in response to the OK button"
 
 	self nextDo do: [:ea |
 		model perform: ea first with: ea second].
-	buttonArea removeAllMorphs! !
+	self complete! !
 
-!Notifier methodsFor: 'operating' stamp: 'dhn 4/8/2020 14:11:17'!
+!Notifier methodsFor: 'operating' stamp: 'dhn 4/9/2020 12:02:59'!
 finish2
 	"Perform methods in response to the 10% button"
 	| col amt |
@@ -3257,7 +3519,7 @@ finish2
 		model perform: ea first with: ea second].
 	textPanel model actualContents: 
 		textPanel model actualContents, ' You paid $', amt negated rounded printStringWithCommas.
-	buttonArea removeAllMorphs! !
+	self complete! !
 
 !Notifier methodsFor: 'initialization' stamp: 'dhn 3/16/2020 21:54:01'!
 buildMorphicWindow
@@ -3427,11 +3689,11 @@ endIt
 	
 	self delete! !
 
-!Notifier methodsFor: 'termination' stamp: 'dhn 3/14/2020 12:23:28'!
+!Notifier methodsFor: 'termination' stamp: 'dhn 4/8/2020 19:07:13'!
 endTurn
 	"Enable the End Turn button and close this window"
 	
-	model enableAll: {'End Turn'}.
+	model enable: 'x'.
 	self endIt ! !
 
 !Notifier class methodsFor: 'class initialization' stamp: 'dhn 3/23/2020 12:32:37'!
