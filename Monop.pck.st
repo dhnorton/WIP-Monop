@@ -1,6 +1,6 @@
-'From Cuis 5.0 [latest update: #4042] on 16 April 2020 at 3:06:34 pm'!
+'From Cuis 5.0 [latest update: #4042] on 16 April 2020 at 7:03:53 pm'!
 'Description Simulation of the board game "Monopoly".'!
-!provides: 'Monop' 1 194!
+!provides: 'Monop' 1 195!
 !requires: 'Game' 1 44 nil!
 SystemOrganization addCategory: #'Monop-View'!
 SystemOrganization addCategory: #'Monop-Model'!
@@ -2850,36 +2850,6 @@ acknowledged
 
 	^ acknowledged! !
 
-!BuyView methodsFor: 'accessing' stamp: 'dhn 4/8/2020 14:07:44'!
-auctionButton
-	"Answer the value of auctionButton"
-
-	^ auctionButton! !
-
-!BuyView methodsFor: 'accessing' stamp: 'dhn 4/8/2020 14:07:44'!
-auctionButton: anObject
-	"Set the value of auctionButton"
-
-	auctionButton _ anObject! !
-
-!BuyView methodsFor: 'accessing' stamp: 'dhn 4/8/2020 14:07:44'!
-buttonArea
-	"Answer the value of buttonArea"
-
-	^ buttonArea! !
-
-!BuyView methodsFor: 'accessing' stamp: 'dhn 4/8/2020 14:07:44'!
-buttonArea: anObject
-	"Set the value of buttonArea"
-
-	buttonArea _ anObject! !
-
-!BuyView methodsFor: 'accessing' stamp: 'dhn 4/8/2020 14:07:44'!
-buyButton
-	"Answer the value of buyButton"
-
-	^ buyButton! !
-
 !BuyView methodsFor: 'accessing' stamp: 'dhn 3/4/2020 20:00:03'!
 buyButton: aBool
 	"Change buy button state according to aBool"
@@ -2900,24 +2870,6 @@ heading
 	"Answer the value of heading"
 	
 	^ heading! !
-
-!BuyView methodsFor: 'accessing' stamp: 'dhn 4/8/2020 14:07:44'!
-heading: anObject
-	"Set the value of heading"
-
-	heading _ anObject! !
-
-!BuyView methodsFor: 'accessing' stamp: 'dhn 4/8/2020 14:07:44'!
-textPane
-	"Answer the value of textPane"
-
-	^ textPane! !
-
-!BuyView methodsFor: 'accessing' stamp: 'dhn 4/8/2020 14:07:44'!
-textPane: anObject
-	"Set the value of textPane"
-
-	textPane _ anObject! !
 
 !BuyView methodsFor: 'termination' stamp: 'dhn 3/4/2020 21:12:59'!
 closeBoxHit
