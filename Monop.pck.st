@@ -1,6 +1,6 @@
-'From Cuis 5.0 [latest update: #4042] on 16 April 2020 at 11:12:01 am'!
+'From Cuis 5.0 [latest update: #4042] on 16 April 2020 at 11:21:00 am'!
 'Description Simulation of the board game "Monopoly".'!
-!provides: 'Monop' 1 189!
+!provides: 'Monop' 1 190!
 !requires: 'Game' 1 44 nil!
 SystemOrganization addCategory: #'Monop-View'!
 SystemOrganization addCategory: #'Monop-Model'!
@@ -557,10 +557,10 @@ devItem
 
 	^ devItem ifNil: [devItem _ 0]! !
 
-!Estate methodsFor: 'development' stamp: 'dhn 4/9/2020 18:33:30'!
+!Estate methodsFor: 'development' stamp: 'dhn 4/16/2020 11:18:53'!
 devItem: anObject
 	"Set the value of devItem"
-	{'set #devItem'. anObject}print.
+
 	(devItem _ anObject) ifNotNil: [
 		self triggerEvent: #itemChange.
 		self changed: #devItem]! !
@@ -3207,10 +3207,10 @@ buildMorphicWindow
 	model when: #addButtons: send: #addButtons: to: self with: #array.
 	! !
 
-!MonopHouse methodsFor: 'operating' stamp: 'dhn 4/9/2020 18:30:17'!
+!MonopHouse methodsFor: 'operating' stamp: 'dhn 4/16/2020 11:19:24'!
 addButtons: anArray
 	"Add buttons appropriately enabled to buy or sell houses"
-	{'add buttond'}print.
+
 	buyButton _ GameButtonMorph label: 'Buy' action: #buyHouse state: anArray first model: self.
 	buyButton 
 		morphExtent: 70@30;
