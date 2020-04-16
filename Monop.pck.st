@@ -1,6 +1,6 @@
-'From Cuis 5.0 [latest update: #4042] on 16 April 2020 at 2:47:06 pm'!
+'From Cuis 5.0 [latest update: #4042] on 16 April 2020 at 3:06:34 pm'!
 'Description Simulation of the board game "Monopoly".'!
-!provides: 'Monop' 1 193!
+!provides: 'Monop' 1 194!
 !requires: 'Game' 1 44 nil!
 SystemOrganization addCategory: #'Monop-View'!
 SystemOrganization addCategory: #'Monop-Model'!
@@ -656,7 +656,7 @@ statsReport: anAsset
 auction: aProperty
 	"Sell aProperty at auction."! !
 
-!Estate methodsFor: 'operating' stamp: 'dhn 4/8/2020 19:13:40'!
+!Estate methodsFor: 'operating' stamp: 'dhn 4/16/2020 14:52:40'!
 broker
 	"Represent the property"
 	"If unowned, the 'owner' is the bank and the property will be sold or auctioned."
@@ -669,7 +669,7 @@ broker
 		ifNotNil: [
 			property owner ~= currentPlayer 
 				ifTrue: [self triggerEvent: #showRentDue]
-				ifFalse: [self enable: 'x']].
+				ifFalse: [self possiblyEnable]].
 	self token moving: false
 ! !
 
@@ -733,20 +733,6 @@ drawChest
 			self triggerEvent: #showChest: with: ches] 
 		ifFalse: [self triggerEvent: #showChest: with: ches]! !
 
-!Estate methodsFor: 'operating' stamp: 'dhn 4/8/2020 21:27:53'!
-enable: aButton
-	"Update histories and enable the 'End Turn' button if all are acknowledged"
-	| col subs |
-	
-	players do: [:ea | ea history addLast: ea netWorth].
-	self triggerEvent: #itemChange.
-	col _ OrderedCollection new.
-	subs _ self world submorphs.
-	1 to: (subs size - 2) do: [:a | 
-		(subs at: a) acknowledged = false
-			ifTrue: [col add: a]].
-	col ifEmpty: [self enableAll: {'End Turn'}]! !
-
 !Estate methodsFor: 'operating' stamp: 'dhn 3/29/2020 13:53:34'!
 endTurn
 	"End a player's turn"
@@ -795,10 +781,10 @@ fromEach: anAmount
 				currentPlayer tally: anAmount negated]].
 	self triggerEvent: #itemChange! !
 
-!Estate methodsFor: 'operating' stamp: 'dhn 4/8/2020 22:09:26'!
+!Estate methodsFor: 'operating' stamp: 'dhn 4/16/2020 14:52:31'!
 getOut: anObject
 
-	self enable: 'x'! !
+	self possiblyEnable! !
 
 !Estate methodsFor: 'operating' stamp: 'dhn 3/2/2020 15:36:49'!
 goToJail
@@ -834,7 +820,7 @@ incomeTax
 	currentPlayer debtor: 'Bank'.
 	self triggerEvent: #showIncomeTax! !
 
-!Estate methodsFor: 'operating' stamp: 'dhn 4/8/2020 19:03:12'!
+!Estate methodsFor: 'operating' stamp: 'dhn 4/16/2020 14:52:23'!
 justVisit
 	"Just visiting jail."
 
@@ -844,7 +830,7 @@ justVisit
 				inform: currentPlayer identity, ' will be here a long time.' 
 				title: 'Life Sentence'.
 			self disableAll: {'Move'}]."
-	self enable: 'x'! !
+	self possiblyEnable! !
 
 !Estate methodsFor: 'operating' stamp: 'dhn 4/8/2020 21:14:24'!
 level11: anArray
@@ -1032,11 +1018,11 @@ numbersReport
 			nextPutAll: 'Cash: $';
 			nextPutAll: currentPlayer cash truncated printStringWithCommas]! !
 
-!Estate methodsFor: 'operating' stamp: 'dhn 4/8/2020 19:03:46'!
+!Estate methodsFor: 'operating' stamp: 'dhn 4/16/2020 14:52:15'!
 parkFree
 	"Cool it."
 
-	self enable: 'x'! !
+	self possiblyEnable! !
 
 !Estate methodsFor: 'operating' stamp: 'dhn 5/16/2019 15:21:32'!
 positionBoardTo: anIndex 
@@ -1044,6 +1030,20 @@ positionBoardTo: anIndex
 	
 	self cellsAt: anIndex.
 	self triggerEvent: #showSeasons: with: anIndex! !
+
+!Estate methodsFor: 'operating' stamp: 'dhn 4/16/2020 14:50:37'!
+possiblyEnable
+	"Update histories and enable the 'End Turn' button if all are acknowledged"
+	| col subs |
+	
+	players do: [:ea | ea history addLast: ea netWorth].
+	self triggerEvent: #itemChange.
+	col _ OrderedCollection new.
+	subs _ self world submorphs.
+	1 to: (subs size - 2) do: [:a | 
+		(subs at: a) acknowledged = false
+			ifTrue: [col add: a]].
+	col ifEmpty: [self enableAll: {'End Turn'}]! !
 
 !Estate methodsFor: 'operating' stamp: 'dhn 3/4/2020 21:44:07'!
 propertyAuction
@@ -1194,7 +1194,7 @@ toEach: anAmount
 				currentPlayer tally: anAmount negated]].
 	self triggerEvent: #itemChange! !
 
-!Estate methodsFor: 'operating' stamp: 'dhn 4/8/2020 19:05:45'!
+!Estate methodsFor: 'operating' stamp: 'dhn 4/16/2020 14:52:07'!
 toOwner: anArray
 	"Transfer money from the current player to the property owner for rent"
 	| rent |
@@ -1205,7 +1205,7 @@ toOwner: anArray
 		tally: rent negated.
 	anArray first tally: rent.
 	self triggerEvent: #itemChange.
-	self enable: 'x'
+	self possiblyEnable
 ! !
 
 !Estate methodsFor: 'operating' stamp: 'dhn 3/18/2020 21:14:36'!
@@ -2655,7 +2655,7 @@ offer: anObject by: aName
 	(buyers findDeepSubmorphThat: [:mm | mm label = aName] ifAbsent: []) disableButton
 ! !
 
-!AuctionProperty methodsFor: 'operation' stamp: 'dhn 4/8/2020 15:05:25'!
+!AuctionProperty methodsFor: 'operation' stamp: 'dhn 4/16/2020 14:53:07'!
 propertySold
 	"Finalize the sale"
 	| prop |
@@ -2663,25 +2663,25 @@ propertySold
 	prop _ model spaces at: model currentPlayer position.
 	model hammerDown: currentBid for: prop by: currentBidder.
 	acknowledged _ true.
-	model enable: 'x'.
+	model possiblyEnable.
 	self delete
 ! !
 
-!AuctionProperty methodsFor: 'termination' stamp: 'dhn 4/8/2020 19:01:12'!
+!AuctionProperty methodsFor: 'termination' stamp: 'dhn 4/16/2020 14:53:38'!
 closeBoxHit
 
 	model 
 		propertyAuctionBid: nil;
-		enable: 'x'.
+		possiblyEnable.
 	super closeBoxHit! !
 
-!AuctionProperty methodsFor: 'termination' stamp: 'dhn 4/8/2020 19:01:55'!
+!AuctionProperty methodsFor: 'termination' stamp: 'dhn 4/16/2020 14:53:27'!
 endIt
 	
 	model 
 		propertyAuctionBid: nil;
 		"jobWinner: currentBidder bid: currentBid;"
-		enable: 'x'.
+		possiblyEnable.
 	self delete
 ! !
 
@@ -2753,17 +2753,17 @@ bidIncrement
 
 	! !
 
-!BuyView methodsFor: 'operating' stamp: 'dhn 4/8/2020 17:49:06'!
+!BuyView methodsFor: 'operating' stamp: 'dhn 4/16/2020 14:52:55'!
 auction
 
 	auctionButton disableButton.
 	buyButton disableButton.
 	model propertyAuction.
 	acknowledged _ true.
-	model enable: 'x'.
+	model possiblyEnable.
 ! !
 
-!BuyView methodsFor: 'operating' stamp: 'dhn 4/8/2020 15:04:09'!
+!BuyView methodsFor: 'operating' stamp: 'dhn 4/16/2020 14:52:48'!
 buy
 	"Buy the property, record the result"
 	
@@ -2771,7 +2771,7 @@ buy
 	auctionButton disableButton.
 	model propertyBuy.
 	acknowledged _ true.
-	model enable: 'x'.
+	model possiblyEnable.
 	self delete! !
 
 !BuyView methodsFor: 'operating' stamp: 'dhn 3/23/2020 16:31:17'!
@@ -3410,13 +3410,13 @@ openOn: aModel
 	^ win
 ! !
 
-!Notifier methodsFor: 'operating' stamp: 'dhn 4/9/2020 13:06:17'!
+!Notifier methodsFor: 'operating' stamp: 'dhn 4/16/2020 14:51:55'!
 complete
 	"Possibly enable End Turn"
 
 	acknowledged _ true.
 	model token moving
-		ifFalse: [model enable: 'x'].
+		ifFalse: [model possiblyEnable].
 	buttonArea removeAllMorphs! !
 
 !Notifier methodsFor: 'operating' stamp: 'dhn 4/1/2020 14:09:22'!
@@ -3610,11 +3610,11 @@ endIt
 	
 	self delete! !
 
-!Notifier methodsFor: 'termination' stamp: 'dhn 4/8/2020 19:07:13'!
+!Notifier methodsFor: 'termination' stamp: 'dhn 4/16/2020 14:51:26'!
 endTurn
 	"Enable the End Turn button and close this window"
 	
-	model enable: 'x'.
+	model possiblyEnable.
 	self endIt ! !
 
 !Notifier class methodsFor: 'class initialization' stamp: 'dhn 3/23/2020 12:32:37'!
