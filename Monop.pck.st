@@ -1,6 +1,6 @@
-'From Cuis 5.0 [latest update: #4042] on 9 April 2020 at 3:07:56 pm'!
+'From Cuis 5.0 [latest update: #4042] on 16 April 2020 at 11:12:01 am'!
 'Description Simulation of the board game "Monopoly".'!
-!provides: 'Monop' 1 186!
+!provides: 'Monop' 1 189!
 !requires: 'Game' 1 44 nil!
 SystemOrganization addCategory: #'Monop-View'!
 SystemOrganization addCategory: #'Monop-Model'!
@@ -557,10 +557,10 @@ devItem
 
 	^ devItem ifNil: [devItem _ 0]! !
 
-!Estate methodsFor: 'development' stamp: 'dhn 3/26/2020 11:20:45'!
+!Estate methodsFor: 'development' stamp: 'dhn 4/9/2020 18:33:30'!
 devItem: anObject
 	"Set the value of devItem"
-	
+	{'set #devItem'. anObject}print.
 	(devItem _ anObject) ifNotNil: [
 		self triggerEvent: #itemChange.
 		self changed: #devItem]! !
@@ -2280,7 +2280,7 @@ showGo
 	win buttonArea color: win textPanel color
 ! !
 
-!Monopoly methodsFor: 'windows' stamp: 'dhn 3/26/2020 14:03:55'!
+!Monopoly methodsFor: 'windows' stamp: 'dhn 4/16/2020 10:40:21'!
 showHouse
 	"Open a window for houses and hotels"
 	| pl win |
@@ -2294,7 +2294,7 @@ showHouse
 		setWindowColor: pl color;
 		morphPosition: self windowPosition;
 		morphExtent: 500 @ 260.
-	model disableAll: {'Develop'}! !
+	model disableAll: {'Develop'. 'Mortgage'}! !
 
 !Monopoly methodsFor: 'windows' stamp: 'dhn 4/8/2020 14:12:27'!
 showIncomeTax
@@ -2333,7 +2333,7 @@ showLuxuryTax
 	win buttonArea color: win textPanel color
 ! !
 
-!Monopoly methodsFor: 'windows' stamp: 'dhn 3/27/2020 20:31:56'!
+!Monopoly methodsFor: 'windows' stamp: 'dhn 4/16/2020 10:40:52'!
 showMortgage
 	"Open a window for changing the mortgage state of property"
 	| pl win |
@@ -2347,9 +2347,9 @@ showMortgage
 		setWindowColor: pl color;
 		morphPosition: self windowPosition;
 		morphExtent: 500 @ 260.
-	model disableAll: {'Mortgage'}! !
+	model disableAll: {'Develop'. 'Mortgage'}! !
 
-!Monopoly methodsFor: 'windows' stamp: 'dhn 3/22/2020 20:50:37'!
+!Monopoly methodsFor: 'windows' stamp: 'dhn 4/16/2020 10:59:31'!
 showPropertyAuction
 	"Open a window on a property at auction"
 	| win where |
@@ -2358,6 +2358,7 @@ showPropertyAuction
 	where _ model currentPlayer position.
 	win openInWorld: pasteup.
 	win
+		cleanTitleBar;
 		setWindowColor: (model seasonAt: where) color;
 		morphPosition: self windowPosition;
 		morphExtent: 570 @ 400;
@@ -2987,11 +2988,11 @@ endIt
 		enableAll: {'Holdings'}.
 	self delete! !
 
-!MonopHoldings methodsFor: 'accessing' stamp: 'dhn 4/8/2020 21:18:57'!
+!MonopHoldings methodsFor: 'accessing' stamp: 'dhn 4/15/2020 11:42:46'!
 acknowledged
 	"Answer the value of acknowledged"
 
-	^ acknowledged! !
+	^ acknowledged ifNil: [acknowledged _ true]! !
 
 !MonopHoldings methodsFor: 'accessing' stamp: 'dhn 4/8/2020 21:18:57'!
 acknowledged: anObject
@@ -3052,45 +3053,40 @@ buildMorphicWindow
 		addMorph: listPane layoutSpec: (LayoutSpec fixedWidth: 250);
 		addAdjusterAndMorph: textPane layoutSpec: (LayoutSpec useAll)! !
 
-!MonopHoldings methodsFor: 'initialization' stamp: 'dhn 4/8/2020 21:11:43'!
-initialize
-
-	super initialize.
-	acknowledged _ true! !
-
-!MonopHoldings class methodsFor: 'instance creation' stamp: 'dhn 4/8/2020 20:14:44'!
+!MonopHoldings class methodsFor: 'instance creation' stamp: 'dhn 4/15/2020 11:51:14'!
 openOn: aModel
 	"Answer an instance of this class on aModel"
 	| win |
 
 	win _ self open: aModel.
 			
+	aModel when: #itemChange send: #details to: win.
 	aModel when: #deleteOpenWindows send: #endIt to: win.
 	
 	^ win
 ! !
 
-!MonopHouse methodsFor: 'termination' stamp: 'dhn 3/26/2020 11:12:58'!
+!MonopHouse methodsFor: 'termination' stamp: 'dhn 4/16/2020 10:43:42'!
 closeBoxHit
 
 	model 
 		devItem: nil;
-		enableAll: {'Develop'}.
+		enableAll: {'Develop'. 'Mortgage'}.
 	super closeBoxHit! !
 
-!MonopHouse methodsFor: 'termination' stamp: 'dhn 3/26/2020 11:14:16'!
+!MonopHouse methodsFor: 'termination' stamp: 'dhn 4/16/2020 10:43:59'!
 endIt
 	
 	model 
 		devItem: nil;
-		enableAll: {'Develop'}.
+		enableAll: {'Develop'. 'Mortgage'}.
 	self delete! !
 
-!MonopHouse methodsFor: 'accessing' stamp: 'dhn 4/8/2020 21:37:35'!
+!MonopHouse methodsFor: 'accessing' stamp: 'dhn 4/15/2020 11:43:50'!
 acknowledged
 	"Answer the value of acknowledged"
 
-	^ acknowledged! !
+	^ acknowledged ifNil: [acknowledged _ true]! !
 
 !MonopHouse methodsFor: 'accessing' stamp: 'dhn 4/8/2020 21:37:35'!
 acknowledged: anObject
@@ -3211,16 +3207,10 @@ buildMorphicWindow
 	model when: #addButtons: send: #addButtons: to: self with: #array.
 	! !
 
-!MonopHouse methodsFor: 'initialization' stamp: 'dhn 4/8/2020 21:32:17'!
-initialize
-
-	super initialize.
-	acknowledged _ true! !
-
-!MonopHouse methodsFor: 'operating' stamp: 'dhn 3/26/2020 17:41:14'!
+!MonopHouse methodsFor: 'operating' stamp: 'dhn 4/9/2020 18:30:17'!
 addButtons: anArray
 	"Add buttons appropriately enabled to buy or sell houses"
-	
+	{'add buttond'}print.
 	buyButton _ GameButtonMorph label: 'Buy' action: #buyHouse state: anArray first model: self.
 	buyButton 
 		morphExtent: 70@30;
@@ -3262,32 +3252,33 @@ sellHouse
 	model currentPlayer tally: prop houseCost / 2.
 	model triggerEvent: #itemChange! !
 
-!MonopHouse class methodsFor: 'instance creation' stamp: 'dhn 4/8/2020 21:31:43'!
+!MonopHouse class methodsFor: 'instance creation' stamp: 'dhn 4/15/2020 11:51:00'!
 openOn: aModel
 	"Answer an instance of this class on aModel"
 	| win |
 
 	win _ self open: aModel.
 			
+	aModel when: #itemChange send: #details to: win.
 	aModel when: #deleteOpenWindows send: #endIt to: win.
 	
 	^ win
 ! !
 
-!Mortgage methodsFor: 'termination' stamp: 'dhn 3/27/2020 20:47:58'!
+!Mortgage methodsFor: 'termination' stamp: 'dhn 4/16/2020 10:44:20'!
 closeBoxHit
 
 	model 
 		morItem: nil;
-		enableAll: {'Mortgage'}.
+		enableAll: {'Develop'. 'Mortgage'}.
 	super closeBoxHit! !
 
-!Mortgage methodsFor: 'termination' stamp: 'dhn 3/27/2020 20:48:47'!
+!Mortgage methodsFor: 'termination' stamp: 'dhn 4/16/2020 10:44:33'!
 endIt
 	
 	model 
 		morItem: nil;
-		enableAll: {'Mortgage'}.
+		enableAll: {'Develop'. 'Mortgage'}.
 	self delete! !
 
 !Mortgage methodsFor: 'initialization' stamp: 'dhn 3/28/2020 12:20:51'!
@@ -3336,12 +3327,6 @@ buildMorphicWindow
 	model when: #delButtons send: #removeButtons to: self.
 	model when: #morButtons: send: #morButtons: to: self with: #array.
 	! !
-
-!Mortgage methodsFor: 'initialization' stamp: 'dhn 4/8/2020 21:33:46'!
-initialize
-
-	super initialize.
-	acknowledged _ true! !
 
 !Mortgage methodsFor: 'operating' stamp: 'dhn 3/28/2020 17:03:51'!
 details
@@ -3399,11 +3384,11 @@ unmortgage
 	model currentPlayer tally: (prop price / 2) * 1.1 negated.
 	model triggerEvent: #itemChange! !
 
-!Mortgage methodsFor: 'accessing' stamp: 'dhn 4/8/2020 21:54:29'!
+!Mortgage methodsFor: 'accessing' stamp: 'dhn 4/15/2020 11:44:20'!
 acknowledged
 	"Answer the value of acknowledged"
 
-	^ acknowledged! !
+	^ acknowledged ifNil: [acknowledged _ true]! !
 
 !Mortgage methodsFor: 'accessing' stamp: 'dhn 4/8/2020 21:54:29'!
 acknowledged: anObject
@@ -3471,13 +3456,14 @@ unmButton: anObject
 
 	unmButton _ anObject! !
 
-!Mortgage class methodsFor: 'instance creation' stamp: 'dhn 4/8/2020 21:33:06'!
+!Mortgage class methodsFor: 'instance creation' stamp: 'dhn 4/15/2020 11:48:51'!
 openOn: aModel
 	"Answer an instance of this class on aModel"
 	| win |
 
 	win _ self open: aModel.
 			
+	aModel when: #itemChange send: #details to: win.
 	aModel when: #deleteOpenWindows send: #endIt to: win.
 	
 	^ win
