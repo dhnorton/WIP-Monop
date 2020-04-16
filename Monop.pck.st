@@ -1,6 +1,6 @@
-'From Cuis 5.0 [latest update: #4042] on 16 April 2020 at 12:31:01 pm'!
+'From Cuis 5.0 [latest update: #4042] on 16 April 2020 at 2:20:10 pm'!
 'Description Simulation of the board game "Monopoly".'!
-!provides: 'Monop' 1 191!
+!provides: 'Monop' 1 192!
 !requires: 'Game' 1 44 nil!
 SystemOrganization addCategory: #'Monop-View'!
 SystemOrganization addCategory: #'Monop-Model'!
@@ -2720,12 +2720,6 @@ acknowledged
 
 	^ acknowledged! !
 
-!AuctionProperty methodsFor: 'accessing' stamp: 'dhn 4/8/2020 14:06:18'!
-acknowledged: anObject
-	"Set the value of acknowledged"
-
-	acknowledged _ anObject! !
-
 !AuctionProperty methodsFor: 'accessing' stamp: 'dhn 3/22/2020 15:12:14'!
 currentBump
 	"Answer the value of currentBump"
@@ -2886,12 +2880,6 @@ acknowledged
 	^ acknowledged! !
 
 !BuyView methodsFor: 'accessing' stamp: 'dhn 4/8/2020 14:07:44'!
-acknowledged: anObject
-	"Set the value of acknowledged"
-
-	acknowledged _ anObject! !
-
-!BuyView methodsFor: 'accessing' stamp: 'dhn 4/8/2020 14:07:44'!
 auctionButton
 	"Answer the value of auctionButton"
 
@@ -2994,12 +2982,6 @@ acknowledged
 
 	^ acknowledged ifNil: [acknowledged _ true]! !
 
-!MonopHoldings methodsFor: 'accessing' stamp: 'dhn 4/8/2020 21:18:57'!
-acknowledged: anObject
-	"Set the value of acknowledged"
-
-	acknowledged _ anObject! !
-
 !MonopHoldings methodsFor: 'accessing' stamp: 'dhn 3/1/2020 11:59:48'!
 details
 
@@ -3087,12 +3069,6 @@ acknowledged
 	"Answer the value of acknowledged"
 
 	^ acknowledged ifNil: [acknowledged _ true]! !
-
-!MonopHouse methodsFor: 'accessing' stamp: 'dhn 4/8/2020 21:37:35'!
-acknowledged: anObject
-	"Set the value of acknowledged"
-
-	acknowledged _ anObject! !
 
 !MonopHouse methodsFor: 'accessing' stamp: 'dhn 4/8/2020 21:37:35'!
 buttonArea
@@ -3391,12 +3367,6 @@ acknowledged
 	^ acknowledged ifNil: [acknowledged _ true]! !
 
 !Mortgage methodsFor: 'accessing' stamp: 'dhn 4/8/2020 21:54:29'!
-acknowledged: anObject
-	"Set the value of acknowledged"
-
-	acknowledged _ anObject! !
-
-!Mortgage methodsFor: 'accessing' stamp: 'dhn 4/8/2020 21:54:29'!
 buttonArea
 	"Answer the value of buttonArea"
 
@@ -3596,12 +3566,6 @@ acknowledged
 	"Answer the value of acknowledged"
 
 	^ acknowledged! !
-
-!Notifier methodsFor: 'accessing' stamp: 'dhn 4/8/2020 14:09:37'!
-acknowledged: anObject
-	"Set the value of acknowledged"
-
-	acknowledged _ anObject! !
 
 !Notifier methodsFor: 'accessing' stamp: 'dhn 3/13/2020 21:11:02'!
 buttonArea
