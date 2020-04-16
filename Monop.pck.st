@@ -1,6 +1,6 @@
-'From Cuis 5.0 [latest update: #4042] on 16 April 2020 at 2:20:10 pm'!
+'From Cuis 5.0 [latest update: #4042] on 16 April 2020 at 2:47:06 pm'!
 'Description Simulation of the board game "Monopoly".'!
-!provides: 'Monop' 1 192!
+!provides: 'Monop' 1 193!
 !requires: 'Game' 1 44 nil!
 SystemOrganization addCategory: #'Monop-View'!
 SystemOrganization addCategory: #'Monop-Model'!
@@ -1183,26 +1183,6 @@ tax: anAmount
 	currentPlayer tally: anAmount.
 	self triggerEvent: #itemChange! !
 
-!Estate methodsFor: 'operating' stamp: 'dhn 4/8/2020 19:05:06'!
-testReport
-	"Show space information in the Transcript."
-	| where what |
-	
-	where _ spaces at: currentPlayer position.
-	what _ where label.
-	{what. where rents. where price. where routine} print.
-	self enable: 'x'! !
-
-!Estate methodsFor: 'operating' stamp: 'dhn 4/8/2020 19:05:20'!
-testRoutine
-	"Debug."
-	| where what |
-	
-	where _ self class spaceAttributes at: currentPlayer position.
-	what _ where label.
-	Transcript show: what; newLine.
-	self enable: 'x'! !
-
 !Estate methodsFor: 'operating' stamp: 'dhn 3/18/2020 21:46:57'!
 toEach: anAmount
 	"Pay anAmount to each other player."
@@ -1242,15 +1222,6 @@ toUtility: unused
 	
 	token slideRight: currentPlayer position to: self nearestUtility
 ! !
-
-!Estate methodsFor: 'operating' stamp: 'dhn 2/28/2020 18:25:49'!
-utilityBill
-	"React as the owner."
-	"If unowned, the 'owner' is the bank and the utility will be sold or auctioned."
-	"If owned, a charge will be collected based on the roll and the number owned."
-
-	self broker.
-	self testReport! !
 
 !Estate methodsFor: 'operating' stamp: 'dhn 2/23/2020 21:14:06'!
 windowPosition: aPoint
