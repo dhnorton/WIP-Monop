@@ -1,6 +1,6 @@
-'From Cuis 5.0 [latest update: #4042] on 16 April 2020 at 11:21:00 am'!
+'From Cuis 5.0 [latest update: #4042] on 16 April 2020 at 12:31:01 pm'!
 'Description Simulation of the board game "Monopoly".'!
-!provides: 'Monop' 1 190!
+!provides: 'Monop' 1 191!
 !requires: 'Game' 1 44 nil!
 SystemOrganization addCategory: #'Monop-View'!
 SystemOrganization addCategory: #'Monop-Model'!
@@ -108,7 +108,7 @@ Notifier class
 
 !classDefinition: #TakeOver category: #'Monop-View'!
 GameView subclass: #TakeOver
-	instanceVariableNames: 'textPane listPane buttonArea unmButton intButton takeList'
+	instanceVariableNames: 'textPane listPane buttonArea unmButton intButton takeList acknowledged'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Monop-View'!
@@ -3753,6 +3753,12 @@ buildMorphicWindow
 	model when: #addButtons send: #addButtons to: self.
 	model when: #itemChange send: #details to: self.
 	! !
+
+!TakeOver methodsFor: 'operating' stamp: 'dhn 4/16/2020 12:28:46'!
+acknowledged
+	"Answer the value of acknowledged"
+
+	^ acknowledged ifNil: [acknowledged _ true]! !
 
 !TakeOver methodsFor: 'operating' stamp: 'dhn 3/29/2020 12:22:26'!
 addButtons
