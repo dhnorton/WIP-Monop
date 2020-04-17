@@ -1,6 +1,6 @@
-'From Cuis 5.0 [latest update: #4042] on 16 April 2020 at 7:03:53 pm'!
+'From Cuis 5.0 [latest update: #4042] on 16 April 2020 at 9:47:07 pm'!
 'Description Simulation of the board game "Monopoly".'!
-!provides: 'Monop' 1 195!
+!provides: 'Monop' 1 196!
 !requires: 'Game' 1 44 nil!
 SystemOrganization addCategory: #'Monop-View'!
 SystemOrganization addCategory: #'Monop-Model'!
@@ -3496,12 +3496,6 @@ buttonArea
 
 	^ buttonArea! !
 
-!Notifier methodsFor: 'accessing' stamp: 'dhn 4/8/2020 14:09:37'!
-buttonArea: anObject
-	"Set the value of buttonArea"
-
-	buttonArea _ anObject! !
-
 !Notifier methodsFor: 'accessing' stamp: 'dhn 3/16/2020 13:12:24'!
 nextDo
 	"Answer the value of nextDo"
@@ -3514,41 +3508,11 @@ nextDo: anObject
 
 	nextDo _ anObject! !
 
-!Notifier methodsFor: 'accessing' stamp: 'dhn 3/18/2020 12:34:55'!
-okButton
-	"Answer the value of okButton"
-
-	^ okButton! !
-
-!Notifier methodsFor: 'accessing' stamp: 'dhn 4/8/2020 14:09:37'!
-okButton: anObject
-	"Set the value of okButton"
-
-	okButton _ anObject! !
-
-!Notifier methodsFor: 'accessing' stamp: 'dhn 4/8/2020 14:09:37'!
-pctButton
-	"Answer the value of pctButton"
-
-	^ pctButton! !
-
-!Notifier methodsFor: 'accessing' stamp: 'dhn 4/8/2020 14:09:37'!
-pctButton: anObject
-	"Set the value of pctButton"
-
-	pctButton _ anObject! !
-
 !Notifier methodsFor: 'accessing' stamp: 'dhn 3/16/2020 21:44:26'!
 textPanel
 	"Answer the value of textPanel"
 
 	^ textPanel! !
-
-!Notifier methodsFor: 'accessing' stamp: 'dhn 4/8/2020 14:09:37'!
-textPanel: anObject
-	"Set the value of textPanel"
-
-	textPanel _ anObject! !
 
 !Notifier methodsFor: 'termination' stamp: 'dhn 3/14/2020 12:19:29'!
 closeBoxHit
