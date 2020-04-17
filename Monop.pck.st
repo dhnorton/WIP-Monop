@@ -1,6 +1,6 @@
-'From Cuis 5.0 [latest update: #4042] on 16 April 2020 at 10:56:32 pm'!
+'From Cuis 5.0 [latest update: #4042] on 16 April 2020 at 10:58:02 pm'!
 'Description Simulation of the board game "Monopoly".'!
-!provides: 'Monop' 1 198!
+!provides: 'Monop' 1 199!
 !requires: 'Game' 1 44 nil!
 SystemOrganization addCategory: #'Monop-View'!
 SystemOrganization addCategory: #'Monop-Model'!
@@ -3242,13 +3242,14 @@ openOn: aModel
 	^ win
 ! !
 
-!Notifier methodsFor: 'operating' stamp: 'dhn 4/16/2020 14:51:55'!
+!Notifier methodsFor: 'operating' stamp: 'dhn 4/16/2020 22:54:38'!
 complete
 	"Possibly enable End Turn"
 
 	acknowledged _ true.
-	model token moving
-		ifFalse: [model possiblyEnable].
+	model ifNotNil: [
+		model token moving
+			ifFalse: [model possiblyEnable]].
 	buttonArea removeAllMorphs! !
 
 !Notifier methodsFor: 'operating' stamp: 'dhn 4/1/2020 14:09:22'!
