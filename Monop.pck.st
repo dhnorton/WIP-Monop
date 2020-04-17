@@ -1,6 +1,6 @@
-'From Cuis 5.0 [latest update: #4042] on 16 April 2020 at 9:52:08 pm'!
+'From Cuis 5.0 [latest update: #4042] on 16 April 2020 at 10:56:32 pm'!
 'Description Simulation of the board game "Monopoly".'!
-!provides: 'Monop' 1 197!
+!provides: 'Monop' 1 198!
 !requires: 'Game' 1 44 nil!
 SystemOrganization addCategory: #'Monop-View'!
 SystemOrganization addCategory: #'Monop-Model'!
@@ -2993,71 +2993,11 @@ acknowledged
 
 	^ acknowledged ifNil: [acknowledged _ true]! !
 
-!MonopHouse methodsFor: 'accessing' stamp: 'dhn 4/8/2020 21:37:35'!
-buttonArea
-	"Answer the value of buttonArea"
-
-	^ buttonArea! !
-
-!MonopHouse methodsFor: 'accessing' stamp: 'dhn 4/8/2020 21:37:35'!
-buttonArea: anObject
-	"Set the value of buttonArea"
-
-	buttonArea _ anObject! !
-
-!MonopHouse methodsFor: 'accessing' stamp: 'dhn 4/8/2020 21:37:35'!
-buyButton
-	"Answer the value of buyButton"
-
-	^ buyButton! !
-
-!MonopHouse methodsFor: 'accessing' stamp: 'dhn 4/8/2020 21:37:35'!
-buyButton: anObject
-	"Set the value of buyButton"
-
-	buyButton _ anObject! !
-
 !MonopHouse methodsFor: 'accessing' stamp: 'dhn 3/26/2020 11:13:36'!
 details
 
 	listPane updateList.
 	textPane model actualContents: model devReport! !
-
-!MonopHouse methodsFor: 'accessing' stamp: 'dhn 4/8/2020 21:37:35'!
-listPane
-	"Answer the value of listPane"
-
-	^ listPane! !
-
-!MonopHouse methodsFor: 'accessing' stamp: 'dhn 4/8/2020 21:37:35'!
-listPane: anObject
-	"Set the value of listPane"
-
-	listPane _ anObject! !
-
-!MonopHouse methodsFor: 'accessing' stamp: 'dhn 4/8/2020 21:37:35'!
-sellButton
-	"Answer the value of sellButton"
-
-	^ sellButton! !
-
-!MonopHouse methodsFor: 'accessing' stamp: 'dhn 4/8/2020 21:37:35'!
-sellButton: anObject
-	"Set the value of sellButton"
-
-	sellButton _ anObject! !
-
-!MonopHouse methodsFor: 'accessing' stamp: 'dhn 4/8/2020 21:37:35'!
-textPane
-	"Answer the value of textPane"
-
-	^ textPane! !
-
-!MonopHouse methodsFor: 'accessing' stamp: 'dhn 4/8/2020 21:37:35'!
-textPane: anObject
-	"Set the value of textPane"
-
-	textPane _ anObject! !
 
 !MonopHouse methodsFor: 'initialization' stamp: 'dhn 3/26/2020 17:21:51'!
 buildMorphicWindow
