@@ -1,6 +1,6 @@
-'From Cuis 5.0 [latest update: #4042] on 16 April 2020 at 9:47:07 pm'!
+'From Cuis 5.0 [latest update: #4042] on 16 April 2020 at 9:52:08 pm'!
 'Description Simulation of the board game "Monopoly".'!
-!provides: 'Monop' 1 196!
+!provides: 'Monop' 1 197!
 !requires: 'Game' 1 44 nil!
 SystemOrganization addCategory: #'Monop-View'!
 SystemOrganization addCategory: #'Monop-Model'!
@@ -3288,66 +3288,6 @@ acknowledged
 	"Answer the value of acknowledged"
 
 	^ acknowledged ifNil: [acknowledged _ true]! !
-
-!Mortgage methodsFor: 'accessing' stamp: 'dhn 4/8/2020 21:54:29'!
-buttonArea
-	"Answer the value of buttonArea"
-
-	^ buttonArea! !
-
-!Mortgage methodsFor: 'accessing' stamp: 'dhn 4/8/2020 21:54:29'!
-buttonArea: anObject
-	"Set the value of buttonArea"
-
-	buttonArea _ anObject! !
-
-!Mortgage methodsFor: 'accessing' stamp: 'dhn 4/8/2020 21:54:29'!
-listPane
-	"Answer the value of listPane"
-
-	^ listPane! !
-
-!Mortgage methodsFor: 'accessing' stamp: 'dhn 4/8/2020 21:54:29'!
-listPane: anObject
-	"Set the value of listPane"
-
-	listPane _ anObject! !
-
-!Mortgage methodsFor: 'accessing' stamp: 'dhn 4/8/2020 21:54:29'!
-morButton
-	"Answer the value of morButton"
-
-	^ morButton! !
-
-!Mortgage methodsFor: 'accessing' stamp: 'dhn 4/8/2020 21:54:29'!
-morButton: anObject
-	"Set the value of morButton"
-
-	morButton _ anObject! !
-
-!Mortgage methodsFor: 'accessing' stamp: 'dhn 4/8/2020 21:54:29'!
-textPane
-	"Answer the value of textPane"
-
-	^ textPane! !
-
-!Mortgage methodsFor: 'accessing' stamp: 'dhn 4/8/2020 21:54:29'!
-textPane: anObject
-	"Set the value of textPane"
-
-	textPane _ anObject! !
-
-!Mortgage methodsFor: 'accessing' stamp: 'dhn 4/8/2020 21:54:29'!
-unmButton
-	"Answer the value of unmButton"
-
-	^ unmButton! !
-
-!Mortgage methodsFor: 'accessing' stamp: 'dhn 4/8/2020 21:54:29'!
-unmButton: anObject
-	"Set the value of unmButton"
-
-	unmButton _ anObject! !
 
 !Mortgage class methodsFor: 'instance creation' stamp: 'dhn 4/15/2020 11:48:51'!
 openOn: aModel
