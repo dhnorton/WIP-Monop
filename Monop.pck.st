@@ -1,6 +1,6 @@
-'From Cuis 5.0 [latest update: #4042] on 16 April 2020 at 10:58:02 pm'!
+'From Cuis 5.0 [latest update: #4042] on 17 April 2020 at 11:24:56 am'!
 'Description Simulation of the board game "Monopoly".'!
-!provides: 'Monop' 1 199!
+!provides: 'Monop' 1 200!
 !requires: 'Game' 1 44 nil!
 SystemOrganization addCategory: #'Monop-View'!
 SystemOrganization addCategory: #'Monop-Model'!
@@ -2910,30 +2910,6 @@ details
 
 	listPane updateList.
 	textPane model actualContents: model statsReport 	"note that the textPane model differs from the model for this view"! !
-
-!MonopHoldings methodsFor: 'accessing' stamp: 'dhn 4/8/2020 21:18:57'!
-listPane
-	"Answer the value of listPane"
-
-	^ listPane! !
-
-!MonopHoldings methodsFor: 'accessing' stamp: 'dhn 4/8/2020 21:18:57'!
-listPane: anObject
-	"Set the value of listPane"
-
-	listPane _ anObject! !
-
-!MonopHoldings methodsFor: 'accessing' stamp: 'dhn 4/8/2020 21:18:57'!
-textPane
-	"Answer the value of textPane"
-
-	^ textPane! !
-
-!MonopHoldings methodsFor: 'accessing' stamp: 'dhn 4/8/2020 21:18:57'!
-textPane: anObject
-	"Set the value of textPane"
-
-	textPane _ anObject! !
 
 !MonopHoldings methodsFor: 'initialization' stamp: 'dhn 3/1/2020 15:48:13'!
 buildMorphicWindow
