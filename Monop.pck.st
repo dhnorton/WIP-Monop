@@ -1,6 +1,6 @@
-'From Cuis 5.0 [latest update: #4042] on 17 April 2020 at 10:21:27 pm'!
+'From Cuis 5.0 [latest update: #4042] on 18 April 2020 at 11:49:54 am'!
 'Description Simulation of the board game "Monopoly".'!
-!provides: 'Monop' 1 201!
+!provides: 'Monop' 1 202!
 !requires: 'Game' 1 44 nil!
 SystemOrganization addCategory: #'Monop-View'!
 SystemOrganization addCategory: #'Monop-Model'!
@@ -3090,7 +3090,7 @@ addButtons: anArray
 		addMorph: sellButton
 ! !
 
-!MonopHouse methodsFor: 'operating' stamp: 'dhn 4/17/2020 20:24:28'!
+!MonopHouse methodsFor: 'operating' stamp: 'dhn 4/18/2020 10:35:34'!
 buyHouse
 	"Buy a house"
 	| nam prop |
@@ -3100,6 +3100,7 @@ buyHouse
 	prop houses: prop houses + 1.
 	model devAt: nam.
 	model currentPlayer tally: prop houseCost negated.
+	model positionBoardTo: model currentPlayer oldPosition.  "update seasons"
 	model triggerEvent: #itemChange! !
 
 !MonopHouse methodsFor: 'operating' stamp: 'dhn 3/26/2020 17:17:29'!
@@ -3107,7 +3108,7 @@ removeButtons
 
 	buttonArea removeAllMorphs ! !
 
-!MonopHouse methodsFor: 'operating' stamp: 'dhn 4/17/2020 20:55:59'!
+!MonopHouse methodsFor: 'operating' stamp: 'dhn 4/18/2020 10:35:58'!
 sellHouse
 	"Sell a house"
 	| nam prop |
@@ -3117,6 +3118,7 @@ sellHouse
 	prop houses: prop houses - 1.
 	model devAt: nam.
 	model currentPlayer tally: prop houseCost / 2.
+	model positionBoardTo: model currentPlayer oldPosition.  "update seasons"
 	model triggerEvent: #itemChange! !
 
 !MonopHouse class methodsFor: 'instance creation' stamp: 'dhn 4/15/2020 11:51:00'!
