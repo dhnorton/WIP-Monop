@@ -1,6 +1,6 @@
-'From Cuis 5.0 [latest update: #4042] on 17 April 2020 at 11:24:56 am'!
+'From Cuis 5.0 [latest update: #4042] on 17 April 2020 at 10:21:27 pm'!
 'Description Simulation of the board game "Monopoly".'!
-!provides: 'Monop' 1 200!
+!provides: 'Monop' 1 201!
 !requires: 'Game' 1 44 nil!
 SystemOrganization addCategory: #'Monop-View'!
 SystemOrganization addCategory: #'Monop-Model'!
@@ -8,7 +8,7 @@ SystemOrganization addCategory: #'Monop-Model'!
 
 !classDefinition: #Estate category: #'Monop-Model'!
 Game subclass: #Estate
-	instanceVariableNames: 'demo hops windowCount chances chests moveButton statsItem propertyAuctionBid note devItem morItem takeItem'
+	instanceVariableNames: 'demo hops windowCount chances chests moveButton statsItem propertyAuctionBid note devItem morItem takeItem seasons'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Monop-Model'!
@@ -375,7 +375,7 @@ initialButtonState
 	self enableAll: {'Move'. 'History'. 'Stats'}.
 	self disableAll: {'End Turn'. 'Purchase'. 'Auction'}! !
 
-!Estate methodsFor: 'initialization' stamp: 'dhn 4/2/2020 16:22:19'!
+!Estate methodsFor: 'initialization' stamp: 'dhn 4/17/2020 19:36:13'!
 initialize
 	"Set up self as the board model."
 	| pos |
@@ -384,6 +384,7 @@ initialize
 	cells _ OrderedCollection new.
 	hops _ OrderedCollection new.
 	spaces _ self class spaceAttributes.
+	seasons _ self class season.
 	pos _ 0.
 	spaces do: [:ea | 
 		ea boardPosition: (pos _ pos + 1).
@@ -550,6 +551,23 @@ morReport:  anAsset
 		ifFalse: [
 			self triggerEvent: #delButtons.
 			^ '']! !
+
+!Estate methodsFor: 'development' stamp: 'dhn 4/17/2020 21:17:42'!
+devAt: aTitle
+	"Describe the devlopment at the lot titled aTitle"
+	| ndx dev blurb |
+	
+	ndx _ spaces findFirst: [:a | a title = aTitle].
+	dev _ (spaces at: ndx) houses.
+	blurb _ ((dev  < 5)
+		ifTrue: [
+			(dev > 0)
+				ifTrue: [
+					dev asString, ' House', ((dev > 1) ifTrue: ['s'] ifFalse: [''])] 
+				ifFalse: ['']]
+		ifFalse: ['Hotel']).
+	(seasons at: ndx) desc: blurb
+	! !
 
 !Estate methodsFor: 'development' stamp: 'dhn 3/26/2020 11:19:42'!
 devItem
@@ -1024,12 +1042,24 @@ parkFree
 
 	self possiblyEnable! !
 
-!Estate methodsFor: 'operating' stamp: 'dhn 5/16/2019 15:21:32'!
-positionBoardTo: anIndex 
-	"Change the location on the board"
+!Estate methodsFor: 'operating' stamp: 'dhn 4/17/2020 18:35:04'!
+parseSeasonsAt: anIndex 
+	"Answer associations of point->season, where point defines the range of cells for the season"
+	| col max start sea |
 	
-	self cellsAt: anIndex.
-	self triggerEvent: #showSeasons: with: anIndex! !
+	col := OrderedCollection new.
+	max _ spaces size.
+	sea _ self seasonAt: anIndex.
+	start _ 0.
+	0 to: cellCount - 1 do: [:n | 	| next |
+		next _ self seasonAt: (self wrapIndex: anIndex + n around: max).
+		sea range = next range
+			ifFalse: [
+				col addLast: start + 1 @ n -> sea.
+				start _ n.
+				sea _ next]].
+	col addLast: start + 1 @ cellCount -> sea.
+	^ col! !
 
 !Estate methodsFor: 'operating' stamp: 'dhn 4/16/2020 14:50:37'!
 possiblyEnable
@@ -1121,22 +1151,24 @@ sayChanceChest: aString
 		inform: aString 
 		title: 'Chance and Community Chest'! !
 
-!Estate methodsFor: 'operating' stamp: 'dhn 5/16/2019 11:59:40'!
+!Estate methodsFor: 'operating' stamp: 'dhn 4/17/2020 19:33:31'!
 seasonAt: aPosition
 	"Answer the season at aPosition"
+	| pos |
+	
+	pos _ (1 to: spaces size) atWrap: aPosition.
+	^ seasons detect: [:a | (a range x <= pos) and: [a range y >= pos]]! !
 
-	^ self class season at: aPosition! !
-
-!Estate methodsFor: 'operating' stamp: 'dhn 5/16/2019 15:13:22'!
+!Estate methodsFor: 'operating' stamp: 'dhn 4/17/2020 20:06:01'!
 seasonsFrom: anIndex
 	"Answer the subset of seasons to be displayed, starting at anIndex."
 	| ndx k col |
 	
-	ndx _ (1 to: self class season size).
+	ndx _ (1 to: seasons size).
 	k _ ((ndx atWrap: anIndex) to: ndx last), (ndx first to: anIndex - 1).
 	col _ OrderedCollection new.
 	(k copyFrom: 1 to: self class cellsForGame) do: [ :n |
-		col addLast: (self class season at: n)].	
+		col addLast: (seasons at: n)].	
 	^ col! !
 
 !Estate methodsFor: 'operating' stamp: 'dhn 3/29/2020 13:50:46'!
@@ -1374,51 +1406,51 @@ chestCards
 		add: #(#movePlayer: #ahead 1 'Advance to Go.');
 		yourself! !
 
-!Estate class methodsFor: 'instance creation' stamp: 'dhn 3/12/2020 17:46:34'!
+!Estate class methodsFor: 'instance creation' stamp: 'dhn 4/17/2020 14:10:29'!
 season
 	"Answer the color at the top of each space in Monopoly."
 	
 	^ OrderedCollection new
-		add: (Season new range: 01; color: (Color transparent));
-		add: (Season new range: 02; color: (Color indexedColors at: 107); textColor: true);
-		add: (Season new range: 03; color: (Color transparent));
-		add: (Season new range: 04; color: (Color indexedColors at: 107); textColor: true);
-		add: (Season new range: 05; color: (Color transparent));
-		add: (Season new range: 06; color: (Color white));
-		add: (Season new range: 07; color: (Color lightBlue));
-		add: (Season new range: 08; color: (Color transparent));
-		add: (Season new range: 09; color: (Color lightBlue));
-		add: (Season new range: 10; color: (Color lightBlue));
-		add: (Season new range: 11; color: (Color transparent));
-		add: (Season new range: 12; color: (Color indexedColors at: 180); textColor: true);
-		add: (Season new range: 13; color: (Color white));
-		add: (Season new range: 14; color: (Color indexedColors at: 180); textColor: true);
-		add: (Season new range: 15; color: (Color indexedColors at: 180); textColor: true);
-		add: (Season new range: 16; color: (Color white));
-		add: (Season new range: 17; color: (Color indexedColors at: 193));
-		add: (Season new range: 18; color: (Color transparent));
-		add: (Season new range: 19; color: (Color indexedColors at: 193));
-		add: (Season new range: 20; color: (Color indexedColors at: 193));
-		add: (Season new range: 21; color: (Color transparent));
-		add: (Season new range: 22; color: (Color indexedColors at: 5));
-		add: (Season new range: 23; color: (Color transparent));
-		add: (Season new range: 24; color: (Color indexedColors at: 5));
-		add: (Season new range: 25; color: (Color indexedColors at: 5));
-		add: (Season new range: 26; color: (Color white));
-		add: (Season new range: 27; color: (Color indexedColors at: 226));
-		add: (Season new range: 28; color: (Color indexedColors at: 226));
-		add: (Season new range: 29; color: (Color white));
-		add: (Season new range: 30; color: (Color indexedColors at: 226));
-		add: (Season new range: 31; color: (Color transparent));
-		add: (Season new range: 32; color: (Color indexedColors at: 45));
-		add: (Season new range: 33; color: (Color indexedColors at: 45));
-		add: (Season new range: 34; color: (Color transparent));
-		add: (Season new range: 35; color: (Color indexedColors at: 45));
-		add: (Season new range: 36; color: (Color white));
-		add: (Season new range: 37; color: (Color transparent));
-		add: (Season new range: 38; color: (Color indexedColors at: 7); textColor: true);
-		add: (Season new range: 39; color: (Color transparent));
-		add: (Season new range: 40; color: (Color indexedColors at: 7); textColor: true);
+		add: (Season new range: 1@1; color: (Color transparent));
+		add: (Season new range: 2@2; color: (Color indexedColors at: 107); textColor: true);
+		add: (Season new range: 3@3; color: (Color transparent));
+		add: (Season new range: 4@4; color: (Color indexedColors at: 107); textColor: true);
+		add: (Season new range: 5@5; color: (Color transparent));
+		add: (Season new range: 6@6; color: (Color white));
+		add: (Season new range: 7@7; color: (Color lightBlue));
+		add: (Season new range: 8@8; color: (Color transparent));
+		add: (Season new range: 9@9; color: (Color lightBlue));
+		add: (Season new range: 10@10; color: (Color lightBlue));
+		add: (Season new range: 11@11; color: (Color transparent));
+		add: (Season new range: 12@12; color: (Color indexedColors at: 180); textColor: true);
+		add: (Season new range: 13@13; color: (Color white));
+		add: (Season new range: 14@14; color: (Color indexedColors at: 180); textColor: true);
+		add: (Season new range: 15@15; color: (Color indexedColors at: 180); textColor: true);
+		add: (Season new range: 16@16; color: (Color white));
+		add: (Season new range: 17@17; color: (Color indexedColors at: 193));
+		add: (Season new range: 18@18; color: (Color transparent));
+		add: (Season new range: 19@19; color: (Color indexedColors at: 193));
+		add: (Season new range: 20@20; color: (Color indexedColors at: 193));
+		add: (Season new range: 21@21; color: (Color transparent));
+		add: (Season new range: 22@22; color: (Color indexedColors at: 5));
+		add: (Season new range: 23@23; color: (Color transparent));
+		add: (Season new range: 24@24; color: (Color indexedColors at: 5));
+		add: (Season new range: 25@25; color: (Color indexedColors at: 5));
+		add: (Season new range: 26@26; color: (Color white));
+		add: (Season new range: 27@27; color: (Color indexedColors at: 226));
+		add: (Season new range: 28@28; color: (Color indexedColors at: 226));
+		add: (Season new range: 29@29; color: (Color white));
+		add: (Season new range: 30@30; color: (Color indexedColors at: 226));
+		add: (Season new range: 31@31; color: (Color transparent));
+		add: (Season new range: 32@32; color: (Color indexedColors at: 45));
+		add: (Season new range: 33@33; color: (Color indexedColors at: 45));
+		add: (Season new range: 34@34; color: (Color transparent));
+		add: (Season new range: 35@35; color: (Color indexedColors at: 45));
+		add: (Season new range: 36@36; color: (Color white));
+		add: (Season new range: 37@37; color: (Color transparent));
+		add: (Season new range: 38@38; color: (Color indexedColors at: 7); textColor: true);
+		add: (Season new range: 39@39; color: (Color transparent));
+		add: (Season new range: 40@40; color: (Color indexedColors at: 7); textColor: true);
 		yourself
 		! !
 
@@ -2119,15 +2151,33 @@ setupToken: aPlayer
 	pasteup addMorph: model token.
 	^ model token! !
 
-!Monopoly methodsFor: 'initialization' stamp: 'dhn 5/16/2019 13:32:18'!
-showSeasons: anIndex 
-	"Display the seasons starting at anIndex"
-	| ndx seas |
-	
-	ndx _ (1 to: model class season size) atWrap: anIndex.
-	seas _ (model seasonsFrom: ndx) reversed.
-	1 to: seasonsArea submorphs size do: [ :n |
-		(seasonsArea submorphs at: n) color: (seas at: n) color]! !
+!Monopoly methodsFor: 'initialization' stamp: 'dhn 4/17/2020 18:35:22'!
+showSeasons: associations 
+	"Display the seasons contained in associations"
+	| width set bm txt |
+			
+	seasonsArea removeAllMorphs.
+	width _ layoutMorph morphWidth / self class cellsForGame.
+	set _ OrderedCollection new.
+	associations do: [:k | 	| first last sea |
+			first _ k key x - 1.
+			last _ k key y.
+			bm _ LayoutMorph newRow
+				padding: #center;
+				name: #season.
+			seasonsArea addMorph: bm
+				layoutSpec: (LayoutSpec proportionalWidth: width * (last - first) proportionalHeight: 1.0).
+			sea _ k value.
+			bm color: sea color.
+			txt _ StringMorph new
+				emphasis: 1;  "emphasis: bold=1"
+				font: (AbstractFont familyName: 'DejaVu' pointSize: 18).
+			bm addMorph: txt..
+			txt color: (sea textColor
+				ifTrue: [Color white]
+				ifFalse: [Color black]).
+			txt contents: sea desc].
+	^ set! !
 
 !Monopoly methodsFor: 'initialization' stamp: 'dhn 3/25/2020 11:08:00'!
 startButtonSet
@@ -2459,7 +2509,7 @@ includeInNewMorphMenu
 	"Not to be instantiated from the menu"
 	^ false! !
 
-!Monopoly class methodsFor: 'instance creation' stamp: 'dhn 2/22/2020 16:05:55'!
+!Monopoly class methodsFor: 'instance creation' stamp: 'dhn 4/17/2020 18:01:03'!
 start
 	"Start the Monopoly game"
 	| win world |
@@ -2486,7 +2536,7 @@ start
 		addMorph: win makeCellsArea.
 	win model positionBoardTo: 1.
 	win startButtonSet.
-	win showSeasons: 1.
+	win showSeasons: (win model parseSeasonsAt: 1).
 	
 	"Now do open it"
 	world _ Processor activeProcess animatedUI.
@@ -3040,7 +3090,7 @@ addButtons: anArray
 		addMorph: sellButton
 ! !
 
-!MonopHouse methodsFor: 'operating' stamp: 'dhn 3/26/2020 18:13:53'!
+!MonopHouse methodsFor: 'operating' stamp: 'dhn 4/17/2020 20:24:28'!
 buyHouse
 	"Buy a house"
 	| nam prop |
@@ -3048,6 +3098,7 @@ buyHouse
 	nam _ model devList at: model devItem.
 	prop _ model currentPlayer assets detect: [:a | a title = nam] ifNone: [].
 	prop houses: prop houses + 1.
+	model devAt: nam.
 	model currentPlayer tally: prop houseCost negated.
 	model triggerEvent: #itemChange! !
 
@@ -3056,7 +3107,7 @@ removeButtons
 
 	buttonArea removeAllMorphs ! !
 
-!MonopHouse methodsFor: 'operating' stamp: 'dhn 3/26/2020 18:15:54'!
+!MonopHouse methodsFor: 'operating' stamp: 'dhn 4/17/2020 20:55:59'!
 sellHouse
 	"Sell a house"
 	| nam prop |
@@ -3064,6 +3115,7 @@ sellHouse
 	nam _ model devList at: model devItem.
 	prop _ model currentPlayer assets detect: [:a | a title = nam] ifNone: [].
 	prop houses: prop houses - 1.
+	model devAt: nam.
 	model currentPlayer tally: prop houseCost / 2.
 	model triggerEvent: #itemChange! !
 
