@@ -1,6 +1,6 @@
-'From Cuis 5.0 [latest update: #4042] on 18 April 2020 at 11:49:54 am'!
+'From Cuis 5.0 [latest update: #4042] on 18 April 2020 at 4:06:37 pm'!
 'Description Simulation of the board game "Monopoly".'!
-!provides: 'Monop' 1 202!
+!provides: 'Monop' 1 203!
 !requires: 'Game' 1 44 nil!
 SystemOrganization addCategory: #'Monop-View'!
 SystemOrganization addCategory: #'Monop-Model'!
@@ -268,7 +268,7 @@ Luxury class
 
 !classDefinition: #Developer category: #'Monop-Model'!
 Gamer subclass: #Developer
-	instanceVariableNames: 'cards doubles jail goAgain doubledString debtor'
+	instanceVariableNames: 'cards doubles jail goAgain doubledString debtor moved'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Monop-Model'!
@@ -700,10 +700,11 @@ declareBroke: aString
 and mortgage until cash is no longer negative.'
 		title: 'Out of Cash'! !
 
-!Estate methodsFor: 'operating' stamp: 'dhn 4/7/2020 16:28:15'!
+!Estate methodsFor: 'operating' stamp: 'dhn 4/18/2020 14:50:07'!
 doMove
 	"Move the player, account for doubles"
 	
+	currentPlayer moved: true.
 	hops first = hops second
 		ifTrue: [currentPlayer doubles add: hops asArray] 
 		ifFalse: [currentPlayer doubles: OrderedCollection new].
@@ -995,12 +996,13 @@ nearestUtility
 	
 	^ self nearest: self class positionUtility to: currentPlayer position! !
 
-!Estate methodsFor: 'operating' stamp: 'dhn 4/9/2020 14:05:36'!
+!Estate methodsFor: 'operating' stamp: 'dhn 4/18/2020 14:46:51'!
 nextPlayer
 	"Begin the next player's turn"
 	| x |
 	
 	currentPlayer _ (players atWrap: (playerIndex _ playerIndex + 1)).
+	currentPlayer moved: false.
 	players size > 1
 		ifTrue: [  
 	self 
@@ -1254,6 +1256,14 @@ toUtility: unused
 	
 	token slideRight: currentPlayer position to: self nearestUtility
 ! !
+
+!Estate methodsFor: 'operating' stamp: 'dhn 4/18/2020 15:10:44'!
+updateSeasons
+	"Show changes to the number of houses in the seasons area"
+	
+	self positionBoardTo: (currentPlayer moved
+		ifTrue: [currentPlayer oldPosition] 
+		ifFalse: [currentPlayer position])! !
 
 !Estate methodsFor: 'operating' stamp: 'dhn 2/23/2020 21:14:06'!
 windowPosition: aPoint
@@ -3090,7 +3100,7 @@ addButtons: anArray
 		addMorph: sellButton
 ! !
 
-!MonopHouse methodsFor: 'operating' stamp: 'dhn 4/18/2020 10:35:34'!
+!MonopHouse methodsFor: 'operating' stamp: 'dhn 4/18/2020 14:58:25'!
 buyHouse
 	"Buy a house"
 	| nam prop |
@@ -3100,7 +3110,7 @@ buyHouse
 	prop houses: prop houses + 1.
 	model devAt: nam.
 	model currentPlayer tally: prop houseCost negated.
-	model positionBoardTo: model currentPlayer oldPosition.  "update seasons"
+	model updateSeasons.
 	model triggerEvent: #itemChange! !
 
 !MonopHouse methodsFor: 'operating' stamp: 'dhn 3/26/2020 17:17:29'!
@@ -3108,7 +3118,7 @@ removeButtons
 
 	buttonArea removeAllMorphs ! !
 
-!MonopHouse methodsFor: 'operating' stamp: 'dhn 4/18/2020 10:35:58'!
+!MonopHouse methodsFor: 'operating' stamp: 'dhn 4/18/2020 14:58:03'!
 sellHouse
 	"Sell a house"
 	| nam prop |
@@ -3118,7 +3128,7 @@ sellHouse
 	prop houses: prop houses - 1.
 	model devAt: nam.
 	model currentPlayer tally: prop houseCost / 2.
-	model positionBoardTo: model currentPlayer oldPosition.  "update seasons"
+	model updateSeasons.
 	model triggerEvent: #itemChange! !
 
 !MonopHouse class methodsFor: 'instance creation' stamp: 'dhn 4/15/2020 11:51:00'!
@@ -3981,7 +3991,7 @@ title: aTitle price: aPrice rents: anArray house: aCost set: aSet
 		set: aSet.
 	^ lot! !
 
-!Railroad methodsFor: 'operating' stamp: 'dhn 4/6/2020 11:49:05'!
+!Railroad methodsFor: 'operating' stamp: 'dhn 4/18/2020 15:25:34'!
 rentAmount
 	"Answer the rent based on the number of railroads owned and whether it is doubled."
 	| amt |
@@ -3989,7 +3999,9 @@ rentAmount
 	self owner isNil ifTrue: [ ^nil ].
 	self mortgaged ifTrue: [ ^0 ].
 	self ownedByOwner > 0
-		ifTrue: [amt _ (rents at: self ownedByOwner) * factor]
+		ifTrue: [
+			factor > 1 ifTrue: [self halt].
+			amt _ (rents at: self ownedByOwner) * factor]
 		ifFalse: [amt _ 0].
 	factor _ 1.
 	^ amt! !
@@ -4411,6 +4423,18 @@ jail: anObject
 	"Set the value of jail"
 
 	jail _ anObject! !
+
+!Developer methodsFor: 'accessing' stamp: 'dhn 4/18/2020 14:45:17'!
+moved
+	"Answer the value of moved"
+
+	^ moved! !
+
+!Developer methodsFor: 'accessing' stamp: 'dhn 4/18/2020 14:44:03'!
+moved: anObject
+	"Set the value of moved"
+
+	moved _ anObject! !
 
 !Developer methodsFor: 'accessing' stamp: 'dhn 5/17/2019 12:29:19'!
 roll
