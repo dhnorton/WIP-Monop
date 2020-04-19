@@ -1,6 +1,6 @@
-'From Cuis 5.0 [latest update: #4042] on 19 April 2020 at 5:57:12 pm'!
+'From Cuis 5.0 [latest update: #4042] on 19 April 2020 at 7:45:49 pm'!
 'Description Simulation of the board game "Monopoly".'!
-!provides: 'Monop' 1 206!
+!provides: 'Monop' 1 207!
 !requires: 'Game' 1 44 nil!
 SystemOrganization addCategory: #'Monop-View'!
 SystemOrganization addCategory: #'Monop-Model'!
@@ -268,7 +268,7 @@ Luxury class
 
 !classDefinition: #Developer category: #'Monop-Model'!
 Gamer subclass: #Developer
-	instanceVariableNames: 'cards doubles jail goAgain doubledString debtor moved'
+	instanceVariableNames: 'cards doubles jail goAgain doubledString debtor'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Monop-Model'!
@@ -700,11 +700,10 @@ declareBroke: aString
 and mortgage until cash is no longer negative.'
 		title: 'Out of Cash'! !
 
-!Estate methodsFor: 'operating' stamp: 'dhn 4/18/2020 14:50:07'!
+!Estate methodsFor: 'operating' stamp: 'dhn 4/19/2020 19:21:44'!
 doMove
 	"Move the player, account for doubles"
 	
-	currentPlayer moved: true.
 	hops first = hops second
 		ifTrue: [currentPlayer doubles add: hops asArray] 
 		ifFalse: [currentPlayer doubles: OrderedCollection new].
@@ -997,13 +996,12 @@ nearestUtility
 	
 	^ self nearest: self class positionUtility to: currentPlayer position! !
 
-!Estate methodsFor: 'operating' stamp: 'dhn 4/18/2020 14:46:51'!
+!Estate methodsFor: 'operating' stamp: 'dhn 4/19/2020 19:21:58'!
 nextPlayer
 	"Begin the next player's turn"
 	| x |
 	
 	currentPlayer _ (players atWrap: (playerIndex _ playerIndex + 1)).
-	currentPlayer moved: false.
 	players size > 1
 		ifTrue: [  
 	self 
@@ -1150,12 +1148,6 @@ repair: anArray
 					ifFalse: [houses _ houses + ea houses]]].
 	self tally: ((houses * anArray first) + (hotels * anArray second)) negated! !
 
-!Estate methodsFor: 'operating' stamp: 'dhn 4/18/2020 20:08:57'!
-resetMoved: unused
-	"Reset the indication that the player has moved"
-	
-	currentPlayer moved: false! !
-
 !Estate methodsFor: 'operating' stamp: 'dhn 3/19/2020 19:08:29'!
 salary
 	"Pay player $200."
@@ -1185,7 +1177,7 @@ setDebtor: aDebtor
 	currentPlayer debtor: aDebtor.
 	self triggerEvent: #itemChange! !
 
-!Estate methodsFor: 'operating' stamp: 'dhn 4/18/2020 20:48:41'!
+!Estate methodsFor: 'operating' stamp: 'dhn 4/19/2020 19:19:21'!
 setNext: anArray
 	"Cases for Chance and Community Chest"
 	| level1 |
@@ -1194,8 +1186,7 @@ setNext: anArray
 		at: #moveMoney: put: [self level11: anArray];
 		at: #movePlayer: put: [OrderedCollection 
 			with: {#setView:. world submorphs first}
-			with: (self level12: anArray)
-			with: {#resetMoved:. nil}];
+			with: (self level12: anArray)];
 		at: #getOut: put: [{#(#getOut: nil)}];
 		at: #repair: put: [{
 			{#setDebtor:. 'Bank'}.
@@ -4439,18 +4430,6 @@ jail: anObject
 	"Set the value of jail"
 
 	jail _ anObject! !
-
-!Developer methodsFor: 'accessing' stamp: 'dhn 4/18/2020 14:45:17'!
-moved
-	"Answer the value of moved"
-
-	^ moved! !
-
-!Developer methodsFor: 'accessing' stamp: 'dhn 4/18/2020 14:44:03'!
-moved: anObject
-	"Set the value of moved"
-
-	moved _ anObject! !
 
 !Developer methodsFor: 'accessing' stamp: 'dhn 5/17/2019 12:29:19'!
 roll
