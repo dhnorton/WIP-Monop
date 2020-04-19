@@ -1,6 +1,6 @@
-'From Cuis 5.0 [latest update: #4042] on 18 April 2020 at 4:06:37 pm'!
+'From Cuis 5.0 [latest update: #4042] on 19 April 2020 at 5:57:12 pm'!
 'Description Simulation of the board game "Monopoly".'!
-!provides: 'Monop' 1 203!
+!provides: 'Monop' 1 206!
 !requires: 'Game' 1 44 nil!
 SystemOrganization addCategory: #'Monop-View'!
 SystemOrganization addCategory: #'Monop-Model'!
@@ -8,7 +8,7 @@ SystemOrganization addCategory: #'Monop-Model'!
 
 !classDefinition: #Estate category: #'Monop-Model'!
 Game subclass: #Estate
-	instanceVariableNames: 'demo hops windowCount chances chests moveButton statsItem propertyAuctionBid note devItem morItem takeItem seasons'
+	instanceVariableNames: 'demo hops windowCount chances chests moveButton statsItem propertyAuctionBid note devItem morItem takeItem seasons spaceIndex'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Monop-Model'!
@@ -879,15 +879,15 @@ level123: anArray
 	^ (switch at: anArray third
 		ifAbsent:[{{#moveAheadTo:. anArray third}}]) value! !
 
-!Estate methodsFor: 'operating' stamp: 'dhn 3/19/2020 17:24:40'!
+!Estate methodsFor: 'operating' stamp: 'dhn 4/18/2020 21:04:50'!
 level12: anArray
 	"Cases for Chance and Community Chest"
 	| switch |
 	
 	switch _ Dictionary new
-		at: #ahead put: [self level123: anArray];
-		at: #back put: [{{#moveBackTo:. anArray third}}];
-		at: #relative: put: [{{#relative:. anArray third}}];
+		at: #ahead put: (self level123: anArray) first;
+		at: #back put: [{#moveBackTo:. anArray third}];
+		at: #relative: put: [{#relative:. anArray third}];
 		yourself.
 	^ (switch at: anArray second) value! !
 
@@ -951,7 +951,7 @@ moveMoney: anArray
 	anArray first = #toEach
 		ifTrue: [self exceptCurrent: anArray second]! !
 
-!Estate methodsFor: 'operating' stamp: 'dhn 3/3/2020 17:19:03'!
+!Estate methodsFor: 'operating' stamp: 'dhn 4/18/2020 21:41:02'!
 movePlayer: anArray
 	"Move the player according to the card."
 	| pos |
@@ -962,6 +962,7 @@ movePlayer: anArray
 		ifTrue: [
 			anArray second = #railroad
 				ifTrue: [
+					self halt.
 					(spaces at: self nearestRailroad) factor: 2.
 					token slideRight: pos to: self nearestRailroad]
 				ifFalse: [
@@ -1063,6 +1064,16 @@ parseSeasonsAt: anIndex
 	col addLast: start + 1 @ cellCount -> sea.
 	^ col! !
 
+!Estate methodsFor: 'operating' stamp: 'dhn 4/19/2020 16:15:50'!
+positionBoardTo: anIndex 
+	"Change the location on the board"
+	| assoc |
+	
+	spaceIndex _ anIndex.
+	self cellsAt: anIndex.
+	assoc _ self parseSeasonsAt: anIndex.
+	self triggerEvent: #showSeasons: with: assoc! !
+
 !Estate methodsFor: 'operating' stamp: 'dhn 4/16/2020 14:50:37'!
 possiblyEnable
 	"Update histories and enable the 'End Turn' button if all are acknowledged"
@@ -1139,6 +1150,12 @@ repair: anArray
 					ifFalse: [houses _ houses + ea houses]]].
 	self tally: ((houses * anArray first) + (hotels * anArray second)) negated! !
 
+!Estate methodsFor: 'operating' stamp: 'dhn 4/18/2020 20:08:57'!
+resetMoved: unused
+	"Reset the indication that the player has moved"
+	
+	currentPlayer moved: false! !
+
 !Estate methodsFor: 'operating' stamp: 'dhn 3/19/2020 19:08:29'!
 salary
 	"Pay player $200."
@@ -1161,18 +1178,6 @@ seasonAt: aPosition
 	pos _ (1 to: spaces size) atWrap: aPosition.
 	^ seasons detect: [:a | (a range x <= pos) and: [a range y >= pos]]! !
 
-!Estate methodsFor: 'operating' stamp: 'dhn 4/17/2020 20:06:01'!
-seasonsFrom: anIndex
-	"Answer the subset of seasons to be displayed, starting at anIndex."
-	| ndx k col |
-	
-	ndx _ (1 to: seasons size).
-	k _ ((ndx atWrap: anIndex) to: ndx last), (ndx first to: anIndex - 1).
-	col _ OrderedCollection new.
-	(k copyFrom: 1 to: self class cellsForGame) do: [ :n |
-		col addLast: (seasons at: n)].	
-	^ col! !
-
 !Estate methodsFor: 'operating' stamp: 'dhn 3/29/2020 13:50:46'!
 setDebtor: aDebtor
 	"Set the current player's debtor"
@@ -1180,7 +1185,7 @@ setDebtor: aDebtor
 	currentPlayer debtor: aDebtor.
 	self triggerEvent: #itemChange! !
 
-!Estate methodsFor: 'operating' stamp: 'dhn 4/9/2020 11:17:59'!
+!Estate methodsFor: 'operating' stamp: 'dhn 4/18/2020 20:48:41'!
 setNext: anArray
 	"Cases for Chance and Community Chest"
 	| level1 |
@@ -1189,7 +1194,8 @@ setNext: anArray
 		at: #moveMoney: put: [self level11: anArray];
 		at: #movePlayer: put: [OrderedCollection 
 			with: {#setView:. world submorphs first}
-			with: (self level12: anArray) first];
+			with: (self level12: anArray)
+			with: {#resetMoved:. nil}];
 		at: #getOut: put: [{#(#getOut: nil)}];
 		at: #repair: put: [{
 			{#setDebtor:. 'Bank'}.
@@ -1257,13 +1263,25 @@ toUtility: unused
 	token slideRight: currentPlayer position to: self nearestUtility
 ! !
 
-!Estate methodsFor: 'operating' stamp: 'dhn 4/18/2020 15:10:44'!
+!Estate methodsFor: 'operating' stamp: 'dhn 4/19/2020 16:20:59'!
 updateSeasons
 	"Show changes to the number of houses in the seasons area"
+	| assoc |
 	
-	self positionBoardTo: (currentPlayer moved
-		ifTrue: [currentPlayer oldPosition] 
-		ifFalse: [currentPlayer position])! !
+	assoc _ self parseSeasonsAt: spaceIndex.
+	self triggerEvent: #showSeasons: with: assoc! !
+
+!Estate methodsFor: 'operating' stamp: 'dhn 4/19/2020 17:38:55'!
+whoOwns: anIndex
+	"Answer balloon content as to the owner"
+	| property |
+	
+	^ ((property _ spaces atWrap: spaceIndex + anIndex) isKindOf: Property)
+		ifTrue: [
+			property owner 
+				ifNotNil: ['Owned by ', property owner identity, '.'] 
+				ifNil: ['Owned by the bank.']]
+		ifFalse: ['']! !
 
 !Estate methodsFor: 'operating' stamp: 'dhn 2/23/2020 21:14:06'!
 windowPosition: aPoint
@@ -1816,6 +1834,34 @@ quitGame
 	(self confirm: 'Are you sure you want to quit ', Monopoly asString, '?')
 		ifTrue: [model quitGame]! !
 
+!Monopoly methodsFor: 'operation' stamp: 'dhn 4/19/2020 17:02:05'!
+showSeasons: associations 
+	"Display the seasons contained in associations"
+	| width ix bm txt |
+			
+	seasonsArea removeAllMorphs.
+	width _ layoutMorph morphWidth / self class cellsForGame.
+	ix _ 0.
+	associations do: [:k | 	| first last sea |
+			first _ k key x - 1.
+			last _ k key y.
+			bm _ LayoutMorph newRow
+				padding: #center;
+				name: #season.
+			seasonsArea addMorph: bm
+				layoutSpec: (LayoutSpec proportionalWidth: width * (last - first) proportionalHeight: 1.0).
+			sea _ k value.
+			bm color: sea color.
+			bm setBalloonText: (model whoOwns: ix).
+			ix _ ix + 1.
+			txt _ StringMorph new
+				font: (AbstractFont familyName: 'DejaVu' pointSize: 18).
+			bm addMorph: txt..
+			txt color: (sea textColor
+				ifTrue: [Color white]
+				ifFalse: [Color black]).
+			txt contents: sea desc]! !
+
 !Monopoly methodsFor: 'operation' stamp: 'dhn 5/16/2019 19:02:12'!
 showToken
 	"Establish the size and position of the token"
@@ -2160,34 +2206,6 @@ setupToken: aPlayer
 		morphPosition: owner morphExtent * (0.003@0.72).
 	pasteup addMorph: model token.
 	^ model token! !
-
-!Monopoly methodsFor: 'initialization' stamp: 'dhn 4/17/2020 18:35:22'!
-showSeasons: associations 
-	"Display the seasons contained in associations"
-	| width set bm txt |
-			
-	seasonsArea removeAllMorphs.
-	width _ layoutMorph morphWidth / self class cellsForGame.
-	set _ OrderedCollection new.
-	associations do: [:k | 	| first last sea |
-			first _ k key x - 1.
-			last _ k key y.
-			bm _ LayoutMorph newRow
-				padding: #center;
-				name: #season.
-			seasonsArea addMorph: bm
-				layoutSpec: (LayoutSpec proportionalWidth: width * (last - first) proportionalHeight: 1.0).
-			sea _ k value.
-			bm color: sea color.
-			txt _ StringMorph new
-				emphasis: 1;  "emphasis: bold=1"
-				font: (AbstractFont familyName: 'DejaVu' pointSize: 18).
-			bm addMorph: txt..
-			txt color: (sea textColor
-				ifTrue: [Color white]
-				ifFalse: [Color black]).
-			txt contents: sea desc].
-	^ set! !
 
 !Monopoly methodsFor: 'initialization' stamp: 'dhn 3/25/2020 11:08:00'!
 startButtonSet
@@ -3991,7 +4009,7 @@ title: aTitle price: aPrice rents: anArray house: aCost set: aSet
 		set: aSet.
 	^ lot! !
 
-!Railroad methodsFor: 'operating' stamp: 'dhn 4/18/2020 15:25:34'!
+!Railroad methodsFor: 'operating' stamp: 'dhn 4/18/2020 21:42:16'!
 rentAmount
 	"Answer the rent based on the number of railroads owned and whether it is doubled."
 	| amt |
@@ -3999,9 +4017,7 @@ rentAmount
 	self owner isNil ifTrue: [ ^nil ].
 	self mortgaged ifTrue: [ ^0 ].
 	self ownedByOwner > 0
-		ifTrue: [
-			factor > 1 ifTrue: [self halt].
-			amt _ (rents at: self ownedByOwner) * factor]
+		ifTrue: [amt _ (rents at: self ownedByOwner) * factor]
 		ifFalse: [amt _ 0].
 	factor _ 1.
 	^ amt! !
