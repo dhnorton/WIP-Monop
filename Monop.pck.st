@@ -1,6 +1,6 @@
-'From Cuis 5.0 [latest update: #4042] on 19 April 2020 at 7:45:49 pm'!
+'From Cuis 5.0 [latest update: #4042] on 19 April 2020 at 8:52:37 pm'!
 'Description Simulation of the board game "Monopoly".'!
-!provides: 'Monop' 1 207!
+!provides: 'Monop' 1 208!
 !requires: 'Game' 1 44 nil!
 SystemOrganization addCategory: #'Monop-View'!
 SystemOrganization addCategory: #'Monop-Model'!
@@ -670,10 +670,6 @@ statsReport: anAsset
 			nextPut: $:; newLine;
 			nextPutAll: (p reportAsAssetFor: currentPlayer); newLine]"! !
 
-!Estate methodsFor: 'operating' stamp: 'dhn 2/28/2020 20:33:58'!
-auction: aProperty
-	"Sell aProperty at auction."! !
-
 !Estate methodsFor: 'operating' stamp: 'dhn 4/16/2020 14:52:40'!
 broker
 	"Represent the property"
@@ -1024,10 +1020,6 @@ nextPlayer
 			self triggerEvent: #showWinner.
 			self disableAll: {'Move'. 'End Turn'}]! !
 
-!Estate methodsFor: 'operating' stamp: 'dhn 3/19/2020 15:56:32'!
-null: unused
-	"A method that does nothing, with a single parameter"! !
-
 !Estate methodsFor: 'operating' stamp: 'dhn 5/16/2019 16:03:47'!
 numbersReport
 	"Answer the string for displaying a player's status"
@@ -1288,46 +1280,16 @@ chances
 	^ chances! !
 
 !Estate methodsFor: 'accessing' stamp: 'dhn 2/28/2020 13:15:57'!
-chances: anObject
-	"Set the value of chances"
-
-	chances _ anObject! !
-
-!Estate methodsFor: 'accessing' stamp: 'dhn 2/28/2020 13:15:57'!
 chests
 	"Answer the value of chests"
 
 	^ chests! !
-
-!Estate methodsFor: 'accessing' stamp: 'dhn 2/28/2020 13:15:57'!
-chests: anObject
-	"Set the value of chests"
-
-	chests _ anObject! !
-
-!Estate methodsFor: 'accessing' stamp: 'dhn 2/28/2020 13:15:57'!
-demo
-	"Answer the value of demo"
-
-	^ demo! !
-
-!Estate methodsFor: 'accessing' stamp: 'dhn 2/28/2020 13:15:57'!
-demo: anObject
-	"Set the value of demo"
-
-	demo _ anObject! !
 
 !Estate methodsFor: 'accessing' stamp: 'dhn 4/2/2020 16:11:00'!
 hops
 	"Answer the value of hops"
 
 	^ hops! !
-
-!Estate methodsFor: 'accessing' stamp: 'dhn 4/2/2020 16:11:00'!
-hops: anObject
-	"Set the value of hops"
-
-	hops _ anObject! !
 
 !Estate methodsFor: 'accessing' stamp: 'dhn 2/28/2020 13:15:57'!
 moveButton
@@ -1341,35 +1303,11 @@ note
 
 	^ note! !
 
-!Estate methodsFor: 'accessing' stamp: 'dhn 3/13/2020 20:35:14'!
-note: anObject
-	"Set the value of note"
-
-	note _ anObject! !
-
-!Estate methodsFor: 'accessing' stamp: 'dhn 3/20/2020 22:06:05'!
-propertyAuctionBid
-	"Answer the value of propertyAuctionBid"
-	
-	^ propertyAuctionBid ifNil: [propertyAuctionBid _ 0]! !
-
 !Estate methodsFor: 'accessing' stamp: 'dhn 2/21/2020 20:55:59'!
 spaces
 	"Answer the value of spaces."
 	
 	^ spaces! !
-
-!Estate methodsFor: 'accessing' stamp: 'dhn 2/28/2020 13:15:57'!
-windowCount
-	"Answer the value of windowCount"
-
-	^ windowCount! !
-
-!Estate methodsFor: 'accessing' stamp: 'dhn 2/28/2020 13:15:57'!
-windowCount: anObject
-	"Set the value of windowCount"
-
-	windowCount _ anObject! !
 
 !Estate class methodsFor: 'instance creation' stamp: 'dhn 5/14/2019 17:07:12'!
 cellsForGame
