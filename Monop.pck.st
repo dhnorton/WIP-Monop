@@ -1,6 +1,6 @@
-'From Cuis 5.0 [latest update: #4042] on 21 April 2020 at 4:03:09 pm'!
+'From Cuis 5.0 [latest update: #4042] on 21 April 2020 at 4:05:48 pm'!
 'Description Simulation of the board game "Monopoly".'!
-!provides: 'Monop' 1 212!
+!provides: 'Monop' 1 213!
 !requires: 'Game' 1 44 nil!
 SystemOrganization addCategory: #'Monop-View'!
 SystemOrganization addCategory: #'Monop-Model'!
@@ -1756,7 +1756,7 @@ displayNumbers
 			setBalloonText: 'cash held by ', ea identity;
 			font: (AbstractFont familyName: 'DejaVu' pointSize: 18))]! !
 
-!Monopoly methodsFor: 'operation' stamp: 'dhn 5/16/2019 15:44:22'!
+!Monopoly methodsFor: 'operation' stamp: 'dhn 4/21/2020 15:59:09'!
 doTour
 	"Start the tour of the board"
 	| choice resp |
@@ -1769,7 +1769,7 @@ doTour
 		[resp ~= ''] whileTrue: [
 			resp _ FillInTheBlankMorph request: 'Board starting where?' initialAnswer: resp.
 			(resp notEmpty and: [resp asNumber > 0]) ifTrue: [
-				self showSeasons:  resp asNumber.
+				self showSeasons: (model parseSeasonsAt: resp asNumber).
 				self model cellsAt: resp asNumber]]].
 	model enableAll: {'Players'. 'Tour'}
 	! !
