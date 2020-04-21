@@ -1,6 +1,6 @@
-'From Cuis 5.0 [latest update: #4042] on 19 April 2020 at 8:52:37 pm'!
+'From Cuis 5.0 [latest update: #4042] on 21 April 2020 at 12:23:42 pm'!
 'Description Simulation of the board game "Monopoly".'!
-!provides: 'Monop' 1 208!
+!provides: 'Monop' 1 211!
 !requires: 'Game' 1 44 nil!
 SystemOrganization addCategory: #'Monop-View'!
 SystemOrganization addCategory: #'Monop-Model'!
@@ -457,6 +457,12 @@ testMode: aBool
 	
 	TestMode _ aBool! !
 
+!Estate methodsFor: 'takeover' stamp: 'dhn 4/20/2020 13:44:40'!
+setTakeOverView
+
+	self setView: world submorphs first.
+	self disableAll: {'End Turn'}! !
+
 !Estate methodsFor: 'takeover' stamp: 'dhn 3/29/2020 12:32:45'!
 takeItem
 	"Answer the value of takeItem"
@@ -471,21 +477,23 @@ takeItem: anObject
 		self triggerEvent: #itemChange.
 		self changed: #takeItem]! !
 
-!Estate methodsFor: 'takeover' stamp: 'dhn 3/29/2020 22:19:25'!
+!Estate methodsFor: 'takeover' stamp: 'dhn 4/21/2020 11:02:45'!
 takeList
 	"Answer a list for the takeover window"
 	| ans |
 	
-	(currentPlayer debtor = 'Bank')
-		ifTrue: [
-			currentPlayer assets do: [:ea |
-				ea
-					owner: nil; 
-					mortgaged: false.].
-			ans _ '']
-		ifFalse: [
-			ans _ OrderedCollection new.
-			currentPlayer assets do: [:a | ans add: a title]].
+	ans _ OrderedCollection new.
+	currentPlayer assets 
+		ifNotEmpty: [
+			(currentPlayer debtor = 'Bank')
+				ifTrue: [
+					currentPlayer assets do: [:ea |
+						ea
+							owner: nil; 
+							mortgaged: false.]]
+				ifFalse: [currentPlayer assets do: [:a | ans add: a title]].
+			ans ifEmpty: [self triggerEvent: #completed]]
+		ifEmpty: [self enableAll: {'End Turn'}].
 	^ ans! !
 
 !Estate methodsFor: 'takeover' stamp: 'dhn 3/30/2020 12:19:52'!
@@ -1217,7 +1225,7 @@ toEach: anAmount
 				currentPlayer tally: anAmount negated]].
 	self triggerEvent: #itemChange! !
 
-!Estate methodsFor: 'operating' stamp: 'dhn 4/16/2020 14:52:07'!
+!Estate methodsFor: 'operating' stamp: 'dhn 4/21/2020 12:03:55'!
 toOwner: anArray
 	"Transfer money from the current player to the property owner for rent"
 	| rent |
@@ -1227,6 +1235,8 @@ toOwner: anArray
 		debtor: anArray first;
 		tally: rent negated.
 	anArray first tally: rent.
+	currentPlayer bankrupt
+		ifTrue: [anArray first tally: currentPlayer cash].
 	self triggerEvent: #itemChange.
 	self possiblyEnable
 ! !
@@ -1290,6 +1300,12 @@ hops
 	"Answer the value of hops"
 
 	^ hops! !
+
+!Estate methodsFor: 'accessing' stamp: 'dhn 4/20/2020 15:04:51'!
+hops: anObject
+	"Set the value of hops"
+
+	hops _ anObject! !
 
 !Estate methodsFor: 'accessing' stamp: 'dhn 2/28/2020 13:15:57'!
 moveButton
@@ -2213,7 +2229,7 @@ showChest: anArray
 	win buttonArea color: win textPanel color
 ! !
 
-!Monopoly methodsFor: 'windows' stamp: 'dhn 4/9/2020 13:15:30'!
+!Monopoly methodsFor: 'windows' stamp: 'dhn 4/20/2020 15:06:09'!
 showDoubles
 	"Tell the player about rolling doubles 3 times consecutively"
 	| win blurb |
@@ -2235,7 +2251,8 @@ showDoubles
 		morphPosition: self windowPosition;
 		setButton;
 		morphExtent: 315 @ 215.
-	win buttonArea color: win textPanel color
+	win buttonArea color: win textPanel color.
+	model hops: OrderedCollection new
 ! !
 
 !Monopoly methodsFor: 'windows' stamp: 'dhn 4/8/2020 14:35:12'!
@@ -2399,7 +2416,7 @@ showStats
 		morphExtent: 500 @ 260.
 	model disableAll: {'Holdings'}! !
 
-!Monopoly methodsFor: 'windows' stamp: 'dhn 3/31/2020 14:56:48'!
+!Monopoly methodsFor: 'windows' stamp: 'dhn 4/20/2020 13:45:20'!
 showTakeOver
 	"Open a window for receiving a debtor's assets"
 	| pl win |
@@ -2416,7 +2433,7 @@ showTakeOver
 		setWindowColor: pl color;
 		morphPosition: self windowPosition;
 		morphExtent: 500 @ 260.
-	model disableAll: {'End Turn'}! !
+	model setTakeOverView! !
 
 !Monopoly methodsFor: 'windows' stamp: 'dhn 4/1/2020 13:42:09'!
 showWinner
@@ -3419,13 +3436,21 @@ closeBoxHit
 	model takeItem: nil.
 	super closeBoxHit! !
 
-!TakeOver methodsFor: 'termination' stamp: 'dhn 3/29/2020 13:13:00'!
+!TakeOver methodsFor: 'termination' stamp: 'dhn 4/20/2020 16:09:49'!
+completed
+	"Indicate that the takeover is complete"
+self halt.
+	acknowledged _ true.
+	model possiblyEnable.
+	self endIt! !
+
+!TakeOver methodsFor: 'termination' stamp: 'dhn 4/20/2020 13:13:58'!
 endIt
 	
-	model devItem: nil.
+	model takeItem: nil.
 	self delete! !
 
-!TakeOver methodsFor: 'initialization' stamp: 'dhn 3/30/2020 12:51:51'!
+!TakeOver methodsFor: 'initialization' stamp: 'dhn 4/20/2020 13:11:41'!
 buildMorphicWindow
 	"Lay out the window for taking over assets"
 	| body |
@@ -3471,13 +3496,14 @@ buildMorphicWindow
 	model when: #rmTakeButtons send: #removeButtons to: self.
 	model when: #addButtons send: #addButtons to: self.
 	model when: #itemChange send: #details to: self.
+	model when: #completed send: #completed to: self.
 	! !
 
-!TakeOver methodsFor: 'operating' stamp: 'dhn 4/16/2020 12:28:46'!
+!TakeOver methodsFor: 'operating' stamp: 'dhn 4/20/2020 12:58:02'!
 acknowledged
 	"Answer the value of acknowledged"
 
-	^ acknowledged ifNil: [acknowledged _ true]! !
+	^ acknowledged ifNil: [acknowledged _ false]! !
 
 !TakeOver methodsFor: 'operating' stamp: 'dhn 3/29/2020 12:22:26'!
 addButtons
@@ -3525,12 +3551,12 @@ removeButtons
 
 	buttonArea removeAllMorphs ! !
 
-!TakeOver methodsFor: 'operating' stamp: 'dhn 3/31/2020 11:21:47'!
+!TakeOver methodsFor: 'operating' stamp: 'dhn 4/20/2020 12:46:13'!
 settle: anAsset at: aRate
 	"Complete the transfer of anAsset to the debtor"
 	| rcvr |
 
-	rcvr _ (model currentPlayer debtor) = 'Bank'
+	rcvr _ ((model currentPlayer debtor) = 'Bank')
 		ifTrue: [nil] ifFalse: [model currentPlayer debtor].
 	rcvr ifNotNil: [
 		rcvr tally: (anAsset price / 2) * aRate negated.
@@ -3938,16 +3964,18 @@ title: aTitle price: aPrice rents: anArray house: aCost set: aSet
 		set: aSet.
 	^ lot! !
 
-!Railroad methodsFor: 'operating' stamp: 'dhn 4/18/2020 21:42:16'!
+!Railroad methodsFor: 'operating' stamp: 'dhn 4/20/2020 17:08:26'!
 rentAmount
 	"Answer the rent based on the number of railroads owned and whether it is doubled."
 	| amt |
 
 	self owner isNil ifTrue: [ ^nil ].
-	self mortgaged ifTrue: [ ^0 ].
-	self ownedByOwner > 0
-		ifTrue: [amt _ (rents at: self ownedByOwner) * factor]
-		ifFalse: [amt _ 0].
+	self mortgaged 
+		ifTrue: [amt _ 0]
+		ifFalse: [
+			self ownedByOwner > 0
+				ifTrue: [amt _ (rents at: self ownedByOwner) * factor]
+				ifFalse: [amt _ 0]].
 	factor _ 1.
 	^ amt! !
 
@@ -4237,6 +4265,14 @@ toJail
         passedGo: false;
         position: 11;
         doubles: 0.! !
+
+!Developer methodsFor: 'operating' stamp: 'dhn 4/21/2020 12:22:28'!
+bankrupt
+	"Answer whether the player is bankrupt"
+	
+	^ (cash < 0)
+		ifTrue: [assets allSatisfy: [:ea | ea mortgaged]]
+		ifFalse: [false]! !
 
 !Developer methodsFor: 'operating' stamp: 'dhn 5/17/2019 12:29:19'!
 cards
