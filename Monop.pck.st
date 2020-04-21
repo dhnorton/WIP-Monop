@@ -1,6 +1,6 @@
-'From Cuis 5.0 [latest update: #4042] on 21 April 2020 at 12:23:42 pm'!
+'From Cuis 5.0 [latest update: #4042] on 21 April 2020 at 4:03:09 pm'!
 'Description Simulation of the board game "Monopoly".'!
-!provides: 'Monop' 1 211!
+!provides: 'Monop' 1 212!
 !requires: 'Game' 1 44 nil!
 SystemOrganization addCategory: #'Monop-View'!
 SystemOrganization addCategory: #'Monop-Model'!
@@ -1572,7 +1572,7 @@ position: aCell
 	horiz _ (model cells at: aCell) morphPosition x.
 	self morphPosition: (self morphPosition translatedBy: (horiz@0))! !
 
-!EstateToken methodsFor: 'operations' stamp: 'dhn 4/9/2020 13:44:05'!
+!EstateToken methodsFor: 'operations' stamp: 'dhn 4/21/2020 15:52:53'!
 slideLeft: from to: to
 	"Slide self when player must go BACK to 'to' from 'from' "
 	| oldPos newPos index n posns limit i final |
@@ -1602,13 +1602,13 @@ slideLeft: from to: to
 				self removeActionsForEvent: #morphicStep.
 				arrow delete.
 				model currentPlayer position: final.
-				view ifNotNil: [view complete].
+				view ifNotNil: [view notified].
 				"final = 11 ifTrue: [model currentPlayer jail: true with: 0]."
 				model doSpace.
 				moving _ false]].
 	self startSteppingStepTime: 500! !
 
-!EstateToken methodsFor: 'operations' stamp: 'dhn 4/9/2020 13:44:51'!
+!EstateToken methodsFor: 'operations' stamp: 'dhn 4/21/2020 15:53:05'!
 slideRight: from to: to
 	"Slide self when player moves ahead from 'from' to 'to' other than by the Move button"
 	| oldPos newPos index n posns limit i final |
@@ -1639,7 +1639,7 @@ slideRight: from to: to
 				arrow delete.
 				from > to ifTrue: [model currentPlayer passedGo: true].
 				model currentPlayer position: final.
-				view ifNotNil: [view complete].
+				view ifNotNil: [view notified].
 				model doSpace.
 				moving _ false]].
 	self startSteppingStepTime: 500! !
@@ -3246,16 +3246,6 @@ openOn: aModel
 	^ win
 ! !
 
-!Notifier methodsFor: 'operating' stamp: 'dhn 4/16/2020 22:54:38'!
-complete
-	"Possibly enable End Turn"
-
-	acknowledged _ true.
-	model ifNotNil: [
-		model token moving
-			ifFalse: [model possiblyEnable]].
-	buttonArea removeAllMorphs! !
-
 !Notifier methodsFor: 'operating' stamp: 'dhn 4/1/2020 14:09:22'!
 endGame
 	"Close everything after the winner is announced"
@@ -3264,15 +3254,15 @@ endGame
 	gam _ owner world submorphs detect: [:a | a class = Monopoly] ifNone: [].
 	gam closeBoxHit ! !
 
-!Notifier methodsFor: 'operating' stamp: 'dhn 4/9/2020 11:59:27'!
+!Notifier methodsFor: 'operating' stamp: 'dhn 4/21/2020 15:42:19'!
 finish
 	"Perform methods in response to the OK button"
 
 	self nextDo do: [:ea |
 		model perform: ea first with: ea second].
-	self complete! !
+	self notified! !
 
-!Notifier methodsFor: 'operating' stamp: 'dhn 4/9/2020 12:02:59'!
+!Notifier methodsFor: 'operating' stamp: 'dhn 4/21/2020 15:42:28'!
 finish2
 	"Perform methods in response to the 10% button"
 	| col amt |
@@ -3283,7 +3273,17 @@ finish2
 		model perform: ea first with: ea second].
 	textPanel model actualContents: 
 		textPanel model actualContents, ' You paid $', amt negated rounded printStringWithCommas.
-	self complete! !
+	self notified! !
+
+!Notifier methodsFor: 'operating' stamp: 'dhn 4/21/2020 15:41:43'!
+notified
+	"Possibly enable End Turn"
+
+	acknowledged _ true.
+	model ifNotNil: [
+		model token moving
+			ifFalse: [model possiblyEnable]].
+	buttonArea removeAllMorphs! !
 
 !Notifier methodsFor: 'initialization' stamp: 'dhn 3/16/2020 21:54:01'!
 buildMorphicWindow
