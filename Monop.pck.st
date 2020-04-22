@@ -1,6 +1,6 @@
-'From Cuis 5.0 [latest update: #4042] on 21 April 2020 at 4:05:48 pm'!
+'From Cuis 5.0 [latest update: #4042] on 21 April 2020 at 9:27:27 pm'!
 'Description Simulation of the board game "Monopoly".'!
-!provides: 'Monop' 1 213!
+!provides: 'Monop' 1 214!
 !requires: 'Game' 1 44 nil!
 SystemOrganization addCategory: #'Monop-View'!
 SystemOrganization addCategory: #'Monop-Model'!
@@ -2435,14 +2435,14 @@ showTakeOver
 		morphExtent: 500 @ 260.
 	model setTakeOverView! !
 
-!Monopoly methodsFor: 'windows' stamp: 'dhn 4/1/2020 13:42:09'!
+!Monopoly methodsFor: 'windows' stamp: 'dhn 4/21/2020 21:26:25'!
 showWinner
 	"Announce the winner"
 	| win |
 		
 	win _ Notifier openOn: model.
 	win openInWorld: pasteup.
-	win textPanel model actualContents: model currentPlayer identity, ', having bankrupted all challengers, is the WINNER of MONOPOLY!!'.
+	win textPanel model actualContents: model currentPlayer debtor identity, ', having bankrupted all challengers, is the WINNER of MONOPOLY!!'.
 	win textPanel color: model currentPlayer color.
 	win
 		cleanTitleBar;
@@ -3275,7 +3275,7 @@ finish2
 		textPanel model actualContents, ' You paid $', amt negated rounded printStringWithCommas.
 	self notified! !
 
-!Notifier methodsFor: 'operating' stamp: 'dhn 4/21/2020 15:41:43'!
+!Notifier methodsFor: 'operating' stamp: 'dhn 4/21/2020 17:40:19'!
 notified
 	"Possibly enable End Turn"
 
@@ -3283,7 +3283,11 @@ notified
 	model ifNotNil: [
 		model token moving
 			ifFalse: [model possiblyEnable]].
-	buttonArea removeAllMorphs! !
+	buttonArea removeAllMorphs.
+	model currentPlayer bankrupt
+		ifTrue: [
+			model players size < 3
+				ifTrue: [model triggerEvent: #showWinner]]! !
 
 !Notifier methodsFor: 'initialization' stamp: 'dhn 3/16/2020 21:54:01'!
 buildMorphicWindow
