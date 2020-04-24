@@ -1,6 +1,6 @@
-'From Cuis 5.0 [latest update: #4042] on 21 April 2020 at 9:27:27 pm'!
+'From Cuis 5.0 [latest update: #4119] on 23 April 2020 at 11:32:19 pm'!
 'Description Simulation of the board game "Monopoly".'!
-!provides: 'Monop' 1 214!
+!provides: 'Monop' 1 217!
 !requires: 'Game' 1 44 nil!
 SystemOrganization addCategory: #'Monop-View'!
 SystemOrganization addCategory: #'Monop-Model'!
@@ -704,12 +704,14 @@ declareBroke: aString
 and mortgage until cash is no longer negative.'
 		title: 'Out of Cash'! !
 
-!Estate methodsFor: 'operating' stamp: 'dhn 4/19/2020 19:21:44'!
+!Estate methodsFor: 'operating' stamp: 'dhn 4/22/2020 12:14:29'!
 doMove
 	"Move the player, account for doubles"
 	
 	hops first = hops second
-		ifTrue: [currentPlayer doubles add: hops asArray] 
+		ifTrue: [
+			playerIndex _ playerIndex - 1.
+			currentPlayer doubles add: hops asArray] 
 		ifFalse: [currentPlayer doubles: OrderedCollection new].
 	currentPlayer doubles size > 2 
 		ifTrue: [self triggerEvent: #showDoubles]
@@ -755,7 +757,7 @@ drawChest
 			self triggerEvent: #showChest: with: ches] 
 		ifFalse: [self triggerEvent: #showChest: with: ches]! !
 
-!Estate methodsFor: 'operating' stamp: 'dhn 3/29/2020 13:53:34'!
+!Estate methodsFor: 'operating' stamp: 'dhn 4/22/2020 17:25:30'!
 endTurn
 	"End a player's turn"
 	
@@ -775,8 +777,14 @@ endTurn
 			self nextPlayer.
 			self won
 				ifTrue: [self wonButtonsState]
-				ifFalse: [self enableAll: {'Move'}.
-					self disableAll: {'End Turn'}]]! !
+				ifFalse: [
+					currentPlayer jail first
+						ifTrue: [
+							self disableAll: {'Move'}.
+							self enableAll: {'End Turn'}] 
+						ifFalse: [
+							self enableAll: {'Move'}.
+							self disableAll: {'End Turn'}]]]! !
 
 !Estate methodsFor: 'operating' stamp: 'dhn 5/14/2019 21:43:28'!
 exceptCurrent: anAmount
@@ -808,13 +816,12 @@ getOut: anObject
 
 	self possiblyEnable! !
 
-!Estate methodsFor: 'operating' stamp: 'dhn 3/2/2020 15:36:49'!
+!Estate methodsFor: 'operating' stamp: 'dhn 4/21/2020 22:09:35'!
 goToJail
 	"Go directly back to jail."
 
 	token slideLeft: currentPlayer position to: 11.
-	"currentPlayer jail: true with: 0."
-! !
+	currentPlayer jail: true with: 0! !
 
 !Estate methodsFor: 'operating' stamp: 'dhn 3/24/2020 17:56:53'!
 goal
@@ -935,13 +942,13 @@ moveAheadTo: aSpace
 	
 	token slideRight: currentPlayer position to: aSpace! !
 
-!Estate methodsFor: 'operating' stamp: 'dhn 3/17/2020 21:10:34'!
+!Estate methodsFor: 'operating' stamp: 'dhn 4/21/2020 21:48:38'!
 moveBackTo: aSpace
 	"Slide player left to aSpace"
 	
 	token slideLeft: currentPlayer position to: aSpace.
 	aSpace = 11
-		ifTrue: ["currentPlayer jail: true with: 0."]! !
+		ifTrue: [currentPlayer jail: true with: 0]! !
 
 !Estate methodsFor: 'operating' stamp: 'dhn 4/8/2020 14:34:03'!
 moveMoney: anArray
@@ -1000,12 +1007,19 @@ nearestUtility
 	
 	^ self nearest: self class positionUtility to: currentPlayer position! !
 
-!Estate methodsFor: 'operating' stamp: 'dhn 4/19/2020 19:21:58'!
+!Estate methodsFor: 'operating' stamp: 'dhn 4/23/2020 21:47:11'!
 nextPlayer
 	"Begin the next player's turn"
 	| x |
 	
 	currentPlayer _ (players atWrap: (playerIndex _ playerIndex + 1)).
+	currentPlayer jail first
+		ifTrue: [
+			currentPlayer jail second < 3
+				ifTrue: [
+					self disableAll: {'Move'}.
+					currentPlayer jail: true with: currentPlayer jail second + 1] 
+				ifFalse: [currentPlayer jail: false with: 0]].
 	players size > 1
 		ifTrue: [  
 	self 
@@ -1018,7 +1032,7 @@ nextPlayer
 	token openInWorld: world.
 	token view: nil.
 	token morphPosition: tokenPos.
-	token id contents: currentPlayer identity.
+	token ident contents: currentPlayer identity.
 	token color: currentPlayer color.
 	token setBalloonText: 'token for ', currentPlayer identity.
 	self testMode ifTrue: [
@@ -1530,21 +1544,21 @@ layoutSubmorphs
 
 	labelArea morphExtent: self morphExtent! !
 
-!EstateToken methodsFor: 'initialization' stamp: 'dhn 5/16/2019 16:25:00'!
+!EstateToken methodsFor: 'initialization' stamp: 'dhn 4/23/2020 21:41:06'!
 makeIdArea
 	"Lay out the area for the players' name"
 	| area |
 	
 	area _ LayoutMorph newRow
 		color: Color transparent;
-		name: #id;
+		name: #ident;
 		padding: #center.
 	
-	id _ (StringMorph contents: 'Player') 
+	ident _ (StringMorph contents: 'Player') 
 		emphasis: AbstractFont boldCode;
 		font: (AbstractFont familyName: 'DejaVu' aroundPointSize: 10).
 		
-	area addMorph: id.
+	area addMorph: ident.
 	^ area layoutSpec: (LayoutSpec  proportionalWidth: 1.0)! !
 
 !EstateToken methodsFor: 'initialization' stamp: 'dhn 5/16/2019 21:21:20'!
@@ -4295,11 +4309,12 @@ inJail
         "Answer whether the player is in jail or not."
     ^jail first! !
 
-!Developer methodsFor: 'operating' stamp: 'dhn 5/17/2019 12:29:19'!
+!Developer methodsFor: 'operating' stamp: 'dhn 4/21/2020 21:42:14'!
 jail: aBoolean with: anInteger
-        "Set the jail state array as (aBoolean anInteger),
+        "Set the jail state array as #(aBoolean anInteger),
         where anInteger is the number of attempts to roll out."
-    jail := Array with: aBoolean with: anInteger! !
+
+    jail _ Array with: aBoolean with: anInteger! !
 
 !Developer methodsFor: 'operating' stamp: 'dhn 3/25/2020 12:38:04'!
 netWorth
