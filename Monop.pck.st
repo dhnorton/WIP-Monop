@@ -1,6 +1,6 @@
-'From Cuis 5.0 [latest update: #4119] on 23 April 2020 at 11:32:19 pm'!
+'From Cuis 5.0 [latest update: #4112] on 26 April 2020 at 9:37:05 pm'!
 'Description Simulation of the board game "Monopoly".'!
-!provides: 'Monop' 1 217!
+!provides: 'Monop' 1 218!
 !requires: 'Game' 1 44 nil!
 SystemOrganization addCategory: #'Monop-View'!
 SystemOrganization addCategory: #'Monop-Model'!
@@ -1793,7 +1793,7 @@ quitGame
 	(self confirm: 'Are you sure you want to quit ', Monopoly asString, '?')
 		ifTrue: [model quitGame]! !
 
-!Monopoly methodsFor: 'operation' stamp: 'dhn 4/19/2020 17:02:05'!
+!Monopoly methodsFor: 'operation' stamp: 'dhn 4/26/2020 20:58:38'!
 showSeasons: associations 
 	"Display the seasons contained in associations"
 	| width ix bm txt |
@@ -1804,17 +1804,17 @@ showSeasons: associations
 	associations do: [:k | 	| first last sea |
 			first _ k key x - 1.
 			last _ k key y.
-			bm _ LayoutMorph newRow
-				padding: #center;
+			sea _ k value.
+			bm _ BorderedRectMorph new
+				borderWidth: 1;
+				color: sea color;
 				name: #season.
 			seasonsArea addMorph: bm
 				layoutSpec: (LayoutSpec proportionalWidth: width * (last - first) proportionalHeight: 1.0).
-			sea _ k value.
-			bm color: sea color.
 			bm setBalloonText: (model whoOwns: ix).
 			ix _ ix + 1.
 			txt _ StringMorph new
-				font: (AbstractFont familyName: 'DejaVu' pointSize: 18).
+				font: (AbstractFont familyName: 'DejaVu' pointSize: 14).
 			bm addMorph: txt..
 			txt color: (sea textColor
 				ifTrue: [Color white]
@@ -2117,17 +2117,15 @@ makePurchasesButton
 		layoutSpec: self class buttonLayoutSpec;
 		setBalloonText: 'Buy property, houses, or hotels.'! !
 
-!Monopoly methodsFor: 'initialization' stamp: 'dhn 5/16/2019 15:24:00'!
+!Monopoly methodsFor: 'initialization' stamp: 'dhn 4/26/2020 20:30:37'!
 makeSeasonsArea
 	"Lay out the area for seasons"
 	
 	seasonsArea _ (LayoutMorph newRow separation: 0)
 		layoutSpec: (LayoutSpec 
 			proportionalWidth: 1.0
-			proportionalHeight: 0.08
+			proportionalHeight: 0.12
 			minorDirectionPadding: #center).
-	1 to: model class cellsForGame do: [ :n |
-		seasonsArea addMorph: (LayoutMorph newRow name: #season)].
 	^ seasonsArea
 			color: Color transparent;
 			name: #seasons! !
