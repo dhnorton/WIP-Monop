@@ -1,6 +1,6 @@
-'From Cuis 5.0 [latest update: #4112] on 26 April 2020 at 9:37:05 pm'!
+'From Cuis 5.0 [latest update: #4128] on 7 May 2020 at 2:09:06 pm'!
 'Description Simulation of the board game "Monopoly".'!
-!provides: 'Monop' 1 218!
+!provides: 'Monop' 1 219!
 !requires: 'Game' 1 44 nil!
 SystemOrganization addCategory: #'Monop-View'!
 SystemOrganization addCategory: #'Monop-Model'!
@@ -64,6 +64,16 @@ GameView subclass: #BuyView
 	category: 'Monop-View'!
 !classDefinition: 'BuyView class' category: #'Monop-View'!
 BuyView class
+	instanceVariableNames: ''!
+
+!classDefinition: #InJailView category: #'Monop-View'!
+GameView subclass: #InJailView
+	instanceVariableNames: 'textPane acknowledged rollButton payButton cardButton buttonArea'
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'Monop-View'!
+!classDefinition: 'InJailView class' category: #'Monop-View'!
+InJailView class
 	instanceVariableNames: ''!
 
 !classDefinition: #MonopHoldings category: #'Monop-View'!
@@ -296,6 +306,9 @@ A Monopoly window which makes it possible for players to bid on property.!
 
 !BuyView commentStamp: '<historical>' prior: 0!
 A window where players must either buy or auction a property.!
+
+!InJailView commentStamp: '<historical>' prior: 0!
+A Monopoly window for possibly getting out of jail.!
 
 !MonopHoldings commentStamp: '<historical>' prior: 0!
 A Monopoly window which shows statistics about the player's assets.!
@@ -849,16 +862,10 @@ incomeTax
 	currentPlayer debtor: 'Bank'.
 	self triggerEvent: #showIncomeTax! !
 
-!Estate methodsFor: 'operating' stamp: 'dhn 4/16/2020 14:52:23'!
+!Estate methodsFor: 'operating' stamp: 'dhn 5/1/2020 21:09:57'!
 justVisit
 	"Just visiting jail."
 
-"	currentPlayer inJail 
-		ifTrue: [
-			GamePopUp 
-				inform: currentPlayer identity, ' will be here a long time.' 
-				title: 'Life Sentence'.
-			self disableAll: {'Move'}]."
 	self possiblyEnable! !
 
 !Estate methodsFor: 'operating' stamp: 'dhn 4/8/2020 21:14:24'!
@@ -1007,37 +1014,23 @@ nearestUtility
 	
 	^ self nearest: self class positionUtility to: currentPlayer position! !
 
-!Estate methodsFor: 'operating' stamp: 'dhn 4/23/2020 21:47:11'!
+!Estate methodsFor: 'operating' stamp: 'dhn 5/1/2020 16:30:27'!
 nextPlayer
 	"Begin the next player's turn"
-	| x |
 	
 	currentPlayer _ (players atWrap: (playerIndex _ playerIndex + 1)).
-	currentPlayer jail first
-		ifTrue: [
-			currentPlayer jail second < 3
-				ifTrue: [
-					self disableAll: {'Move'}.
-					currentPlayer jail: true with: currentPlayer jail second + 1] 
-				ifFalse: [currentPlayer jail: false with: 0]].
 	players size > 1
 		ifTrue: [  
-	self 
-		triggerEvent: #deleteOpenWindows;
-		triggerEvent: #itemChange;
-		triggerEvent: #titleChange with: currentPlayer;
-		positionBoardTo: currentPlayer position;
-		enableAll: {'Holdings'. 'Develop'. 'Mortgage'};
-		removeMarkers.
-	token openInWorld: world.
-	token view: nil.
-	token morphPosition: tokenPos.
-	token ident contents: currentPlayer identity.
-	token color: currentPlayer color.
-	token setBalloonText: 'token for ', currentPlayer identity.
-	self testMode ifTrue: [
-	x _ (FillInTheBlankMorph request: 'How many spaces' initialAnswer: '6' onCancel: ['0']) asNumber.
-	self hardRoll: ((1 to: 6) asArray atWrap: x)]]
+			self 
+				triggerEvent: #deleteOpenWindows;
+				triggerEvent: #itemChange;
+				triggerEvent: #titleChange with: currentPlayer;
+				positionBoardTo: currentPlayer position;
+				enableAll: {'Holdings'. 'Develop'. 'Mortgage'};
+				removeMarkers.
+			currentPlayer jail first
+				ifTrue: [self triggerEvent: #showInJailView]
+				ifFalse: [self proceedToMove]]
 		ifFalse: [
 			self triggerEvent: #showWinner.
 			self disableAll: {'Move'. 'End Turn'}]! !
@@ -1086,19 +1079,37 @@ positionBoardTo: anIndex
 	assoc _ self parseSeasonsAt: anIndex.
 	self triggerEvent: #showSeasons: with: assoc! !
 
-!Estate methodsFor: 'operating' stamp: 'dhn 4/16/2020 14:50:37'!
+!Estate methodsFor: 'operating' stamp: 'dhn 5/7/2020 14:01:45'!
 possiblyEnable
-	"Update histories and enable the 'End Turn' button if all are acknowledged"
+	"Update histories and enable the 'End Turn' button if all GameViews are acknowledged"
 	| col subs |
 	
 	players do: [:ea | ea history addLast: ea netWorth].
 	self triggerEvent: #itemChange.
 	col _ OrderedCollection new.
 	subs _ self world submorphs.
-	1 to: (subs size - 2) do: [:a | 
-		(subs at: a) acknowledged = false
+	subs do: [:a | 
+		((a is: #Gameview) and: [a acknowledged not])
 			ifTrue: [col add: a]].
 	col ifEmpty: [self enableAll: {'End Turn'}]! !
+
+!Estate methodsFor: 'operating' stamp: 'dhn 5/1/2020 16:45:16'!
+proceedToMove
+	"Prepare board for the current player's move"
+	| x |
+	
+	token openInWorld: world.
+	token view: nil.
+	token morphPosition: tokenPos.
+	token ident contents: currentPlayer identity.
+	token color: currentPlayer color.
+	token setBalloonText: 'token for ', currentPlayer identity.
+	self testMode 
+		ifTrue: [
+			x _ (FillInTheBlankMorph 
+				request: 'How many spaces' 
+				initialAnswer: '12' onCancel: ['0']) asNumber.
+			self hardRoll: ((1 to: 12) asArray atWrap: x)]! !
 
 !Estate methodsFor: 'operating' stamp: 'dhn 3/4/2020 21:44:07'!
 propertyAuction
@@ -1886,7 +1897,7 @@ tourAt: anInterval
 	self startSteppingStepTime: anInterval. 	"time of each increment of the hop"
 ! !
 
-!Monopoly methodsFor: 'initialization' stamp: 'dhn 4/7/2020 15:03:20'!
+!Monopoly methodsFor: 'initialization' stamp: 'dhn 5/1/2020 16:31:36'!
 buildMorphicWindow
 
 	pasteup _ GamePasteUp new
@@ -1915,6 +1926,7 @@ buildMorphicWindow
 	model when: #showTakeOver send: #showTakeOver to: self.
 	model when: #showWinner send: #showWinner to: self.
 	model when: #showDoubles send: #showDoubles to: self.
+	model when: #showInJailView send: #showInJailView to: self.
 	"when:send:to:"
 	"when:send:to:with:"
 	"when:send:to:withArguments:"
@@ -2302,6 +2314,29 @@ showHouse
 		morphPosition: self windowPosition;
 		morphExtent: 500 @ 260.
 	model disableAll: {'Develop'. 'Mortgage'}! !
+
+!Monopoly methodsFor: 'windows' stamp: 'dhn 5/1/2020 21:28:19'!
+showInJailView
+	"See if the current player can get out of jail"
+	| win |
+		
+	win _ InJailView openOn: model.
+	win openInWorld: pasteup.
+	win
+		cleanTitleBar;
+		setLabel: model currentPlayer identity, ' is in Jail';
+		setWindowColor: model currentPlayer color;
+		morphPosition: self windowPosition;
+		morphExtent: 390 @ 260.
+	model disableAll: {'End Turn'}.
+	model currentPlayer doubles: OrderedCollection new.
+	model currentPlayer cards
+		ifEmpty: [win cardButton disableButton]
+		ifNotEmpty: [win cardButton enableButton].
+	win rollButton enableButton.
+	win payButton enableButton.
+	win textPane model actualContents: 'Click one of the buttons below to get out.'
+! !
 
 !Monopoly methodsFor: 'windows' stamp: 'dhn 4/8/2020 14:12:27'!
 showIncomeTax
@@ -2711,13 +2746,10 @@ closeBoxHit
 		possiblyEnable.
 	super closeBoxHit! !
 
-!AuctionProperty methodsFor: 'termination' stamp: 'dhn 4/16/2020 14:53:27'!
+!AuctionProperty methodsFor: 'termination' stamp: 'dhn 5/1/2020 21:08:49'!
 endIt
 	
-	model 
-		propertyAuctionBid: nil;
-		"jobWinner: currentBidder bid: currentBid;"
-		possiblyEnable.
+	model possiblyEnable.
 	self delete
 ! !
 
@@ -2744,6 +2776,10 @@ heading
 	"Answer the value of heading"
 	
 	^ heading! !
+
+!AuctionProperty methodsFor: 'testing' stamp: 'dhn 5/1/2020 20:43:45'!
+is: aSymbol
+	^ aSymbol == #AuctionProperty or: [ super is: aSymbol ]! !
 
 !AuctionProperty class methodsFor: 'class initialization' stamp: 'dhn 3/23/2020 14:11:43'!
 open: aModel label: aString
@@ -2788,6 +2824,10 @@ bidIncrement
 	^ col
 
 	! !
+
+!BuyView methodsFor: 'testing' stamp: 'dhn 5/1/2020 20:44:32'!
+is: aSymbol
+	^ aSymbol == #BuyView or: [ super is: aSymbol ]! !
 
 !BuyView methodsFor: 'operating' stamp: 'dhn 4/16/2020 14:52:55'!
 auction
@@ -2919,6 +2959,154 @@ endIt
 	
 	self delete! !
 
+!InJailView methodsFor: 'initialization' stamp: 'dhn 5/1/2020 18:20:46'!
+buildMorphicWindow
+	"Lay out the window for possibly getting out of jail"
+	
+	textPane _ (TextModelMorph
+		withModel: (TextModel withText: ''))
+			askBeforeDiscardingEdits: false;
+			name: 'jail state'. 
+	textPane layoutSpec: (LayoutSpec proportionalWidth: 1.0).
+	buttonArea _ (LayoutMorph newRow separation: 8)
+		layoutSpec: (LayoutSpec new
+			proportionalWidth: 1.0;
+			proportionalHeight: 0.2;
+			minorDirectionPadding: #center).
+	buttonArea
+		addAllMorphs: self jailButtons;
+		name: #buttons;
+		padding: #center.
+
+	self beColumn.
+	layoutMorph
+		addMorph: textPane layoutSpec: (LayoutSpec useAll);
+		addMorph: buttonArea.
+		
+	model when: #deleteOpenWindows send: #endIt to: self.
+! !
+
+!InJailView methodsFor: 'initialization' stamp: 'dhn 5/1/2020 12:24:50'!
+initialize
+
+	super initialize.
+	acknowledged _ false! !
+
+!InJailView methodsFor: 'buttons' stamp: 'dhn 5/1/2020 18:20:25'!
+jailButtons
+	"Answer the buttons for getting out"
+	
+	rollButton _ GameButtonMorph label: 'Roll Out' action: #rollOut state: false model: self.
+	rollButton 
+		morphExtent: 100@30;
+		setBalloonText: 'Try to roll doubles.'.
+	payButton _ GameButtonMorph label: 'Pay $50' action: #payOut state: false model: self.
+	payButton 
+		morphExtent: 100@30;
+		setBalloonText: 'Bribe the jailor.'.
+	cardButton _ GameButtonMorph label: 'Use Card' action: #cardOut state: false model: self.
+	cardButton 
+		morphExtent: 100@30;
+		setBalloonText: 'Use "Get Out Free" card.'.
+	^ {cardButton. payButton. rollButton}
+! !
+
+!InJailView methodsFor: 'testing' stamp: 'dhn 5/1/2020 20:40:29'!
+is: aSymbol
+	^ aSymbol == #InJailView or: [ super is: aSymbol ]! !
+
+!InJailView methodsFor: 'operation' stamp: 'dhn 5/1/2020 18:13:00'!
+cardOut
+	"Use a Get Out of Jail card"
+	| card |
+	
+	card _ model currentPlayer cards removeFirst.
+	card first = #chances
+		ifTrue: [model chances second add: card second].
+	card first = #chests
+		ifTrue: [model chests second add: card second].
+	acknowledged _ true.
+	model proceedToMove! !
+
+!InJailView methodsFor: 'operation' stamp: 'dhn 5/1/2020 17:32:22'!
+details! !
+
+!InJailView methodsFor: 'operation' stamp: 'dhn 5/1/2020 21:03:06'!
+payOut
+	"Pay $50 to get out"
+
+	model tally: -50.
+	acknowledged _ true.
+	model currentPlayer jail: false with: 0.
+	model 
+		enableAll: {'Move'};
+		disableAll: {'End Turn'};
+		proceedToMove.
+	self endIt! !
+
+!InJailView methodsFor: 'operation' stamp: 'dhn 5/1/2020 15:41:22'!
+rollOut
+	"Roll the dice. If doubles, get out, else stay"
+	"If three unsuccessful rolls, pay out"
+	
+	{'gimme them bones'}print.
+	
+	"pretend unsuccessful"
+	model currentPlayer jail: true with: model currentPlayer jail second + 1.
+	model currentPlayer jail second < 3
+		ifTrue: [model nextPlayer] 
+		ifFalse: [self payOut]! !
+
+!InJailView methodsFor: 'termination' stamp: 'dhn 5/1/2020 16:42:21'!
+endIt
+	
+	model possiblyEnable.
+	self delete
+! !
+
+!InJailView methodsFor: 'accessing' stamp: 'dhn 5/1/2020 12:22:14'!
+acknowledged
+	"Answer the value of acknowledged"
+
+	^ acknowledged! !
+
+!InJailView methodsFor: 'accessing' stamp: 'dhn 5/1/2020 13:32:45'!
+cardButton
+	"Answer the value of cardButton"
+	
+	^ cardButton! !
+
+!InJailView methodsFor: 'accessing' stamp: 'dhn 5/1/2020 18:15:11'!
+payButton
+	"Answer the value of payButton"
+	
+	^ payButton! !
+
+!InJailView methodsFor: 'accessing' stamp: 'dhn 5/1/2020 18:15:54'!
+rollButton
+	"Answer the value of rollButton"
+	
+	^ rollButton! !
+
+!InJailView methodsFor: 'accessing' stamp: 'dhn 5/1/2020 17:36:44'!
+textPane
+	"Answer the value of textPane"
+	
+	^ textPane! !
+
+!InJailView class methodsFor: 'class initialization' stamp: 'dhn 5/1/2020 13:04:51'!
+open: aModel label: aString
+	"Answer a view on aModel with label aString"
+	|  window |
+	
+	window _ self new.
+	window
+		model: aModel;
+		buildMorphicWindow.
+	aString ifNotNil: [ window setLabel: aString ].
+	aModel when: #deleteOpenWindows send: #endIt to: window.
+	^ window! !
+
 !MonopHoldings methodsFor: 'termination' stamp: 'dhn 3/27/2020 11:34:35'!
 closeBoxHit
 
@@ -2969,6 +3157,10 @@ buildMorphicWindow
 	self layoutMorph
 		addMorph: listPane layoutSpec: (LayoutSpec fixedWidth: 250);
 		addAdjusterAndMorph: textPane layoutSpec: (LayoutSpec useAll)! !
+
+!MonopHoldings methodsFor: 'testing' stamp: 'dhn 5/1/2020 20:46:38'!
+is: aSymbol
+	^ aSymbol == #MonopHoldings or: [ super is: aSymbol ]! !
 
 !MonopHoldings class methodsFor: 'instance creation' stamp: 'dhn 4/15/2020 11:51:14'!
 openOn: aModel
@@ -3107,6 +3299,10 @@ sellHouse
 	model updateSeasons.
 	model triggerEvent: #itemChange! !
 
+!MonopHouse methodsFor: 'testing' stamp: 'dhn 5/1/2020 20:47:32'!
+is: aSymbol
+	^ aSymbol == #MonopHouse or: [ super is: aSymbol ]! !
+
 !MonopHouse class methodsFor: 'instance creation' stamp: 'dhn 4/15/2020 11:51:00'!
 openOn: aModel
 	"Answer an instance of this class on aModel"
@@ -3244,6 +3440,10 @@ acknowledged
 	"Answer the value of acknowledged"
 
 	^ acknowledged ifNil: [acknowledged _ true]! !
+
+!Mortgage methodsFor: 'testing' stamp: 'dhn 5/1/2020 20:48:23'!
+is: aSymbol
+	^ aSymbol == #Mortgage or: [ super is: aSymbol ]! !
 
 !Mortgage class methodsFor: 'instance creation' stamp: 'dhn 4/15/2020 11:48:51'!
 openOn: aModel
@@ -3434,6 +3634,10 @@ endTurn
 	model possiblyEnable.
 	self endIt ! !
 
+!Notifier methodsFor: 'testing' stamp: 'dhn 5/1/2020 20:48:55'!
+is: aSymbol
+	^ aSymbol == #Notifier or: [ super is: aSymbol ]! !
+
 !Notifier class methodsFor: 'class initialization' stamp: 'dhn 3/23/2020 12:32:37'!
 openOn: aModel
 	"Answer an instance of this class on aModel"
@@ -3592,6 +3796,10 @@ unmortgage
 	prop _ model currentPlayer assets detect: [:a | a title = nam] ifNone: [].
 	prop mortgaged: false.
 	self settle: prop at: 1.1! !
+
+!TakeOver methodsFor: 'testing' stamp: 'dhn 5/1/2020 20:49:40'!
+is: aSymbol
+	^ aSymbol == #TakeOver or: [ super is: aSymbol ]! !
 
 !Die2 methodsFor: 'operation' stamp: 'dhn 4/2/2020 21:49:41'!
 showRoll: aCollection
@@ -4273,15 +4481,6 @@ rollOut: aRoll
 			reply := true ].
 	^ reply! !
 
-!Developer methodsFor: 'as yet unclassified' stamp: 'dhn 2/27/2020 20:27:50'!
-toJail
-        "Send the player to jail."
-    self goAgain: false;
-        "jail: true with: 0;"
-        passedGo: false;
-        position: 11;
-        doubles: 0.! !
-
 !Developer methodsFor: 'operating' stamp: 'dhn 4/21/2020 12:22:28'!
 bankrupt
 	"Answer whether the player is bankrupt"
@@ -4289,18 +4488,6 @@ bankrupt
 	^ (cash < 0)
 		ifTrue: [assets allSatisfy: [:ea | ea mortgaged]]
 		ifFalse: [false]! !
-
-!Developer methodsFor: 'operating' stamp: 'dhn 5/17/2019 12:29:19'!
-cards
-        "Answer a 'Get Out of Jail Free' card, or nil if none."
-    cards notEmpty
-        ifTrue: [ ^cards removeLast ]
-        ifFalse: [ ^nil ].! !
-
-!Developer methodsFor: 'operating' stamp: 'dhn 5/17/2019 12:29:19'!
-cards: aCard
-        "Add a 'Get Out of Jail Free' card to a Player's collection."
-    cards add: aCard.! !
 
 !Developer methodsFor: 'operating' stamp: 'dhn 5/17/2019 12:29:19'!
 inJail
@@ -4364,6 +4551,18 @@ taxWorth
 			ifTrue: [development _ development + (ea houses * ea houseCost)].
 		prices _ prices + ea price].
 	^ cash + prices + development! !
+
+!Developer methodsFor: 'accessing' stamp: 'dhn 5/1/2020 18:02:22'!
+cards
+	"Answer the value of cards"
+
+	^ cards! !
+
+!Developer methodsFor: 'accessing' stamp: 'dhn 5/1/2020 18:00:43'!
+cards: anObject
+	"Set the value of cards"
+
+	cards _ anObject! !
 
 !Developer methodsFor: 'accessing' stamp: 'dhn 3/29/2020 12:49:33'!
 debtor
