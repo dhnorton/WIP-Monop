@@ -1,6 +1,6 @@
-'From Cuis 5.0 [latest update: #4128] on 7 May 2020 at 2:09:06 pm'!
+'From Cuis 5.0 [latest update: #4140] on 8 May 2020 at 7:38:49 pm'!
 'Description Simulation of the board game "Monopoly".'!
-!provides: 'Monop' 1 219!
+!provides: 'Monop' 1 220!
 !requires: 'Game' 1 44 nil!
 SystemOrganization addCategory: #'Monop-View'!
 SystemOrganization addCategory: #'Monop-Model'!
@@ -1079,21 +1079,20 @@ positionBoardTo: anIndex
 	assoc _ self parseSeasonsAt: anIndex.
 	self triggerEvent: #showSeasons: with: assoc! !
 
-!Estate methodsFor: 'operating' stamp: 'dhn 5/7/2020 14:01:45'!
+!Estate methodsFor: 'operating' stamp: 'dhn 5/8/2020 19:21:45'!
 possiblyEnable
 	"Update histories and enable the 'End Turn' button if all GameViews are acknowledged"
-	| col subs |
+	| col |
 	
 	players do: [:ea | ea history addLast: ea netWorth].
 	self triggerEvent: #itemChange.
 	col _ OrderedCollection new.
-	subs _ self world submorphs.
-	subs do: [:a | 
-		((a is: #Gameview) and: [a acknowledged not])
+	self world submorphs do: [:a | 
+		((a is: #GameView) and: [a acknowledged not])
 			ifTrue: [col add: a]].
 	col ifEmpty: [self enableAll: {'End Turn'}]! !
 
-!Estate methodsFor: 'operating' stamp: 'dhn 5/1/2020 16:45:16'!
+!Estate methodsFor: 'operating' stamp: 'dhn 5/8/2020 15:53:35'!
 proceedToMove
 	"Prepare board for the current player's move"
 	| x |
@@ -1101,7 +1100,7 @@ proceedToMove
 	token openInWorld: world.
 	token view: nil.
 	token morphPosition: tokenPos.
-	token ident contents: currentPlayer identity.
+	token tokenId contents: currentPlayer identity.
 	token color: currentPlayer color.
 	token setBalloonText: 'token for ', currentPlayer identity.
 	self testMode 
@@ -1555,21 +1554,21 @@ layoutSubmorphs
 
 	labelArea morphExtent: self morphExtent! !
 
-!EstateToken methodsFor: 'initialization' stamp: 'dhn 4/23/2020 21:41:06'!
+!EstateToken methodsFor: 'initialization' stamp: 'dhn 5/8/2020 19:37:58'!
 makeIdArea
 	"Lay out the area for the players' name"
 	| area |
 	
 	area _ LayoutMorph newRow
 		color: Color transparent;
-		name: #ident;
+		name: #tokenId;
 		padding: #center.
 	
-	ident _ (StringMorph contents: 'Player') 
+	tokenId _ (StringMorph contents: 'Player') 
 		emphasis: AbstractFont boldCode;
 		font: (AbstractFont familyName: 'DejaVu' aroundPointSize: 10).
 		
-	area addMorph: ident.
+	area addMorph: tokenId.
 	^ area layoutSpec: (LayoutSpec  proportionalWidth: 1.0)! !
 
 !EstateToken methodsFor: 'initialization' stamp: 'dhn 5/16/2019 21:21:20'!
