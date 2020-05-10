@@ -1,6 +1,6 @@
-'From Cuis 5.0 [latest update: #4140] on 8 May 2020 at 7:38:49 pm'!
+'From Cuis 5.0 [latest update: #4140] on 9 May 2020 at 8:47:22 pm'!
 'Description Simulation of the board game "Monopoly".'!
-!provides: 'Monop' 1 220!
+!provides: 'Monop' 1 221!
 !requires: 'Game' 1 44 nil!
 SystemOrganization addCategory: #'Monop-View'!
 SystemOrganization addCategory: #'Monop-Model'!
@@ -1692,7 +1692,7 @@ view: anObject
 
 	view _ anObject! !
 
-!AuctionButton methodsFor: 'event handling' stamp: 'dhn 3/22/2020 20:28:19'!
+!AuctionButton methodsFor: 'event handling' stamp: 'dhn 5/9/2020 20:32:27'!
 mouseButton2Down: event localPosition: point 
 	"Bring up the bid increment menu"
 	| x |
@@ -1700,7 +1700,7 @@ mouseButton2Down: event localPosition: point
 	x _ (PopUpMenu labelArray: model bidIncrementList) 
 		startUpWithCaption: 'Bid Increment'.
 	x _ x max: 1.
-	model currentBump: (model class bidBump at: x).
+	model currentBump: (model bidBump at: x).
 	model offer: label! !
 
 !Monopoly methodsFor: 'accessing' stamp: 'dhn 5/15/2019 12:43:43'!
@@ -2688,11 +2688,23 @@ beginAuction
 	begun _ true.
 	self buyerButtons! !
 
-!AuctionProperty methodsFor: 'operation' stamp: 'dhn 3/21/2020 11:35:35'!
+!AuctionProperty methodsFor: 'operation' stamp: 'dhn 5/9/2020 20:46:08'!
+bidBump
+	"Answer the bid increments"
+	| col |
+	
+	col _ (Interval from: 10 to: 100 by: 10) asOrderedCollection.
+	^ col addLast: 150; addLast: 200; yourself! !
+
+!AuctionProperty methodsFor: 'operation' stamp: 'dhn 5/9/2020 20:28:11'!
 bidIncrementList
 	"Answer the list of bid increments"
+	| col |
 	
-	^ self class bidIncrement! !
+	col _ OrderedCollection new.
+	self bidBump do: [:each | col add: '$', each printStringWithCommas].
+	^ col
+! !
 
 !AuctionProperty methodsFor: 'operation' stamp: 'dhn 3/21/2020 11:20:08'!
 details
@@ -2806,23 +2818,6 @@ openOn: aModel
 	
 	^ win
 ! !
-
-!AuctionProperty class methodsFor: 'accessing' stamp: 'dhn 3/21/2020 11:28:54'!
-bidBump
-	"Answer the bid increments"
-	
-	^ (Interval from: 10 to: 100 by: 10) asOrderedCollection! !
-
-!AuctionProperty class methodsFor: 'accessing' stamp: 'dhn 3/21/2020 11:34:44'!
-bidIncrement
-	"Answer the list for an auction"
-	| col |
-	
-	col _ OrderedCollection new.
-	self bidBump do: [:each | col add: '$', each printStringWithCommas].
-	^ col
-
-	! !
 
 !BuyView methodsFor: 'testing' stamp: 'dhn 5/1/2020 20:44:32'!
 is: aSymbol
