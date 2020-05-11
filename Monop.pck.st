@@ -1,6 +1,6 @@
-'From Cuis 5.0 [latest update: #4140] on 9 May 2020 at 8:47:22 pm'!
+'From Cuis 5.0 [latest update: #4140] on 11 May 2020 at 2:52:38 pm'!
 'Description Simulation of the board game "Monopoly".'!
-!provides: 'Monop' 1 221!
+!provides: 'Monop' 1 222!
 !requires: 'Game' 1 44 nil!
 SystemOrganization addCategory: #'Monop-View'!
 SystemOrganization addCategory: #'Monop-Model'!
@@ -2618,14 +2618,14 @@ initialize
 	currentBump _ 10.
 	acknowledged _ false! !
 
-!AuctionProperty methodsFor: 'buttons' stamp: 'dhn 3/21/2020 11:00:47'!
+!AuctionProperty methodsFor: 'buttons' stamp: 'dhn 5/9/2020 21:20:23'!
 buyerButtons
 	"Set bidding buttons for players."
 	| col |
 	
 	col _ OrderedCollection new.
 	model players do: [:ea |
-		col add: ((AuctionButton label: ea identity action: #offer: state: true model: self)
+		col add: ((BidderButton label: ea identity action: #offer: state: true model: self)
 			morphExtent: 70@30;
 			color: ea color;
 			setProperty: #'handlesMouseDown:' toValue: true;
@@ -2696,15 +2696,11 @@ bidBump
 	col _ (Interval from: 10 to: 100 by: 10) asOrderedCollection.
 	^ col addLast: 150; addLast: 200; yourself! !
 
-!AuctionProperty methodsFor: 'operation' stamp: 'dhn 5/9/2020 20:28:11'!
+!AuctionProperty methodsFor: 'operation' stamp: 'dhn 5/11/2020 14:33:44'!
 bidIncrementList
 	"Answer the list of bid increments"
-	| col |
 	
-	col _ OrderedCollection new.
-	self bidBump do: [:each | col add: '$', each printStringWithCommas].
-	^ col
-! !
+	^ self bidBump collect: [:each | '$', each printStringWithCommas]! !
 
 !AuctionProperty methodsFor: 'operation' stamp: 'dhn 3/21/2020 11:20:08'!
 details
