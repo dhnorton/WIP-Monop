@@ -1,4 +1,4 @@
-'From Cuis 5.0 [latest update: #4140] on 13 May 2020 at 2:00:50 pm'!
+'From Cuis 5.0 [latest update: #4140] on 13 May 2020 at 7:22:25 pm'!
 'Description Simulation of the board game "Monopoly".'!
 !provides: 'Monop' 1 223!
 !requires: 'Game' 1 44 nil!
@@ -125,16 +125,6 @@ GameView subclass: #TakeOver
 	category: 'Monop-View'!
 !classDefinition: 'TakeOver class' category: #'Monop-View'!
 TakeOver class
-	instanceVariableNames: ''!
-
-!classDefinition: #Die2 category: #'Monop-View'!
-DieMorph subclass: #Die2
-	instanceVariableNames: ''
-	classVariableNames: ''
-	poolDictionaries: ''
-	category: 'Monop-View'!
-!classDefinition: 'Die2 class' category: #'Monop-View'!
-Die2 class
 	instanceVariableNames: ''!
 
 !classDefinition: #Square category: #'Monop-Model'!
@@ -325,9 +315,6 @@ A window for notifying players.!
 
 !TakeOver commentStamp: '<historical>' prior: 0!
 A Monopoly window for taking over assets. A debtor must either unmortgage or pay interest on assets received from a bankrupt player.!
-
-!Die2 commentStamp: '<historical>' prior: 0!
-A class for using two of super.!
 
 !Square commentStamp: '<historical>' prior: 0!
 A square on the board.!
@@ -734,6 +721,25 @@ doMove
 			hops _ OrderedCollection new]
 ! !
 
+!Estate methodsFor: 'operating' stamp: 'dhn 5/12/2020 17:37:38'!
+doMove: aCollection
+	"Move the player, account for doubles"
+	| col |
+	
+	self halt.
+	col _ aCollection.
+	col first = col second
+		ifTrue: [
+			playerIndex _ playerIndex - 1.
+			currentPlayer doubles add: col asArray] 
+		ifFalse: [currentPlayer doubles: OrderedCollection new].
+	currentPlayer doubles size > 2 
+		ifTrue: [self triggerEvent: #showDoubles]
+		ifFalse: [
+			self hopFor: col first + col second.
+			hops _ OrderedCollection new]
+! !
+
 !Estate methodsFor: 'operating' stamp: 'dhn 3/20/2020 15:00:21'!
 doSpace
 	"Perform the method associated with the space where the player is"
@@ -916,7 +922,7 @@ luxuryTax
 	currentPlayer debtor: 'Bank'.
 	self triggerEvent: #showLuxuryTax! !
 
-!Estate methodsFor: 'operating' stamp: 'dhn 4/2/2020 16:18:48'!
+!Estate methodsFor: 'operating' stamp: 'dhn 5/12/2020 17:46:45'!
 move
 	"Roll the dice"
 	| die1 die2 s |
@@ -925,24 +931,21 @@ move
 		ifTrue: [self perform: (spaces atWrap: self currentPlayer position) routine]
 		ifFalse: [
 			self disableAll: {'Move'}.
-			die1 _ Die2 new openInWorld: world.
+			die1 _ DieMorph new openInWorld: world.
 			die1 model: self.
-			die2 _ Die2 new openInWorld: world.
+			die2 _ DieMorph new openInWorld: world.
 			die2 model: self.
-			"currentPlayer die: {die1. die2}."
 
 			s _ token morphExtent x * 60 / 132.
 			die1 
-				morphExtent: s@s;
-				setDots;
-				referencePosition: token referencePosition - (0@1.5 * token morphHeight).
+				shape: s@s
+				at: token referencePosition - (0@1.5 * token morphHeight).
 			die2 
-				morphExtent: s@s;
-				setDots;
-				referencePosition: token referencePosition - (0@2.5 * token morphHeight).
+				shape: s@s
+				at: token referencePosition - (0@2.5 * token morphHeight).
 
-			die1 showRoll: die1 class faces shuffled.
-			die2 showRoll: die2 class faces shuffled].! !
+			die1 roll2: die1 class faces shuffled then: #doMove.
+			die2 roll2: die2 class faces shuffled then: #doMove]! !
 
 !Estate methodsFor: 'operating' stamp: 'dhn 3/17/2020 20:51:31'!
 moveAheadTo: aSpace
@@ -1804,7 +1807,7 @@ quitGame
 	(self confirm: 'Are you sure you want to quit ', Monopoly asString, '?')
 		ifTrue: [model quitGame]! !
 
-!Monopoly methodsFor: 'operation' stamp: 'dhn 4/26/2020 20:58:38'!
+!Monopoly methodsFor: 'operation' stamp: 'dhn 5/13/2020 16:44:40'!
 showSeasons: associations 
 	"Display the seasons contained in associations"
 	| width ix bm txt |
@@ -1816,7 +1819,8 @@ showSeasons: associations
 			first _ k key x - 1.
 			last _ k key y.
 			sea _ k value.
-			bm _ BorderedRectMorph new
+			bm _ FramedLayoutMorph newRow
+				padding: #center;
 				borderWidth: 1;
 				color: sea color;
 				name: #season.
@@ -2129,14 +2133,14 @@ makePurchasesButton
 		layoutSpec: self class buttonLayoutSpec;
 		setBalloonText: 'Buy property, houses, or hotels.'! !
 
-!Monopoly methodsFor: 'initialization' stamp: 'dhn 4/26/2020 20:30:37'!
+!Monopoly methodsFor: 'initialization' stamp: 'dhn 5/13/2020 17:10:06'!
 makeSeasonsArea
 	"Lay out the area for seasons"
 	
 	seasonsArea _ (LayoutMorph newRow separation: 0)
 		layoutSpec: (LayoutSpec 
 			proportionalWidth: 1.0
-			proportionalHeight: 0.12
+			proportionalHeight: 0.08
 			minorDirectionPadding: #center).
 	^ seasonsArea
 			color: Color transparent;
@@ -3791,32 +3795,6 @@ unmortgage
 !TakeOver methodsFor: 'testing' stamp: 'dhn 5/1/2020 20:49:40'!
 is: aSymbol
 	^ aSymbol == #TakeOver or: [ super is: aSymbol ]! !
-
-!Die2 methodsFor: 'operation' stamp: 'dhn 4/2/2020 21:49:41'!
-showRoll: aCollection
-	"Display the succession of faces in aCollection on the die, then hop the token"
-	| limit linger t i x |
-	
-	limit _ 1600 + (500 atRandom).
-	linger _ limit + 700. 	"to pause before vanishing"
-	t _ 0.
-	i _ 0.
-	self when: #morphicStep evaluate: [ :delta |
-		i _ i + 1.
-		t _ t + delta.
-		t < limit 	"limit on the total time of activity"
-			ifTrue: [x _ self perform: (aCollection atWrap: i)]
-			ifFalse: [
-				model testMode ifTrue: [self perform: (self class faces at: (model hardRoll * 2))].
-				t > linger ifTrue: [
-					self stopStepping.
-					model hops add: x.
-					model hops size > 1 
-						ifTrue: [model doMove].
-					self removeActionsForEvent: #morphicStep.
-					owner removeMorph: self]]].
-	self startSteppingStepTime: 85. 	"time of each step in the activity"
-! !
 
 !Square methodsFor: 'accessing' stamp: 'dhn 3/1/2020 13:02:50'!
 boardPosition
