@@ -1,7 +1,8 @@
-'From Cuis 5.0 [latest update: #4140] on 11 May 2020 at 2:52:38 pm'!
+'From Cuis 5.0 [latest update: #4140] on 13 May 2020 at 2:00:50 pm'!
 'Description Simulation of the board game "Monopoly".'!
-!provides: 'Monop' 1 222!
+!provides: 'Monop' 1 223!
 !requires: 'Game' 1 44 nil!
+!requires: 'Morphic-Misc1' 1 139 nil!
 SystemOrganization addCategory: #'Monop-View'!
 SystemOrganization addCategory: #'Monop-Model'!
 
